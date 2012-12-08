@@ -1,3 +1,14 @@
+Features:
+
+ * Only runs on Windows Vista and above
+ * Only incremental backups are supported
+ * Mandatory compression with 7-Zip
+ * Full file/directory history (SVN-like revisions, but no file content diff)
+ * Restores files and directories from any given revision
+ * Can trim (delete) old revisions
+ * Volume Shadow Copy support (allows backup of locked files)
+ * Transaction support
+
 In order to compile the code, you must compile Process Hacker and copy:
 
  * phlib/bin/Release32/phlib.lib to lib/lib32/phlib.lib
