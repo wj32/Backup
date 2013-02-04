@@ -19,36 +19,36 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{2098A912-7DCF-4876-AED7-D264B913E0F4}</ProjectGuid>
+    <ProjectGuid>{2CD42CAF-687F-417F-B466-702D282C88DD}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Backup</RootNamespace>
+    <RootNamespace>BackupExplorer</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v110</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v110</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -71,49 +71,47 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <TargetName>bkc</TargetName>
     <OutDir>$(ProjectDir)bin\$(Configuration)$(PlatformArchitecture)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Configuration)$(PlatformArchitecture)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>bkc-explorer</TargetName>
     <LinkIncremental>true</LinkIncremental>
-    <TargetName>bkc</TargetName>
-    <OutDir>$(ProjectDir)bin\$(Configuration)$(PlatformArchitecture)\</OutDir>
-    <IntDir>$(ProjectDir)obj\$(Configuration)$(PlatformArchitecture)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <TargetName>bkc</TargetName>
     <OutDir>$(ProjectDir)bin\$(Configuration)$(PlatformArchitecture)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Configuration)$(PlatformArchitecture)\</IntDir>
+    <TargetName>bkc-explorer</TargetName>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <OutDir>$(ProjectDir)bin\$(Configuration)$(PlatformArchitecture)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(Configuration)$(PlatformArchitecture)\</IntDir>
+    <TargetName>bkc-explorer</TargetName>
+    <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
-    <TargetName>bkc</TargetName>
     <OutDir>$(ProjectDir)bin\$(Configuration)$(PlatformArchitecture)\</OutDir>
     <IntDir>$(ProjectDir)obj\$(Configuration)$(PlatformArchitecture)\</IntDir>
+    <TargetName>bkc-explorer</TargetName>
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -124,10 +122,10 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -138,62 +136,41 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="cmdline.c" />
-    <ClCompile Include="config.c" />
-    <ClCompile Include="db.c" />
-    <ClCompile Include="dbutils.c" />
-    <ClCompile Include="engine.c" />
-    <ClCompile Include="package.cpp" />
-    <ClCompile Include="main.c" />
-    <ClCompile Include="vssobj.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="backup.h" />
-    <ClInclude Include="cmdlinep.h" />
-    <ClInclude Include="config.h" />
-    <ClInclude Include="db.h" />
-    <ClInclude Include="dbp.h" />
-    <ClInclude Include="dbutils.h" />
-    <ClInclude Include="engine.h" />
-    <ClInclude Include="enginep.h" />
-    <ClInclude Include="lzma\CPP\7zip\Archive\IArchive.h" />
-    <ClInclude Include="lzma\CPP\7zip\ICoder.h" />
-    <ClInclude Include="lzma\CPP\7zip\IDecl.h" />
-    <ClInclude Include="lzma\CPP\7zip\IPassword.h" />
-    <ClInclude Include="lzma\CPP\7zip\IProgress.h" />
-    <ClInclude Include="lzma\CPP\7zip\IStream.h" />
-    <ClInclude Include="lzma\CPP\7zip\PropID.h" />
-    <ClInclude Include="lzma\CPP\Common\AutoPtr.h" />
-    <ClInclude Include="lzma\CPP\Common\Buffer.h" />
-    <ClInclude Include="lzma\CPP\Common\ComTry.h" />
-    <ClInclude Include="lzma\CPP\Common\Defs.h" />
-    <ClInclude Include="lzma\CPP\Common\DynamicBuffer.h" />
-    <ClInclude Include="lzma\CPP\Common\MyCom.h" />
-    <ClInclude Include="lzma\CPP\Common\MyException.h" />
-    <ClInclude Include="lzma\CPP\Common\MyGuidDef.h" />
-    <ClInclude Include="lzma\CPP\Common\MyInitGuid.h" />
-    <ClInclude Include="lzma\CPP\Common\MyUnknown.h" />
-    <ClInclude Include="lzma\CPP\Common\MyWindows.h" />
-    <ClInclude Include="lzma\CPP\Common\StdAfx.h" />
-    <ClInclude Include="lzma\CPP\Common\Types.h" />
-    <ClInclude Include="lzma\C\Types.h" />
-    <ClInclude Include="package.h" />
-    <ClInclude Include="packagep.h" />
+    <ClInclude Include="..\Backup\backup.h" />
+    <ClInclude Include="..\Backup\config.h" />
+    <ClInclude Include="..\Backup\db.h" />
+    <ClInclude Include="..\Backup\dbp.h" />
+    <ClInclude Include="..\Backup\dbutils.h" />
+    <ClInclude Include="..\Backup\engine.h" />
+    <ClInclude Include="..\Backup\enginep.h" />
+    <ClInclude Include="..\Backup\package.h" />
+    <ClInclude Include="..\Backup\packagep.h" />
+    <ClInclude Include="..\Backup\vssobj.h" />
+    <ClInclude Include="explorer.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="vssobj.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Backup.rc" />
+    <ClCompile Include="..\Backup\config.c" />
+    <ClCompile Include="..\Backup\db.c" />
+    <ClCompile Include="..\Backup\dbutils.c" />
+    <ClCompile Include="..\Backup\engine.c" />
+    <ClCompile Include="..\Backup\package.cpp" />
+    <ClCompile Include="..\Backup\vssobj.cpp" />
+    <ClCompile Include="explorer.c" />
+    <ClCompile Include="main.c" />
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="Backup.manifest" />
+    <ResourceCompile Include="BackupExplorer.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="BackupExplorer.manifest" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
