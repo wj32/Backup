@@ -1,3 +1,5 @@
+1.7
+ * Temporary files are now created in the system temp directory
 1.6
  * Added filter to list command
 1.5

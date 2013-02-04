@@ -4953,6 +4953,8 @@ PPH_STRING EnpFormatTempDatabaseFileName(
 {
     WCHAR tempNameBuffer[18];
     PH_STRINGREF tempNameSr;
+    WCHAR tempPathBuffer[MAX_PATH + 1];
+    PH_STRINGREF tempPathSr;
 
     tempNameBuffer[0] = 'd';
     tempNameBuffer[1] = 'b';
@@ -4968,7 +4970,16 @@ PPH_STRING EnpFormatTempDatabaseFileName(
     tempNameSr.Buffer = tempNameBuffer;
     tempNameSr.Length = 18 * sizeof(WCHAR);
 
-    return EnpAppendComponentToPath(&Config->DestinationDirectory->sr, &tempNameSr);
+    if (GetTempPath(MAX_PATH + 1, tempPathBuffer) != 0)
+    {
+        PhInitializeStringRef(&tempPathSr, tempPathBuffer);
+
+        return PhConcatStringRef2(&tempPathSr, &tempNameSr);
+    }
+    else
+    {
+        return EnpAppendComponentToPath(&Config->DestinationDirectory->sr, &tempNameSr);
+    }
 }
 
 NTSTATUS EnpCreateDatabase(
