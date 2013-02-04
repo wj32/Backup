@@ -154,6 +154,7 @@
     <ClInclude Include="..\Backup\packagep.h" />
     <ClInclude Include="..\Backup\vssobj.h" />
     <ClInclude Include="explorer.h" />
+    <ClInclude Include="explorerp.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
