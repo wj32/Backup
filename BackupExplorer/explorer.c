@@ -132,6 +132,9 @@ INT_PTR CALLBACK BeExplorerDlgProc(
             case IDCANCEL:
                 EndDialog(hwndDlg, IDCANCEL);
                 break;
+            case IDC_CLEARLOG:
+                ListBox_ResetContent(BeLogHandle);
+                break;
             case ID_FILE_PREVIEW:
                 {
                     PBE_FILE_NODE selectedNode = BeGetSelectedFileNode();
