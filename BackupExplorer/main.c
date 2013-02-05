@@ -1,5 +1,7 @@
 #include "explorer.h"
 
+HINSTANCE BeInstanceHandle;
+
 INT WINAPI WinMain(
     __in HINSTANCE hInstance,
     __in_opt HINSTANCE hPrevInstance,
@@ -7,6 +9,8 @@ INT WINAPI WinMain(
     __in INT nCmdShow
     )
 {
+    BeInstanceHandle = hInstance;
+
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     PhInitializePhLibEx(PHLIB_INIT_MODULE_WORK_QUEUE | PHLIB_INIT_MODULE_IO_SUPPORT, 512 * 1024, 16 * 1024);
     PhGuiSupportInitialization();

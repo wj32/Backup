@@ -3,7 +3,10 @@
 
 #define BETNC_FILE 0
 #define BETNC_SIZE 1
-#define BETNC_BACKUPTIME 2
+#define BETNC_TIMESTAMP 2
+#define BETNC_REVISION 3
+#define BETNC_BACKUPTIME 4
+#define BETNC_MAXIMUM 5
 
 typedef struct _BE_FILE_NODE
 {
@@ -11,6 +14,7 @@ typedef struct _BE_FILE_NODE
 
     struct _BE_FILE_NODE *Parent;
     PPH_LIST Children;
+    BOOLEAN IsRoot;
     BOOLEAN IsDirectory;
     BOOLEAN HasChildren;
     BOOLEAN Opened;
@@ -20,6 +24,11 @@ typedef struct _BE_FILE_NODE
     ULONGLONG RevisionId;
     LARGE_INTEGER EndOfFile;
     LARGE_INTEGER LastBackupTime;
+
+    PPH_STRING RevisionIdString;
+    PPH_STRING TimeStampString;
+    PPH_STRING EndOfFileString;
+    PPH_STRING LastBackupTimeString;
 } BE_FILE_NODE, *PBE_FILE_NODE;
 
 // Revision list
@@ -81,6 +90,12 @@ HICON BeGetFileIconForExtension(
     __in PPH_STRINGREF Extension
     );
 
+// Restore
+
+NTSTATUS BePreviewSingleFileThreadStart(
+    __in PVOID Parameter
+    );
+
 // Support functions
 
 PPH_STRING BePromptForConfigFileName(
@@ -90,6 +105,23 @@ PPH_STRING BePromptForConfigFileName(
 VOID BeMessageHandler(
     __in ULONG Level,
     __in __assumeRefs(1) PPH_STRING Message
+    );
+
+ULONG BeGetProgressFromMessage(
+    __in PPH_STRINGREF Message
+    );
+
+BOOLEAN BeExecuteWithProgress(
+    __in PUSER_THREAD_START_ROUTINE ThreadStart,
+    __in_opt PVOID Context
+    );
+
+VOID BeCompleteWithProgress(
+    VOID
+    );
+
+PPH_STRING BeGetTempDirectoryName(
+    VOID
     );
 
 #endif

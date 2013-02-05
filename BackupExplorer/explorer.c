@@ -10,6 +10,8 @@
 
 HWND BeWindowHandle;
 HWND BeRevisionListHandle;
+PH_LAYOUT_MANAGER BeLayoutManager;
+HWND BeProgressWindowHandle;
 
 PPH_STRING BeDatabaseFileName;
 ULONGLONG BeCurrentRevision;
@@ -48,6 +50,12 @@ INT_PTR CALLBACK BeExplorerDlgProc(
             BeFileListHandle = GetDlgItem(hwndDlg, IDC_FILES);
             BeLogHandle = GetDlgItem(hwndDlg, IDC_LOG);
 
+            PhInitializeLayoutManager(&BeLayoutManager, hwndDlg);
+            PhAddLayoutItem(&BeLayoutManager, BeRevisionListHandle, NULL, PH_ANCHOR_LEFT | PH_ANCHOR_TOP | PH_ANCHOR_BOTTOM);
+            PhAddLayoutItem(&BeLayoutManager, GetDlgItem(hwndDlg, IDC_CLEARLOG), NULL, PH_ANCHOR_LEFT | PH_ANCHOR_BOTTOM);
+            PhAddLayoutItem(&BeLayoutManager, GetDlgItem(hwndDlg, IDC_FILES), NULL, PH_ANCHOR_ALL);
+            PhAddLayoutItem(&BeLayoutManager, GetDlgItem(hwndDlg, IDC_LOG), NULL, PH_ANCHOR_LEFT | PH_ANCHOR_BOTTOM | PH_ANCHOR_RIGHT);
+
             PhCenterWindow(BeWindowHandle, NULL);
 
             // Revision list
@@ -65,13 +73,16 @@ INT_PTR CALLBACK BeExplorerDlgProc(
             PhSetControlTheme(BeFileListHandle, L"explorer");
             PhAddTreeNewColumn(BeFileListHandle, BETNC_FILE, TRUE, L"File", 200, PH_ALIGN_LEFT, -2, 0);
             PhAddTreeNewColumn(BeFileListHandle, BETNC_SIZE, TRUE, L"Size", 80, PH_ALIGN_RIGHT, 0, DT_RIGHT);
-            PhAddTreeNewColumn(BeFileListHandle, BETNC_BACKUPTIME, TRUE, L"Last Backup Time", 140, PH_ALIGN_LEFT, 1, 0);
+            PhAddTreeNewColumn(BeFileListHandle, BETNC_TIMESTAMP, TRUE, L"Time Stamp", 140, PH_ALIGN_LEFT, 1, 0);
+            PhAddTreeNewColumn(BeFileListHandle, BETNC_REVISION, TRUE, L"Last Revision", 80, PH_ALIGN_RIGHT, 2, DT_RIGHT);
+            PhAddTreeNewColumn(BeFileListHandle, BETNC_BACKUPTIME, TRUE, L"Last Backup Time", 140, PH_ALIGN_LEFT, 3, 0);
             TreeNew_SetSort(BeFileListHandle, BETNC_FILE, AscendingSortOrder);
             TreeNew_SetCallback(BeFileListHandle, BeFileListTreeNewCallback, NULL);
             TreeNew_SetExtendedFlags(BeFileListHandle, TN_FLAG_ITEM_DRAG_SELECT, TN_FLAG_ITEM_DRAG_SELECT);
 
             BeRootNode = BeCreateFileNode(NULL, NULL);
             BeRootNode->Node.Expanded = TRUE;
+            BeRootNode->IsRoot = TRUE;
             BeRootNode->IsDirectory = TRUE;
             BeRootNode->HasChildren = TRUE;
             BeRootNode->Name = PhCreateString(L"\\");
@@ -113,12 +124,41 @@ INT_PTR CALLBACK BeExplorerDlgProc(
             BeSetCurrentRevision(0);
         }
         break;
+    case WM_SIZE:
+        {
+            PhLayoutManagerLayout(&BeLayoutManager);
+        }
+        break;
     case WM_COMMAND:
         {
             switch (LOWORD(wParam))
             {
             case IDCANCEL:
                 EndDialog(hwndDlg, IDCANCEL);
+                break;
+            }
+        }
+        break;
+    case WM_NOTIFY:
+        {
+            LPNMHDR header = (LPNMHDR)lParam;
+
+            switch (header->code)
+            {
+            case LVN_ITEMCHANGED:
+                {
+                    if (header->hwndFrom == BeRevisionListHandle)
+                    {
+                        //LPNMITEMACTIVATE itemActivate = (LPNMITEMACTIVATE)header;
+                        PULONGLONG revisionId = NULL;
+
+                        if (ListView_GetSelectedCount(BeRevisionListHandle) == 1)
+                            revisionId = PhGetSelectedListViewItemParam(BeRevisionListHandle);
+
+                        if (revisionId)
+                            BeSetCurrentRevision(*revisionId);
+                    }
+                }
                 break;
             }
         }
@@ -172,7 +212,7 @@ BOOLEAN BeLoadRevisionList(
             temp = PhFormatUInt64(entries[i].RevisionId, TRUE);
         }
 
-        itemIndex = PhAddListViewItem(BeRevisionListHandle, MAXINT, temp->Buffer, NULL);
+        itemIndex = PhAddListViewItem(BeRevisionListHandle, MAXINT, temp->Buffer, PhAllocateCopy(&entries[i].RevisionId, sizeof(ULONGLONG)));
         PhDereferenceObject(temp);
 
         PhLargeIntegerToLocalSystemTime(&systemTime, &entries[i].TimeStamp);
@@ -186,8 +226,6 @@ BOOLEAN BeLoadRevisionList(
     ListView_SetItemState(BeRevisionListHandle, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
     ExtendedListView_SortItems(BeRevisionListHandle);
 
-    BeSetCurrentRevision(lastRevisionId);
-
     return TRUE;
 }
 
@@ -200,6 +238,9 @@ BOOLEAN BeSetCurrentRevision(
     if (RevisionId == 0)
     {
         ULONG i;
+
+        if (BeCurrentRevision == 0)
+            return TRUE;
 
         BeCurrentRevision = 0;
 
@@ -276,6 +317,58 @@ BOOLEAN BeSetCurrentRevision(
     return TRUE;
 }
 
+#define SORT_FUNCTION(Column) BeFileListTreeNewCompare##Column
+
+#define BEGIN_SORT_FUNCTION(Column) static int __cdecl BeFileListTreeNewCompare##Column( \
+    __in void *_context, \
+    __in const void *_elem1, \
+    __in const void *_elem2 \
+    ) \
+{ \
+    PBE_FILE_NODE node1 = *(PBE_FILE_NODE *)_elem1; \
+    PBE_FILE_NODE node2 = *(PBE_FILE_NODE *)_elem2; \
+    int sortResult = 0; \
+    \
+    if (node1->IsDirectory != node2->IsDirectory) \
+        return node2->IsDirectory - node1->IsDirectory;
+
+#define END_SORT_FUNCTION \
+    if (sortResult == 0) \
+        sortResult = PhCompareString(node1->Name, node2->Name, TRUE); \
+    \
+    return PhModifySort(sortResult, BeFileListSortOrder); \
+}
+
+BEGIN_SORT_FUNCTION(File)
+{
+    sortResult = PhCompareString(node1->Name, node2->Name, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(Size)
+{
+    sortResult = uint64cmp(node1->EndOfFile.QuadPart, node2->EndOfFile.QuadPart);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(TimeStamp)
+{
+    sortResult = uint64cmp(node1->TimeStamp.QuadPart, node2->TimeStamp.QuadPart);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(Revision)
+{
+    sortResult = uint64cmp(node1->RevisionId, node2->RevisionId);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(BackupTime)
+{
+    sortResult = uint64cmp(node1->LastBackupTime.QuadPart, node2->LastBackupTime.QuadPart);
+}
+END_SORT_FUNCTION
+
 BOOLEAN BeFileListTreeNewCallback(
     __in HWND hwnd,
     __in PH_TREENEW_MESSAGE Message,
@@ -301,6 +394,26 @@ BOOLEAN BeFileListTreeNewCallback(
             }
             else
             {
+                static PVOID sortFunctions[] =
+                {
+                    SORT_FUNCTION(File),
+                    SORT_FUNCTION(Size),
+                    SORT_FUNCTION(TimeStamp),
+                    SORT_FUNCTION(Revision),
+                    SORT_FUNCTION(BackupTime)
+                };
+                int (__cdecl *sortFunction)(void *, const void *, const void *);
+
+                if (BeFileListSortColumn < BETNC_MAXIMUM)
+                    sortFunction = sortFunctions[BeFileListSortColumn];
+                else
+                    sortFunction = NULL;
+
+                if (sortFunction)
+                {
+                    qsort_s(node->Children->Items, node->Children->Count, sizeof(PVOID), sortFunction, NULL);
+                }
+
                 getChildren->Children = (PPH_TREENEW_NODE *)node->Children->Items;
                 getChildren->NumberOfChildren = node->Children->Count;
             }
@@ -324,6 +437,18 @@ BOOLEAN BeFileListTreeNewCallback(
             {
             case BETNC_FILE:
                 getCellText->Text = node->Name->sr;
+                break;
+            case BETNC_SIZE:
+                getCellText->Text = PhGetStringRef(node->EndOfFileString);
+                break;
+            case BETNC_TIMESTAMP:
+                getCellText->Text = PhGetStringRef(node->TimeStampString);
+                break;
+            case BETNC_REVISION:
+                getCellText->Text = PhGetStringRef(node->RevisionIdString);
+                break;
+            case BETNC_BACKUPTIME:
+                getCellText->Text = PhGetStringRef(node->LastBackupTimeString);
                 break;
             default:
                 return FALSE;
@@ -372,6 +497,19 @@ BOOLEAN BeFileListTreeNewCallback(
             }
         }
         return TRUE;
+    case TreeNewLeftDoubleClick:
+        {
+            PPH_TREENEW_MOUSE_EVENT mouseEvent = Parameter1;
+
+            if (mouseEvent->Node)
+            {
+                node = (PBE_FILE_NODE)mouseEvent->Node;
+
+                if (!node->IsDirectory)
+                    BeExecuteWithProgress(BePreviewSingleFileThreadStart, BeComputeFullPath(node));
+            }
+        }
+        break;
     }
 
     return FALSE;
@@ -395,6 +533,8 @@ PBE_FILE_NODE BeCreateFileNode(
 
     if (Information)
     {
+        SYSTEMTIME systemTime;
+
         node->Name = Information->FileName;
         PhReferenceObject(node->Name);
 
@@ -402,6 +542,21 @@ PBE_FILE_NODE BeCreateFileNode(
         node->RevisionId = Information->RevisionId;
         node->EndOfFile = Information->EndOfFile;
         node->LastBackupTime = Information->LastBackupTime;
+
+        if (!(Information->Attributes & DB_FILE_ATTRIBUTE_DIRECTORY))
+        {
+            node->EndOfFileString = PhFormatSize(node->EndOfFile.QuadPart, -1);
+            node->RevisionIdString = PhFormatUInt64(node->RevisionId, TRUE);
+
+            PhLargeIntegerToLocalSystemTime(&systemTime, &node->TimeStamp);
+            node->TimeStampString = PhFormatDateTime(&systemTime);
+        }
+
+        if (node->LastBackupTime.QuadPart != 0)
+        {
+            PhLargeIntegerToLocalSystemTime(&systemTime, &node->LastBackupTime);
+            node->LastBackupTimeString = PhFormatDateTime(&systemTime);
+        }
     }
 
     if (ParentNode)
@@ -424,6 +579,11 @@ VOID BeDestroyFileNode(
     }
 
     PhDereferenceObject(Node->Children);
+
+    PhSwapReference(&Node->EndOfFileString, NULL);
+    PhSwapReference(&Node->LastBackupTimeString, NULL);
+    PhSwapReference(&Node->RevisionIdString, NULL);
+
     PhFree(Node);
 }
 
@@ -498,7 +658,7 @@ PPH_STRING BeComputeFullPath(
     totalLength = 0;
     currentNode = Node;
 
-    while (currentNode)
+    while (currentNode && !currentNode->IsRoot)
     {
         totalLength += currentNode->Name->Length;
 
@@ -512,7 +672,7 @@ PPH_STRING BeComputeFullPath(
     currentPointer = (PCHAR)result->Buffer + totalLength;
     currentNode = Node;
 
-    while (currentNode)
+    while (currentNode && !currentNode->IsRoot)
     {
         currentPointer -= currentNode->Name->Length;
         memcpy(currentPointer, currentNode->Name->Buffer, currentNode->Name->Length);
@@ -606,6 +766,52 @@ HICON BeGetFileIconForExtension(
     return icon;
 }
 
+NTSTATUS BePreviewSingleFileThreadStart(
+    __in PVOID Parameter
+    )
+{
+    static PH_STRINGREF backslash = PH_STRINGREF_INIT(L"\\");
+
+    NTSTATUS status;
+    PPH_STRING fullPath = Parameter;
+    PPH_STRING tempDirectoryName;
+    PPH_STRING baseName;
+    PPH_STRING fullName;
+
+    tempDirectoryName = BeGetTempDirectoryName();
+
+    if (!tempDirectoryName)
+        goto Done;
+
+    baseName = PhGetBaseName(fullPath);
+    CreateDirectory(tempDirectoryName->Buffer, NULL);
+    status = EnRestoreFromRevision(BeConfig, EN_RESTORE_OVERWRITE_FILES, &fullPath->sr, BeCurrentRevision, &tempDirectoryName->sr, &baseName->sr, BeMessageHandler);
+    fullName = PhConcatStringRef3(&tempDirectoryName->sr, &backslash, &baseName->sr);
+
+    if (NT_SUCCESS(status))
+    {
+        BeCompleteWithProgress();
+        PhShellExecuteEx(BeWindowHandle, fullName->Buffer, NULL, SW_SHOW, 0, ULONG_MAX, NULL);
+    }
+    else
+    {
+        PhShowStatus(BeProgressWindowHandle, L"Unable to extract the file", status, 0);
+    }
+
+    PhDeleteFileWin32(fullName->Buffer);
+    PhDeleteFileWin32(tempDirectoryName->Buffer);
+
+    PhDereferenceObject(fullName);
+    PhDereferenceObject(baseName);
+    PhDereferenceObject(tempDirectoryName);
+
+Done:
+    PhDereferenceObject(fullPath);
+    BeCompleteWithProgress();
+
+    return STATUS_SUCCESS;
+}
+
 PPH_STRING BePromptForConfigFileName(
     VOID
     )
@@ -640,7 +846,14 @@ VOID BeMessageHandler(
     PH_STRING_BUILDER sb;
 
     if (Level == EN_MESSAGE_PROGRESS)
+    {
+        if (BeProgressWindowHandle)
+        {
+            SendMessage(BeProgressWindowHandle, BE_PROGRESS_MESSAGE_UPDATE, BeGetProgressFromMessage(&Message->sr), 100);
+        }
+
         return;
+    }
 
     PhInitializeStringBuilder(&sb, Message->Length);
 
@@ -656,4 +869,99 @@ VOID BeMessageHandler(
     ListBox_SetTopIndex(BeLogHandle, ListBox_GetCount(BeLogHandle) - 1);
 
     PhDeleteStringBuilder(&sb);
+}
+
+ULONG BeGetProgressFromMessage(
+    __in PPH_STRINGREF Message
+    )
+{
+    static PH_STRINGREF colonSeparator = PH_STRINGREF_INIT(L": ");
+
+    PH_STRINGREF firstPart;
+    PH_STRINGREF secondPart;
+    ULONG64 integer;
+
+    PhSplitStringRefAtString(Message, &colonSeparator, FALSE, &firstPart, &secondPart);
+    PhSplitStringRefAtChar(&secondPart, '.', &firstPart, &secondPart);
+
+    while (firstPart.Length != 0 && *firstPart.Buffer == ' ')
+    {
+        firstPart.Buffer++;
+        firstPart.Length -= sizeof(WCHAR);
+    }
+
+    PhStringToInteger64(&firstPart, 10, &integer);
+
+    return (ULONG)integer;
+}
+
+BOOLEAN BeExecuteWithProgress(
+    __in PUSER_THREAD_START_ROUTINE ThreadStart,
+    __in_opt PVOID Context
+    )
+{
+    HANDLE threadHandle;
+
+    if (BeProgressWindowHandle)
+        return FALSE;
+
+    BeProgressWindowHandle = BeCreateProgressDialog(BeWindowHandle);
+    threadHandle = PhCreateThread(0, ThreadStart, Context);
+
+    if (threadHandle)
+    {
+        NtClose(threadHandle);
+    }
+    else
+    {
+        SendMessage(BeProgressWindowHandle, BE_PROGRESS_MESSAGE_CLOSE, 0, 0);
+        BeProgressWindowHandle = NULL;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+VOID BeCompleteWithProgress(
+    VOID
+    )
+{
+    if (BeProgressWindowHandle)
+    {
+        SendMessage(BeProgressWindowHandle, BE_PROGRESS_MESSAGE_CLOSE, 0, 0);
+        BeProgressWindowHandle = NULL;
+    }
+}
+
+PPH_STRING BeGetTempDirectoryName(
+    VOID
+    )
+{
+    WCHAR tempNameBuffer[18];
+    PH_STRINGREF tempNameSr;
+    WCHAR tempPathBuffer[MAX_PATH + 1];
+    PH_STRINGREF tempPathSr;
+
+    tempNameBuffer[0] = 'b';
+    tempNameBuffer[1] = 'k';
+    tempNameBuffer[2] = 'e';
+    tempNameBuffer[3] = 'x';
+    tempNameBuffer[4] = 'p';
+    tempNameBuffer[5] = '.';
+    PhGenerateRandomAlphaString(tempNameBuffer + 6, 9);
+    tempNameBuffer[14] = '.';
+    tempNameBuffer[15] = 't';
+    tempNameBuffer[16] = 'm';
+    tempNameBuffer[17] = 'p';
+    tempNameSr.Buffer = tempNameBuffer;
+    tempNameSr.Length = 18 * sizeof(WCHAR);
+
+    if (GetTempPath(MAX_PATH + 1, tempPathBuffer) != 0)
+    {
+        PhInitializeStringRef(&tempPathSr, tempPathBuffer);
+
+        return PhConcatStringRef2(&tempPathSr, &tempNameSr);
+    }
+
+    return NULL;
 }
