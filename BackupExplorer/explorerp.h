@@ -64,8 +64,16 @@ BOOLEAN BeExpandFileNode(
     __in PBE_FILE_NODE Node
     );
 
+PBE_FILE_NODE BeGetSelectedFileNode(
+    VOID
+    );
+
 PPH_STRING BeComputeFullPath(
     __in PBE_FILE_NODE Node
+    );
+
+VOID BeSelectFullPath(
+    __in PPH_STRINGREF FullPath
     );
 
 // File icons
@@ -96,6 +104,21 @@ NTSTATUS BePreviewSingleFileThreadStart(
     __in PVOID Parameter
     );
 
+typedef struct _BE_RESTORE_PARAMETERS
+{
+    PPH_STRING FromFileName;
+    PPH_STRING ToDirectoryName;
+    PPH_STRING ToFileName;
+} BE_RESTORE_PARAMETERS, *PBE_RESTORE_PARAMETERS;
+
+VOID BeDestroyRestoreParameters(
+    __in PBE_RESTORE_PARAMETERS Parameters
+    );
+
+NTSTATUS BeRestoreFileOrDirectoryThreadStart(
+    __in PVOID Parameter
+    );
+
 // Support functions
 
 PPH_STRING BePromptForConfigFileName(
@@ -122,6 +145,11 @@ VOID BeCompleteWithProgress(
 
 PPH_STRING BeGetTempDirectoryName(
     VOID
+    );
+
+NTSTATUS BeIsDirectoryEmpty(
+    __in PWSTR DirectoryName,
+    __out PBOOLEAN Empty
     );
 
 #endif

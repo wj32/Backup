@@ -1,4 +1,5 @@
 #include "explorer.h"
+#include <emenu.h>
 #include <windowsx.h>
 #include "../Backup/config.h"
 #include "../Backup/db.h"
@@ -23,6 +24,7 @@ HWND BeFileListHandle;
 ULONG BeFileListSortColumn;
 PH_SORT_ORDER BeFileListSortOrder;
 PBE_FILE_NODE BeRootNode;
+PPH_STRING BeSelectedFullPath;
 
 HWND BeLogHandle;
 PPH_STRING BeConfigFileName;
@@ -136,6 +138,120 @@ INT_PTR CALLBACK BeExplorerDlgProc(
             case IDCANCEL:
                 EndDialog(hwndDlg, IDCANCEL);
                 break;
+            case ID_FILE_PREVIEW:
+                {
+                    PBE_FILE_NODE selectedNode = BeGetSelectedFileNode();
+
+                    if (selectedNode)
+                    {
+                        if (!selectedNode->IsDirectory)
+                            BeExecuteWithProgress(BePreviewSingleFileThreadStart, BeComputeFullPath(selectedNode));
+                    }
+                }
+                break;
+            case ID_FILE_RESTORE:
+                {
+                    PBE_FILE_NODE selectedNode = BeGetSelectedFileNode();
+
+                    if (selectedNode)
+                    {
+                        PPH_STRING fullPath = BeComputeFullPath(selectedNode);
+
+                        if (selectedNode->IsDirectory)
+                        {
+                            PVOID fileDialog = PhCreateOpenFileDialog();
+
+                            PhSetFileDialogOptions(fileDialog, PH_FILEDIALOG_PATHMUSTEXIST | PH_FILEDIALOG_PICKFOLDERS);
+
+                            if (PhShowFileDialog(BeWindowHandle, fileDialog))
+                            {
+                                PPH_STRING fileName = PhGetFileDialogFileName(fileDialog);
+
+                                if (fileName)
+                                {
+                                    NTSTATUS status;
+                                    BOOLEAN empty;
+
+                                    status = BeIsDirectoryEmpty(fileName->Buffer, &empty);
+
+                                    if (NT_SUCCESS(status))
+                                    {
+                                        if (empty || PhShowMessage(
+                                            BeWindowHandle,
+                                            MB_ICONWARNING | MB_YESNO,
+                                            L"The destination directory is not empty, and its contents may be overwritten. Do you want to continue?"
+                                            ) == IDYES)
+                                        {
+                                            PBE_RESTORE_PARAMETERS parameters;
+
+                                            parameters = PhAllocate(sizeof(BE_RESTORE_PARAMETERS));
+                                            parameters->FromFileName = fullPath;
+                                            PhReferenceObject(fullPath);
+                                            parameters->ToDirectoryName = fileName;
+                                            PhReferenceObject(fileName);
+                                            parameters->ToFileName = NULL;
+
+                                            BeExecuteWithProgress(BeRestoreFileOrDirectoryThreadStart, parameters);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        PhShowStatus(BeWindowHandle, L"Unable to open the destination directory", status, 0);
+                                    }
+
+                                    PhDereferenceObject(fileName);
+                                }
+                            }
+
+                            PhFreeFileDialog(fileDialog);
+                        }
+                        else
+                        {
+                            static PH_FILETYPE_FILTER filters[] =
+                            {
+                                { L"All files (*.*)", L"*.*" }
+                            };
+
+                            PPH_STRING baseName = PhGetBaseName(fullPath);
+                            PVOID fileDialog = PhCreateSaveFileDialog();
+
+                            PhSetFileDialogFilter(fileDialog, filters, sizeof(filters) / sizeof(PH_FILETYPE_FILTER));
+                            PhSetFileDialogFileName(fileDialog, baseName->Buffer);
+
+                            if (PhShowFileDialog(BeWindowHandle, fileDialog))
+                            {
+                                PPH_STRING fileName = PhGetFileDialogFileName(fileDialog);
+
+                                if (fileName)
+                                {
+                                    PH_STRINGREF directoryPart;
+                                    PH_STRINGREF filePart;
+
+                                    if (PhSplitStringRefAtLastChar(&fileName->sr, '\\', &directoryPart, &filePart))
+                                    {
+                                        PBE_RESTORE_PARAMETERS parameters;
+
+                                        parameters = PhAllocate(sizeof(BE_RESTORE_PARAMETERS));
+                                        parameters->FromFileName = fullPath;
+                                        PhReferenceObject(fullPath);
+                                        parameters->ToDirectoryName = PhCreateStringEx(directoryPart.Buffer, directoryPart.Length);
+                                        parameters->ToFileName = PhCreateStringEx(filePart.Buffer, filePart.Length);
+
+                                        BeExecuteWithProgress(BeRestoreFileOrDirectoryThreadStart, parameters);
+                                    }
+
+                                    PhDereferenceObject(fileName);
+                                }
+                            }
+
+                            PhFreeFileDialog(fileDialog);
+                            PhDereferenceObject(baseName);
+                        }
+
+                        PhDereferenceObject(fullPath);
+                    }
+                }
+                break;
             }
         }
         break;
@@ -235,12 +351,12 @@ BOOLEAN BeSetCurrentRevision(
 {
     NTSTATUS status;
 
+    if (RevisionId == BeCurrentRevision)
+        return TRUE;
+
     if (RevisionId == 0)
     {
         ULONG i;
-
-        if (BeCurrentRevision == 0)
-            return TRUE;
 
         BeCurrentRevision = 0;
 
@@ -311,6 +427,9 @@ BOOLEAN BeSetCurrentRevision(
 
     BeExpandFileNode(BeRootNode);
     TreeNew_NodesStructured(BeFileListHandle);
+
+    if (BeSelectedFullPath)
+        BeSelectFullPath(&BeSelectedFullPath->sr);
 
     SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(IDC_ARROW)));
 
@@ -486,6 +605,16 @@ BOOLEAN BeFileListTreeNewCallback(
             TreeNew_NodesStructured(hwnd);
         }
         return TRUE;
+    case TreeNewSelectionChanged:
+        {
+            PBE_FILE_NODE selectedNode = BeGetSelectedFileNode();
+
+            if (selectedNode)
+                BeSelectedFullPath = BeComputeFullPath(selectedNode);
+            else
+                BeSelectedFullPath = NULL;
+        }
+        break;
     case TreeNewNodeExpanding:
         {
             node = Parameter1;
@@ -499,14 +628,32 @@ BOOLEAN BeFileListTreeNewCallback(
         return TRUE;
     case TreeNewLeftDoubleClick:
         {
-            PPH_TREENEW_MOUSE_EVENT mouseEvent = Parameter1;
+            SendMessage(BeWindowHandle, WM_COMMAND, ID_FILE_PREVIEW, 0);
+        }
+        break;
+    case TreeNewContextMenu:
+        {
+            PPH_TREENEW_CONTEXT_MENU contextMenu = Parameter1;
 
-            if (mouseEvent->Node)
+            if (contextMenu->Node)
             {
-                node = (PBE_FILE_NODE)mouseEvent->Node;
+                PPH_EMENU menu;
+                PPH_EMENU_ITEM selectedItem;
 
-                if (!node->IsDirectory)
-                    BeExecuteWithProgress(BePreviewSingleFileThreadStart, BeComputeFullPath(node));
+                node = (PBE_FILE_NODE)contextMenu->Node;
+                menu = PhCreateEMenu();
+                PhLoadResourceEMenuItem(menu, BeInstanceHandle, MAKEINTRESOURCE(IDR_FILE), 0);
+                PhSetFlagsEMenuItem(menu, ID_FILE_PREVIEW, PH_EMENU_DEFAULT, PH_EMENU_DEFAULT);
+
+                if (node->IsDirectory)
+                    PhSetFlagsEMenuItem(menu, ID_FILE_PREVIEW, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
+
+                selectedItem = PhShowEMenu(menu, hwnd, PH_EMENU_SHOW_LEFTRIGHT, PH_ALIGN_TOP | PH_ALIGN_LEFT, contextMenu->Location.x, contextMenu->Location.y);
+
+                if (selectedItem)
+                    SendMessage(BeWindowHandle, WM_COMMAND, selectedItem->Id, 0);
+
+                PhDestroyEMenu(menu);
             }
         }
         break;
@@ -646,6 +793,26 @@ BOOLEAN BeExpandFileNode(
     return NT_SUCCESS(status);
 }
 
+PBE_FILE_NODE BeGetSelectedFileNode(
+    VOID
+    )
+{
+    ULONG count;
+    ULONG i;
+
+    count = TreeNew_GetFlatNodeCount(BeFileListHandle);
+
+    for (i = 0; i < count; i++)
+    {
+        PBE_FILE_NODE node = (PBE_FILE_NODE)TreeNew_GetFlatNode(BeFileListHandle, i);
+
+        if (node->Node.Selected)
+            return node;
+    }
+
+    return NULL;
+}
+
 PPH_STRING BeComputeFullPath(
     __in PBE_FILE_NODE Node
     )
@@ -687,6 +854,60 @@ PPH_STRING BeComputeFullPath(
     }
 
     return result;
+}
+
+VOID BeSelectFullPath(
+    __in PPH_STRINGREF FullPath
+    )
+{
+    PBE_FILE_NODE currentNode;
+    PH_STRINGREF namePart;
+    PH_STRINGREF remainingPart;
+
+    currentNode = BeRootNode;
+    remainingPart = *FullPath;
+
+    // Remove trailing backslashes.
+    while (remainingPart.Length != 0 && remainingPart.Buffer[remainingPart.Length / sizeof(WCHAR) - 1] == '\\')
+        remainingPart.Length--;
+
+    while (remainingPart.Length != 0 && currentNode)
+    {
+        PBE_FILE_NODE newNode;
+        ULONG i;
+
+        PhSplitStringRefAtChar(&remainingPart, '\\', &namePart, &remainingPart);
+
+        if (namePart.Length == 0)
+            continue;
+
+        currentNode->Node.Expanded = TRUE;
+        BeExpandFileNode(currentNode);
+
+        newNode = NULL;
+
+        for (i = 0; i < currentNode->Children->Count; i++)
+        {
+            PBE_FILE_NODE node = currentNode->Children->Items[i];
+
+            if (PhEqualStringRef(&node->Name->sr, &namePart, TRUE))
+            {
+                newNode = node;
+                break;
+            }
+        }
+
+        currentNode = newNode;
+    }
+
+    TreeNew_NodesStructured(BeFileListHandle);
+
+    if (remainingPart.Length == 0 && currentNode)
+    {
+        // We made it to the correct item, so select it.
+        TreeNew_SelectRange(BeFileListHandle, currentNode->Node.Index, currentNode->Node.Index);
+        TreeNew_EnsureVisible(BeFileListHandle, currentNode);
+    }
 }
 
 BOOLEAN BeFileIconEntryCompareFunction(
@@ -807,6 +1028,42 @@ NTSTATUS BePreviewSingleFileThreadStart(
 
 Done:
     PhDereferenceObject(fullPath);
+    BeCompleteWithProgress();
+
+    return STATUS_SUCCESS;
+}
+
+VOID BeDestroyRestoreParameters(
+    __in PBE_RESTORE_PARAMETERS Parameters
+    )
+{
+    PhSwapReference(&Parameters->FromFileName, NULL);
+    PhSwapReference(&Parameters->ToDirectoryName, NULL);
+    PhSwapReference(&Parameters->ToFileName, NULL);
+    PhFree(Parameters);
+}
+
+NTSTATUS BeRestoreFileOrDirectoryThreadStart(
+    __in PVOID Parameter
+    )
+{
+    NTSTATUS status;
+    PBE_RESTORE_PARAMETERS parameters = Parameter;
+
+    status = EnRestoreFromRevision(
+        BeConfig,
+        EN_RESTORE_OVERWRITE_FILES,
+        &parameters->FromFileName->sr,
+        BeCurrentRevision,
+        &parameters->ToDirectoryName->sr,
+        parameters->ToFileName ? &parameters->ToFileName->sr : NULL,
+        BeMessageHandler
+        );
+
+    if (!NT_SUCCESS(status))
+        PhShowStatus(BeProgressWindowHandle, L"Unable to restore the file or directory", status, 0);
+
+    BeDestroyRestoreParameters(parameters);
     BeCompleteWithProgress();
 
     return STATUS_SUCCESS;
@@ -964,4 +1221,42 @@ PPH_STRING BeGetTempDirectoryName(
     }
 
     return NULL;
+}
+
+BOOLEAN BeIsDirectoryEmptyEnumCallback(
+    __in PFILE_DIRECTORY_INFORMATION Information,
+    __in_opt PVOID Context
+    )
+{
+    if (Information->FileNameLength == sizeof(WCHAR) && Information->FileName[0] == '.')
+        return TRUE;
+    if (Information->FileNameLength == 2 * sizeof(WCHAR) && Information->FileName[0] == '.' && Information->FileName[1] == '.')
+        return TRUE;
+
+    *(PBOOLEAN)Context = FALSE;
+
+    return FALSE;
+}
+
+NTSTATUS BeIsDirectoryEmpty(
+    __in PWSTR DirectoryName,
+    __out PBOOLEAN Empty
+    )
+{
+    NTSTATUS status;
+    BOOLEAN empty = TRUE;
+    HANDLE directoryHandle;
+
+    status = PhCreateFileWin32(&directoryHandle, DirectoryName, FILE_GENERIC_READ, 0, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, FILE_OPEN, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT);
+
+    if (!NT_SUCCESS(status))
+        return status;
+
+    status = PhEnumDirectoryFile(directoryHandle, NULL, BeIsDirectoryEmptyEnumCallback, &empty);
+    NtClose(directoryHandle);
+
+    if (NT_SUCCESS(status))
+        *Empty = empty;
+
+    return status;
 }
