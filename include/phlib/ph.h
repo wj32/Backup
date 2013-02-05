@@ -184,6 +184,13 @@ NTSTATUS PhGetProcessPebString(
     PhGetProcessPebString(ProcessHandle, PhpoCommandLine, String)
 
 PHLIBAPI
+NTSTATUS PhGetProcessWindowTitle(
+    __in HANDLE ProcessHandle,
+    __out PULONG WindowFlags,
+    __out PPH_STRING *WindowTitle
+    );
+
+PHLIBAPI
 NTSTATUS PhGetProcessIsPosix(
     __in HANDLE ProcessHandle,
     __out PBOOLEAN IsPosix
@@ -2627,6 +2634,7 @@ BOOLEAN PhShowFileDialog(
 #define PH_FILEDIALOG_OVERWRITEPROMPT 0x20 // default save
 #define PH_FILEDIALOG_DEFAULTEXPANDED 0x40
 #define PH_FILEDIALOG_STRICTFILETYPES 0x80
+#define PH_FILEDIALOG_PICKFOLDERS 0x100
 
 PHLIBAPI
 ULONG PhGetFileDialogOptions(
