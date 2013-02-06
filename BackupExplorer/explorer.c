@@ -1032,7 +1032,7 @@ VOID BeRestoreFileOrDirectoryWithProgress(
                         PBE_RESTORE_PARAMETERS parameters;
 
                         parameters = PhAllocate(sizeof(BE_RESTORE_PARAMETERS));
-                        parameters->RevisionId = BeCurrentRevision;
+                        parameters->RevisionId = RevisionId;
                         parameters->FromFileName = fullPath;
                         PhReferenceObject(fullPath);
                         parameters->ToDirectoryName = fileName;
@@ -1080,7 +1080,7 @@ VOID BeRestoreFileOrDirectoryWithProgress(
                     PBE_RESTORE_PARAMETERS parameters;
 
                     parameters = PhAllocate(sizeof(BE_RESTORE_PARAMETERS));
-                    parameters->RevisionId = BeCurrentRevision;
+                    parameters->RevisionId = RevisionId;
                     parameters->FromFileName = fullPath;
                     PhReferenceObject(fullPath);
                     parameters->ToDirectoryName = PhCreateStringEx(directoryPart.Buffer, directoryPart.Length);
@@ -1158,18 +1158,25 @@ VOID BeMessageHandler(
     )
 {
     PH_STRING_BUILDER sb;
+    PPH_STRING now;
 
     if (Level == EN_MESSAGE_PROGRESS)
     {
-        if (BeProgressWindowHandle)
+        if (PhStartsWithString2(Message, L"Compressing: ", FALSE) || PhStartsWithString2(Message, L"Extracting: ", FALSE))
         {
-            SendMessage(BeProgressWindowHandle, BE_PROGRESS_MESSAGE_UPDATE, BeGetProgressFromMessage(&Message->sr), 100);
-        }
+            if (BeProgressWindowHandle)
+                SendMessage(BeProgressWindowHandle, BE_PROGRESS_MESSAGE_UPDATE, BeGetProgressFromMessage(&Message->sr), 100);
 
-        return;
+            return;
+        }
     }
 
     PhInitializeStringBuilder(&sb, Message->Length);
+
+    now = PhFormatDateTime(NULL);
+    PhAppendStringBuilder(&sb, now);
+    PhDereferenceObject(now);
+    PhAppendStringBuilder2(&sb, L": ");
 
     if (Level == EN_MESSAGE_WARNING)
         PhAppendStringBuilder2(&sb, L"** Warning ** ");
