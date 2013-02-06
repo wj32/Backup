@@ -62,8 +62,8 @@ INT_PTR CALLBACK BeFindDlgProc(
             TreeNew_SetCallback(BeFindListHandle, BeFindListTreeNewCallback, NULL);
             PhAddTreeNewColumn(BeFindListHandle, BEFTNC_FILE, TRUE, L"File", 350, PH_ALIGN_LEFT, -2, 0);
             PhAddTreeNewColumn(BeFindListHandle, BEFTNC_SIZE, TRUE, L"Size", 80, PH_ALIGN_RIGHT, 0, DT_RIGHT);
-            PhAddTreeNewColumn(BeFindListHandle, BEFTNC_LASTREVISION, TRUE, L"Last Present In", 55, PH_ALIGN_RIGHT, 1, DT_RIGHT);
-            PhAddTreeNewColumn(BeFindListHandle, BEFTNC_LASTTIMESTAMP, TRUE, L"Last Time Stamp", 140, PH_ALIGN_LEFT, 2, 0);
+            PhAddTreeNewColumn(BeFindListHandle, BEFTNC_BACKUPTIME, TRUE, L"Time Modified", 140, PH_ALIGN_LEFT, 1, 0);
+            PhAddTreeNewColumn(BeFindListHandle, BEFTNC_LASTREVISION, TRUE, L"Last Revision", 55, PH_ALIGN_RIGHT, 2, DT_RIGHT);
         }
         break;
     case WM_SHOWWINDOW:
@@ -194,8 +194,8 @@ VOID BeDestroyResultNode(
 {
     PhSwapReference(&Node->FileName, NULL);
     PhSwapReference(&Node->EndOfFileString, NULL);
+    PhSwapReference(&Node->LastBackupTimeString, NULL);
     PhSwapReference(&Node->LastRevisionIdString, NULL);
-    PhSwapReference(&Node->LastTimeStampString, NULL);
     PhFree(Node);
 }
 
@@ -263,11 +263,11 @@ BOOLEAN BeFindListTreeNewCallback(
             case BEFTNC_SIZE:
                 getCellText->Text = PhGetStringRef(node->EndOfFileString);
                 break;
+            case BEFTNC_BACKUPTIME:
+                getCellText->Text = PhGetStringRef(node->LastBackupTimeString);
+                break;
             case BEFTNC_LASTREVISION:
                 getCellText->Text = PhGetStringRef(node->LastRevisionIdString);
-                break;
-            case BEFTNC_LASTTIMESTAMP:
-                getCellText->Text = PhGetStringRef(node->LastTimeStampString);
                 break;
             default:
                 return FALSE;
@@ -365,8 +365,8 @@ static VOID EnumDb(
                 PhReferenceObject(fileName);
                 result->IsDirectory = !!(dirInfo[i].Attributes & DB_FILE_ATTRIBUTE_DIRECTORY);
                 result->EndOfFile = dirInfo[i].EndOfFile;
+                result->LastBackupTime = dirInfo[i].LastBackupTime;
                 result->LastRevisionId = RevisionId;
-                result->LastTimeStamp = dirInfo[i].TimeStamp;
 
                 //if (!result->IsDirectory)
                 //    result->LastRevisionId = dirInfo[i].RevisionId;
@@ -376,8 +376,8 @@ static VOID EnumDb(
 
                 result->LastRevisionIdString = PhFormatUInt64(result->LastRevisionId, TRUE);
 
-                PhLargeIntegerToLocalSystemTime(&systemTime, &result->LastTimeStamp);
-                result->LastTimeStampString = PhFormatDateTime(&systemTime);
+                PhLargeIntegerToLocalSystemTime(&systemTime, &result->LastBackupTime);
+                result->LastBackupTimeString = PhFormatDateTime(&systemTime);
 
                 PhAcquireQueuedLockExclusive(&SearchResultsLock);
 

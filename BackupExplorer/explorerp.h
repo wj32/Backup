@@ -3,9 +3,9 @@
 
 #define BETNC_FILE 0
 #define BETNC_SIZE 1
-#define BETNC_TIMESTAMP 2
+#define BETNC_BACKUPTIME 2
 #define BETNC_REVISION 3
-#define BETNC_BACKUPTIME 4
+#define BETNC_TIMESTAMP 4
 #define BETNC_MAXIMUM 5
 
 typedef struct _BE_FILE_NODE

@@ -70,9 +70,9 @@ INT_PTR CALLBACK BeExplorerDlgProc(
             PhSetControlTheme(BeFileListHandle, L"explorer");
             PhAddTreeNewColumn(BeFileListHandle, BETNC_FILE, TRUE, L"File", 200, PH_ALIGN_LEFT, -2, 0);
             PhAddTreeNewColumn(BeFileListHandle, BETNC_SIZE, TRUE, L"Size", 80, PH_ALIGN_RIGHT, 0, DT_RIGHT);
-            PhAddTreeNewColumn(BeFileListHandle, BETNC_TIMESTAMP, TRUE, L"Time Stamp", 140, PH_ALIGN_LEFT, 1, 0);
+            PhAddTreeNewColumn(BeFileListHandle, BETNC_BACKUPTIME, TRUE, L"Time Modified", 140, PH_ALIGN_LEFT, 1, 0);
             PhAddTreeNewColumn(BeFileListHandle, BETNC_REVISION, TRUE, L"Last Revision", 80, PH_ALIGN_RIGHT, 2, DT_RIGHT);
-            PhAddTreeNewColumn(BeFileListHandle, BETNC_BACKUPTIME, TRUE, L"Last Backup Time", 140, PH_ALIGN_LEFT, 3, 0);
+            PhAddTreeNewColumn(BeFileListHandle, BETNC_TIMESTAMP, TRUE, L"Last Revision Time", 140, PH_ALIGN_LEFT, 3, 0);
             TreeNew_SetSort(BeFileListHandle, BETNC_FILE, AscendingSortOrder);
             TreeNew_SetCallback(BeFileListHandle, BeFileListTreeNewCallback, NULL);
             TreeNew_SetExtendedFlags(BeFileListHandle, TN_FLAG_ITEM_DRAG_SELECT, TN_FLAG_ITEM_DRAG_SELECT);
@@ -414,9 +414,9 @@ BEGIN_SORT_FUNCTION(Size)
 }
 END_SORT_FUNCTION
 
-BEGIN_SORT_FUNCTION(TimeStamp)
+BEGIN_SORT_FUNCTION(BackupTime)
 {
-    sortResult = uint64cmp(node1->TimeStamp.QuadPart, node2->TimeStamp.QuadPart);
+    sortResult = uint64cmp(node1->LastBackupTime.QuadPart, node2->LastBackupTime.QuadPart);
 }
 END_SORT_FUNCTION
 
@@ -426,9 +426,9 @@ BEGIN_SORT_FUNCTION(Revision)
 }
 END_SORT_FUNCTION
 
-BEGIN_SORT_FUNCTION(BackupTime)
+BEGIN_SORT_FUNCTION(TimeStamp)
 {
-    sortResult = uint64cmp(node1->LastBackupTime.QuadPart, node2->LastBackupTime.QuadPart);
+    sortResult = uint64cmp(node1->TimeStamp.QuadPart, node2->TimeStamp.QuadPart);
 }
 END_SORT_FUNCTION
 
@@ -461,9 +461,9 @@ BOOLEAN BeFileListTreeNewCallback(
                 {
                     SORT_FUNCTION(File),
                     SORT_FUNCTION(Size),
-                    SORT_FUNCTION(TimeStamp),
+                    SORT_FUNCTION(BackupTime),
                     SORT_FUNCTION(Revision),
-                    SORT_FUNCTION(BackupTime)
+                    SORT_FUNCTION(TimeStamp)
                 };
                 int (__cdecl *sortFunction)(void *, const void *, const void *);
 
@@ -504,14 +504,14 @@ BOOLEAN BeFileListTreeNewCallback(
             case BETNC_SIZE:
                 getCellText->Text = PhGetStringRef(node->EndOfFileString);
                 break;
-            case BETNC_TIMESTAMP:
-                getCellText->Text = PhGetStringRef(node->TimeStampString);
+            case BETNC_BACKUPTIME:
+                getCellText->Text = PhGetStringRef(node->LastBackupTimeString);
                 break;
             case BETNC_REVISION:
                 getCellText->Text = PhGetStringRef(node->RevisionIdString);
                 break;
-            case BETNC_BACKUPTIME:
-                getCellText->Text = PhGetStringRef(node->LastBackupTimeString);
+            case BETNC_TIMESTAMP:
+                getCellText->Text = PhGetStringRef(node->TimeStampString);
                 break;
             default:
                 return FALSE;
@@ -636,7 +636,10 @@ PBE_FILE_NODE BeCreateFileNode(
         {
             node->EndOfFileString = PhFormatSize(node->EndOfFile.QuadPart, -1);
             node->RevisionIdString = PhFormatUInt64(node->RevisionId, TRUE);
+        }
 
+        if (node->TimeStamp.QuadPart != 0)
+        {
             PhLargeIntegerToLocalSystemTime(&systemTime, &node->TimeStamp);
             node->TimeStampString = PhFormatDateTime(&systemTime);
         }

@@ -93,12 +93,12 @@ VOID BeLoadFileRevisions(
             temp = PhFormatSize(entries[i].EndOfFile.QuadPart, -1);
             PhSetListViewSubItem(Context->ListHandle, itemIndex, 1, temp->Buffer);
             PhDereferenceObject(temp);
-        }
 
-        PhLargeIntegerToLocalSystemTime(&systemTime, &entries[i].TimeStamp);
-        temp = PhFormatDateTime(&systemTime);
-        PhSetListViewSubItem(Context->ListHandle, itemIndex, 2, temp->Buffer);
-        PhDereferenceObject(temp);
+            PhLargeIntegerToLocalSystemTime(&systemTime, &entries[i].LastBackupTime);
+            temp = PhFormatDateTime(&systemTime);
+            PhSetListViewSubItem(Context->ListHandle, itemIndex, 2, temp->Buffer);
+            PhDereferenceObject(temp);
+        }
     }
 
     if (Context->Information)
@@ -133,7 +133,7 @@ INT_PTR CALLBACK BeRevisionsDlgProc(
 
             PhAddListViewColumn(context->ListHandle, 0, 0, 0, LVCFMT_LEFT, 55, L"Revision");
             PhAddListViewColumn(context->ListHandle, 1, 1, 1, LVCFMT_RIGHT, 80, L"Size");
-            PhAddListViewColumn(context->ListHandle, 2, 2, 2, LVCFMT_LEFT, 140, L"Time Stamp");
+            PhAddListViewColumn(context->ListHandle, 2, 2, 2, LVCFMT_LEFT, 140, L"Time Modified");
 
             BeLoadFileRevisions(hwndDlg, context);
         }
