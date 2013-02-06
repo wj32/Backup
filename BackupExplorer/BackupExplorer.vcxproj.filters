@@ -86,6 +86,9 @@
     <ClCompile Include="progress.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="revisions.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BackupExplorer.rc">

@@ -1,12 +1,6 @@
 #include "explorer.h"
 #include <emenu.h>
 #include <windowsx.h>
-#include "../Backup/config.h"
-#include "../Backup/db.h"
-#include "../Backup/vssobj.h"
-#include "../Backup/package.h"
-#include "../Backup/engine.h"
-#include "../Backup/enginep.h"
 #include "explorerp.h"
 
 HWND BeWindowHandle;
@@ -145,7 +139,13 @@ INT_PTR CALLBACK BeExplorerDlgProc(
                     if (selectedNode)
                     {
                         if (!selectedNode->IsDirectory)
-                            BeExecuteWithProgress(BePreviewSingleFileThreadStart, BeComputeFullPath(selectedNode));
+                        {
+                            PPH_STRING fullPath;
+                            
+                            fullPath = BeComputeFullPath(selectedNode);
+                            BePreviewSingleFileWithProgress(BeWindowHandle, BeCurrentRevision, &fullPath->sr);
+                            PhDereferenceObject(fullPath);
+                        }
                     }
                 }
                 break;
@@ -155,99 +155,24 @@ INT_PTR CALLBACK BeExplorerDlgProc(
 
                     if (selectedNode)
                     {
-                        PPH_STRING fullPath = BeComputeFullPath(selectedNode);
+                        PPH_STRING fullPath;
 
-                        if (selectedNode->IsDirectory)
-                        {
-                            PVOID fileDialog = PhCreateOpenFileDialog();
+                        fullPath = BeComputeFullPath(selectedNode);
+                        BeRestoreFileOrDirectoryWithProgress(BeWindowHandle, BeCurrentRevision, &fullPath->sr, selectedNode->IsDirectory);
+                        PhDereferenceObject(fullPath);
+                    }
+                }
+                break;
+            case ID_FILE_REVISIONS:
+                {
+                    PBE_FILE_NODE selectedNode = BeGetSelectedFileNode();
 
-                            PhSetFileDialogOptions(fileDialog, PH_FILEDIALOG_PATHMUSTEXIST | PH_FILEDIALOG_PICKFOLDERS);
+                    if (selectedNode)
+                    {
+                        PPH_STRING fullPath;
 
-                            if (PhShowFileDialog(BeWindowHandle, fileDialog))
-                            {
-                                PPH_STRING fileName = PhGetFileDialogFileName(fileDialog);
-
-                                if (fileName)
-                                {
-                                    NTSTATUS status;
-                                    BOOLEAN empty;
-
-                                    status = BeIsDirectoryEmpty(fileName->Buffer, &empty);
-
-                                    if (NT_SUCCESS(status))
-                                    {
-                                        if (empty || PhShowMessage(
-                                            BeWindowHandle,
-                                            MB_ICONWARNING | MB_YESNO,
-                                            L"The destination directory is not empty, and its contents may be overwritten. Do you want to continue?"
-                                            ) == IDYES)
-                                        {
-                                            PBE_RESTORE_PARAMETERS parameters;
-
-                                            parameters = PhAllocate(sizeof(BE_RESTORE_PARAMETERS));
-                                            parameters->FromFileName = fullPath;
-                                            PhReferenceObject(fullPath);
-                                            parameters->ToDirectoryName = fileName;
-                                            PhReferenceObject(fileName);
-                                            parameters->ToFileName = NULL;
-
-                                            BeExecuteWithProgress(BeRestoreFileOrDirectoryThreadStart, parameters);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        PhShowStatus(BeWindowHandle, L"Unable to open the destination directory", status, 0);
-                                    }
-
-                                    PhDereferenceObject(fileName);
-                                }
-                            }
-
-                            PhFreeFileDialog(fileDialog);
-                        }
-                        else
-                        {
-                            static PH_FILETYPE_FILTER filters[] =
-                            {
-                                { L"All files (*.*)", L"*.*" }
-                            };
-
-                            PPH_STRING baseName = PhGetBaseName(fullPath);
-                            PVOID fileDialog = PhCreateSaveFileDialog();
-
-                            PhSetFileDialogFilter(fileDialog, filters, sizeof(filters) / sizeof(PH_FILETYPE_FILTER));
-                            PhSetFileDialogFileName(fileDialog, baseName->Buffer);
-
-                            if (PhShowFileDialog(BeWindowHandle, fileDialog))
-                            {
-                                PPH_STRING fileName = PhGetFileDialogFileName(fileDialog);
-
-                                if (fileName)
-                                {
-                                    PH_STRINGREF directoryPart;
-                                    PH_STRINGREF filePart;
-
-                                    if (PhSplitStringRefAtLastChar(&fileName->sr, '\\', &directoryPart, &filePart))
-                                    {
-                                        PBE_RESTORE_PARAMETERS parameters;
-
-                                        parameters = PhAllocate(sizeof(BE_RESTORE_PARAMETERS));
-                                        parameters->FromFileName = fullPath;
-                                        PhReferenceObject(fullPath);
-                                        parameters->ToDirectoryName = PhCreateStringEx(directoryPart.Buffer, directoryPart.Length);
-                                        parameters->ToFileName = PhCreateStringEx(filePart.Buffer, filePart.Length);
-
-                                        BeExecuteWithProgress(BeRestoreFileOrDirectoryThreadStart, parameters);
-                                    }
-
-                                    PhDereferenceObject(fileName);
-                                }
-                            }
-
-                            PhFreeFileDialog(fileDialog);
-                            PhDereferenceObject(baseName);
-                        }
-
+                        fullPath = BeComputeFullPath(selectedNode);
+                        BeShowRevisionsDialog(hwndDlg, &fullPath->sr);
                         PhDereferenceObject(fullPath);
                     }
                 }
@@ -968,7 +893,12 @@ HICON BeGetFileIconForExtension(
     else
     {
         extensionString = PhConcatStringRef2(&dotString, Extension);
-        icon = PhGetFileShellIcon(NULL, extensionString->Buffer, FALSE);
+
+        if (Extension->Length != 0)
+            icon = PhGetFileShellIcon(NULL, extensionString->Buffer, FALSE);
+        else
+            icon = PhGetFileShellIcon(NULL, L".no-extension-bkc-explorer", FALSE);
+
         PhDereferenceObject(extensionString);
     }
 
@@ -987,6 +917,33 @@ HICON BeGetFileIconForExtension(
     return icon;
 }
 
+VOID BeDestroyRestoreParameters(
+    __in PBE_RESTORE_PARAMETERS Parameters
+    )
+{
+    PhSwapReference(&Parameters->FromFileName, NULL);
+    PhSwapReference(&Parameters->ToDirectoryName, NULL);
+    PhSwapReference(&Parameters->ToFileName, NULL);
+    PhFree(Parameters);
+}
+
+VOID BePreviewSingleFileWithProgress(
+    __in HWND ParentWindowHandle,
+    __in ULONGLONG RevisionId,
+    __in PPH_STRINGREF FileName
+    )
+{
+    PBE_RESTORE_PARAMETERS parameters;
+
+    parameters = PhAllocate(sizeof(BE_RESTORE_PARAMETERS));
+    memset(parameters, 0, sizeof(BE_RESTORE_PARAMETERS));
+
+    parameters->RevisionId = RevisionId;
+    parameters->FromFileName = PhCreateStringEx(FileName->Buffer, FileName->Length);
+
+    BeExecuteWithProgress(ParentWindowHandle, BePreviewSingleFileThreadStart, parameters);
+}
+
 NTSTATUS BePreviewSingleFileThreadStart(
     __in PVOID Parameter
     )
@@ -994,7 +951,7 @@ NTSTATUS BePreviewSingleFileThreadStart(
     static PH_STRINGREF backslash = PH_STRINGREF_INIT(L"\\");
 
     NTSTATUS status;
-    PPH_STRING fullPath = Parameter;
+    PBE_RESTORE_PARAMETERS parameters = Parameter;
     PPH_STRING tempDirectoryName;
     PPH_STRING baseName;
     PPH_STRING fullName;
@@ -1004,9 +961,9 @@ NTSTATUS BePreviewSingleFileThreadStart(
     if (!tempDirectoryName)
         goto Done;
 
-    baseName = PhGetBaseName(fullPath);
+    baseName = PhGetBaseName(parameters->FromFileName);
     CreateDirectory(tempDirectoryName->Buffer, NULL);
-    status = EnRestoreFromRevision(BeConfig, EN_RESTORE_OVERWRITE_FILES, &fullPath->sr, BeCurrentRevision, &tempDirectoryName->sr, &baseName->sr, BeMessageHandler);
+    status = EnRestoreFromRevision(BeConfig, EN_RESTORE_OVERWRITE_FILES, &parameters->FromFileName->sr, parameters->RevisionId, &tempDirectoryName->sr, &baseName->sr, BeMessageHandler);
     fullName = PhConcatStringRef3(&tempDirectoryName->sr, &backslash, &baseName->sr);
 
     if (NT_SUCCESS(status))
@@ -1027,20 +984,117 @@ NTSTATUS BePreviewSingleFileThreadStart(
     PhDereferenceObject(tempDirectoryName);
 
 Done:
-    PhDereferenceObject(fullPath);
+    BeDestroyRestoreParameters(parameters);
     BeCompleteWithProgress();
 
     return STATUS_SUCCESS;
 }
 
-VOID BeDestroyRestoreParameters(
-    __in PBE_RESTORE_PARAMETERS Parameters
+VOID BeRestoreFileOrDirectoryWithProgress(
+    __in HWND ParentWindowHandle,
+    __in ULONGLONG RevisionId,
+    __in PPH_STRINGREF FileName,
+    __in BOOLEAN Directory
     )
 {
-    PhSwapReference(&Parameters->FromFileName, NULL);
-    PhSwapReference(&Parameters->ToDirectoryName, NULL);
-    PhSwapReference(&Parameters->ToFileName, NULL);
-    PhFree(Parameters);
+    PPH_STRING fullPath;
+
+    fullPath = PhCreateStringEx(FileName->Buffer, FileName->Length);
+
+    if (Directory)
+    {
+        PVOID fileDialog = PhCreateOpenFileDialog();
+
+        PhSetFileDialogOptions(fileDialog, PH_FILEDIALOG_PATHMUSTEXIST | PH_FILEDIALOG_PICKFOLDERS);
+
+        if (PhShowFileDialog(ParentWindowHandle, fileDialog))
+        {
+            PPH_STRING fileName = PhGetFileDialogFileName(fileDialog);
+
+            if (fileName)
+            {
+                NTSTATUS status;
+                BOOLEAN empty;
+
+                status = BeIsDirectoryEmpty(fileName->Buffer, &empty);
+
+                if (NT_SUCCESS(status))
+                {
+                    if (empty || PhShowMessage(
+                        ParentWindowHandle,
+                        MB_ICONWARNING | MB_YESNO,
+                        L"The destination directory is not empty, and its contents may be overwritten. Do you want to continue?"
+                        ) == IDYES)
+                    {
+                        PBE_RESTORE_PARAMETERS parameters;
+
+                        parameters = PhAllocate(sizeof(BE_RESTORE_PARAMETERS));
+                        parameters->RevisionId = BeCurrentRevision;
+                        parameters->FromFileName = fullPath;
+                        PhReferenceObject(fullPath);
+                        parameters->ToDirectoryName = fileName;
+                        PhReferenceObject(fileName);
+                        parameters->ToFileName = NULL;
+
+                        BeExecuteWithProgress(ParentWindowHandle, BeRestoreFileOrDirectoryThreadStart, parameters);
+                    }
+                }
+                else
+                {
+                    PhShowStatus(ParentWindowHandle, L"Unable to open the destination directory", status, 0);
+                }
+
+                PhDereferenceObject(fileName);
+            }
+        }
+
+        PhFreeFileDialog(fileDialog);
+    }
+    else
+    {
+        static PH_FILETYPE_FILTER filters[] =
+        {
+            { L"All files (*.*)", L"*.*" }
+        };
+
+        PPH_STRING baseName = PhGetBaseName(fullPath);
+        PVOID fileDialog = PhCreateSaveFileDialog();
+
+        PhSetFileDialogFilter(fileDialog, filters, sizeof(filters) / sizeof(PH_FILETYPE_FILTER));
+        PhSetFileDialogFileName(fileDialog, baseName->Buffer);
+
+        if (PhShowFileDialog(ParentWindowHandle, fileDialog))
+        {
+            PPH_STRING fileName = PhGetFileDialogFileName(fileDialog);
+
+            if (fileName)
+            {
+                PH_STRINGREF directoryPart;
+                PH_STRINGREF filePart;
+
+                if (PhSplitStringRefAtLastChar(&fileName->sr, '\\', &directoryPart, &filePart))
+                {
+                    PBE_RESTORE_PARAMETERS parameters;
+
+                    parameters = PhAllocate(sizeof(BE_RESTORE_PARAMETERS));
+                    parameters->RevisionId = BeCurrentRevision;
+                    parameters->FromFileName = fullPath;
+                    PhReferenceObject(fullPath);
+                    parameters->ToDirectoryName = PhCreateStringEx(directoryPart.Buffer, directoryPart.Length);
+                    parameters->ToFileName = PhCreateStringEx(filePart.Buffer, filePart.Length);
+
+                    BeExecuteWithProgress(ParentWindowHandle, BeRestoreFileOrDirectoryThreadStart, parameters);
+                }
+
+                PhDereferenceObject(fileName);
+            }
+        }
+
+        PhFreeFileDialog(fileDialog);
+        PhDereferenceObject(baseName);
+    }
+
+    PhDereferenceObject(fullPath);
 }
 
 NTSTATUS BeRestoreFileOrDirectoryThreadStart(
@@ -1054,7 +1108,7 @@ NTSTATUS BeRestoreFileOrDirectoryThreadStart(
         BeConfig,
         EN_RESTORE_OVERWRITE_FILES,
         &parameters->FromFileName->sr,
-        BeCurrentRevision,
+        parameters->RevisionId,
         &parameters->ToDirectoryName->sr,
         parameters->ToFileName ? &parameters->ToFileName->sr : NULL,
         BeMessageHandler
@@ -1153,6 +1207,7 @@ ULONG BeGetProgressFromMessage(
 }
 
 BOOLEAN BeExecuteWithProgress(
+    __in HWND ParentWindowHandle,
     __in PUSER_THREAD_START_ROUTINE ThreadStart,
     __in_opt PVOID Context
     )
@@ -1162,7 +1217,7 @@ BOOLEAN BeExecuteWithProgress(
     if (BeProgressWindowHandle)
         return FALSE;
 
-    BeProgressWindowHandle = BeCreateProgressDialog(BeWindowHandle);
+    BeProgressWindowHandle = BeCreateProgressDialog(ParentWindowHandle);
     threadHandle = PhCreateThread(0, ThreadStart, Context);
 
     if (threadHandle)
@@ -1259,4 +1314,56 @@ NTSTATUS BeIsDirectoryEmpty(
         *Empty = empty;
 
     return status;
+}
+
+// Copied from appsup.c
+BOOLEAN PhGetListViewContextMenuPoint(
+    __in HWND ListViewHandle,
+    __out PPOINT Point
+    )
+{
+    static PH_INTEGER_PAIR PhSmallIconSize = { 16, 16 };
+    static PH_INITONCE initOnce;
+
+    INT selectedIndex;
+    RECT bounds;
+    RECT clientRect;
+
+    if (PhBeginInitOnce(&initOnce))
+    {
+        PhSmallIconSize.X = GetSystemMetrics(SM_CXSMICON);
+        PhSmallIconSize.Y = GetSystemMetrics(SM_CYSMICON);
+        PhEndInitOnce(&initOnce);
+    }
+
+    // The user pressed a key to display the context menu.
+    // Suggest where the context menu should display.
+
+    if ((selectedIndex = ListView_GetNextItem(ListViewHandle, -1, LVNI_SELECTED)) != -1)
+    {
+        if (ListView_GetItemRect(ListViewHandle, selectedIndex, &bounds, LVIR_BOUNDS))
+        {
+            Point->x = bounds.left + PhSmallIconSize.X / 2;
+            Point->y = bounds.top + PhSmallIconSize.Y / 2;
+
+            GetClientRect(ListViewHandle, &clientRect);
+
+            if (Point->x < 0 || Point->y < 0 || Point->x >= clientRect.right || Point->y >= clientRect.bottom)
+            {
+                // The menu is going to be outside of the control. Just put it at the top-left.
+                Point->x = 0;
+                Point->y = 0;
+            }
+
+            ClientToScreen(ListViewHandle, Point);
+
+            return TRUE;
+        }
+    }
+
+    Point->x = 0;
+    Point->y = 0;
+    ClientToScreen(ListViewHandle, Point);
+
+    return FALSE;
 }

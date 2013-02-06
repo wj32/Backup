@@ -167,6 +167,7 @@
     <ClCompile Include="explorer.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="progress.c" />
+    <ClCompile Include="revisions.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BackupExplorer.rc" />

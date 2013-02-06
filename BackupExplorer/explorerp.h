@@ -100,12 +100,9 @@ HICON BeGetFileIconForExtension(
 
 // Restore
 
-NTSTATUS BePreviewSingleFileThreadStart(
-    __in PVOID Parameter
-    );
-
 typedef struct _BE_RESTORE_PARAMETERS
 {
+    ULONGLONG RevisionId;
     PPH_STRING FromFileName;
     PPH_STRING ToDirectoryName;
     PPH_STRING ToFileName;
@@ -113,6 +110,10 @@ typedef struct _BE_RESTORE_PARAMETERS
 
 VOID BeDestroyRestoreParameters(
     __in PBE_RESTORE_PARAMETERS Parameters
+    );
+
+NTSTATUS BePreviewSingleFileThreadStart(
+    __in PVOID Parameter
     );
 
 NTSTATUS BeRestoreFileOrDirectoryThreadStart(
@@ -125,16 +126,12 @@ PPH_STRING BePromptForConfigFileName(
     VOID
     );
 
-VOID BeMessageHandler(
-    __in ULONG Level,
-    __in __assumeRefs(1) PPH_STRING Message
-    );
-
 ULONG BeGetProgressFromMessage(
     __in PPH_STRINGREF Message
     );
 
 BOOLEAN BeExecuteWithProgress(
+    __in HWND ParentWindowHandle,
     __in PUSER_THREAD_START_ROUTINE ThreadStart,
     __in_opt PVOID Context
     );
