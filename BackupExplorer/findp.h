@@ -3,7 +3,7 @@
 
 #define BEFTNC_FILE 0
 #define BEFTNC_SIZE 1
-#define BEFTNC_REVISIONS 2
+#define BEFTNC_LASTREVISION 2
 #define BEFTNC_LASTTIMESTAMP 3
 #define BEFTNC_MAXIMUM 4
 
@@ -14,10 +14,11 @@ typedef struct _BE_RESULT_NODE
     PPH_STRING FileName;
     BOOLEAN IsDirectory;
     LARGE_INTEGER EndOfFile;
-    PPH_STRING RevisionsString;
+    ULONGLONG LastRevisionId;
     LARGE_INTEGER LastTimeStamp;
 
     PPH_STRING EndOfFileString;
+    PPH_STRING LastRevisionIdString;
     PPH_STRING LastTimeStampString;
 } BE_RESULT_NODE, *PBE_RESULT_NODE;
 

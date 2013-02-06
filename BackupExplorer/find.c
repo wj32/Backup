@@ -58,10 +58,11 @@ INT_PTR CALLBACK BeFindDlgProc(
             PhAddLayoutItem(&LayoutManager, GetDlgItem(hwndDlg, IDC_RESULTS), NULL, PH_ANCHOR_ALL);
 
             BeFindListHandle = GetDlgItem(hwndDlg, IDC_RESULTS);
+            PhSetControlTheme(BeFindListHandle, L"explorer");
             TreeNew_SetCallback(BeFindListHandle, BeFindListTreeNewCallback, NULL);
             PhAddTreeNewColumn(BeFindListHandle, BEFTNC_FILE, TRUE, L"File", 350, PH_ALIGN_LEFT, -2, 0);
             PhAddTreeNewColumn(BeFindListHandle, BEFTNC_SIZE, TRUE, L"Size", 80, PH_ALIGN_RIGHT, 0, DT_RIGHT);
-            PhAddTreeNewColumn(BeFindListHandle, BEFTNC_REVISIONS, TRUE, L"Revisions", 55, PH_ALIGN_RIGHT, 1, DT_RIGHT);
+            PhAddTreeNewColumn(BeFindListHandle, BEFTNC_LASTREVISION, TRUE, L"Last Present In", 55, PH_ALIGN_RIGHT, 1, DT_RIGHT);
             PhAddTreeNewColumn(BeFindListHandle, BEFTNC_LASTTIMESTAMP, TRUE, L"Last Time Stamp", 140, PH_ALIGN_LEFT, 2, 0);
         }
         break;
@@ -122,6 +123,7 @@ INT_PTR CALLBACK BeFindDlgProc(
                         // Start the search.
 
                         SearchString = PhGetWindowText(GetDlgItem(hwndDlg, IDC_FILTER));
+                        PhUpperString(SearchString);
                         SearchResults = PhCreateList(128);
                         SearchResultsAddIndex = 0;
 
@@ -191,10 +193,30 @@ VOID BeDestroyResultNode(
     )
 {
     PhSwapReference(&Node->FileName, NULL);
-    PhSwapReference(&Node->RevisionsString, NULL);
     PhSwapReference(&Node->EndOfFileString, NULL);
+    PhSwapReference(&Node->LastRevisionIdString, NULL);
     PhSwapReference(&Node->LastTimeStampString, NULL);
     PhFree(Node);
+}
+
+PBE_RESULT_NODE BeGetSelectedResultNode(
+    VOID
+    )
+{
+    ULONG count;
+    ULONG i;
+
+    count = TreeNew_GetFlatNodeCount(BeFindListHandle);
+
+    for (i = 0; i < count; i++)
+    {
+        PBE_RESULT_NODE node = (PBE_RESULT_NODE)TreeNew_GetFlatNode(BeFindListHandle, i);
+
+        if (node->Node.Selected)
+            return node;
+    }
+
+    return NULL;
 }
 
 BOOLEAN BeFindListTreeNewCallback(
@@ -241,8 +263,8 @@ BOOLEAN BeFindListTreeNewCallback(
             case BEFTNC_SIZE:
                 getCellText->Text = PhGetStringRef(node->EndOfFileString);
                 break;
-            case BEFTNC_REVISIONS:
-                getCellText->Text = PhGetStringRef(node->RevisionsString);
+            case BEFTNC_LASTREVISION:
+                getCellText->Text = PhGetStringRef(node->LastRevisionIdString);
                 break;
             case BEFTNC_LASTTIMESTAMP:
                 getCellText->Text = PhGetStringRef(node->LastTimeStampString);
@@ -252,9 +274,137 @@ BOOLEAN BeFindListTreeNewCallback(
             }
         }
         return TRUE;
+    case TreeNewSelectionChanged:
+        {
+            PBE_RESULT_NODE node;
+
+            node = BeGetSelectedResultNode();
+
+            if (node)
+            {
+                BeSetCurrentRevision(node->LastRevisionId);
+                BeSelectFullPath(&node->FileName->sr);
+            }
+        }
+        break;
     }
 
     return FALSE;
+}
+
+BOOLEAN BeStringCompareFunction(
+    __in PVOID Entry1,
+    __in PVOID Entry2
+    )
+{
+    PPH_STRING entry1 = *(PPH_STRING *)Entry1;
+    PPH_STRING entry2 = *(PPH_STRING *)Entry2;
+
+    return PhEqualString(entry1, entry2, FALSE);
+}
+
+ULONG BeStringHashFunction(
+    __in PVOID Entry
+    )
+{
+    PPH_STRING entry = *(PPH_STRING *)Entry;
+
+    return PhHashBytes((PUCHAR)entry->Buffer, entry->Length);
+}
+
+static VOID EnumDb(
+    __in PDB_DATABASE Database,
+    __in PDBF_FILE File,
+    __in_opt PPH_STRING FileName,
+    __in ULONGLONG RevisionId,
+    __in PPH_HASHTABLE NamesSeen
+    )
+{
+    PDB_FILE_DIRECTORY_INFORMATION dirInfo;
+    ULONG numberOfEntries;
+    ULONG i;
+    PPH_STRING fileName;
+
+    if (!NT_SUCCESS(DbQueryDirectoryFile(Database, File, &dirInfo, &numberOfEntries)))
+        return;
+
+    for (i = 0; i < numberOfEntries; i++)
+    {
+        PDBF_FILE file;
+        PPH_STRING upperFileName;
+
+        if (FileName)
+        {
+            fileName = PhFormatString(L"%s\\%s", FileName->Buffer, dirInfo[i].FileName->Buffer);
+        }
+        else
+        {
+            fileName = dirInfo[i].FileName;
+            PhReferenceObject(fileName);
+        }
+
+        upperFileName = PhDuplicateString(fileName);
+        PhUpperString(upperFileName);
+
+        if (!(dirInfo[i].Attributes & DB_FILE_ATTRIBUTE_DELETE_TAG))
+        {
+            if (!PhFindEntryHashtable(NamesSeen, &upperFileName) &&
+                PhFindStringInStringRef(&upperFileName->sr, &SearchString->sr, FALSE) != -1)
+            {
+                PBE_RESULT_NODE result;
+                SYSTEMTIME systemTime;
+
+                PhAddEntryHashtable(NamesSeen, &upperFileName);
+                PhReferenceObject(upperFileName);
+
+                result = PhAllocate(sizeof(BE_RESULT_NODE));
+                memset(result, 0, sizeof(BE_RESULT_NODE));
+
+                PhInitializeTreeNewNode(&result->Node);
+                result->FileName = fileName;
+                PhReferenceObject(fileName);
+                result->IsDirectory = !!(dirInfo[i].Attributes & DB_FILE_ATTRIBUTE_DIRECTORY);
+                result->EndOfFile = dirInfo[i].EndOfFile;
+                result->LastRevisionId = RevisionId;
+                result->LastTimeStamp = dirInfo[i].TimeStamp;
+
+                //if (!result->IsDirectory)
+                //    result->LastRevisionId = dirInfo[i].RevisionId;
+
+                if (!result->IsDirectory)
+                    result->EndOfFileString = PhFormatSize(result->EndOfFile.QuadPart, -1);
+
+                result->LastRevisionIdString = PhFormatUInt64(result->LastRevisionId, TRUE);
+
+                PhLargeIntegerToLocalSystemTime(&systemTime, &result->LastTimeStamp);
+                result->LastTimeStampString = PhFormatDateTime(&systemTime);
+
+                PhAcquireQueuedLockExclusive(&SearchResultsLock);
+
+                PhAddItemList(SearchResults, result);
+
+                // Update the search results in batches of 40.
+                if (SearchResults->Count % 40 == 0)
+                    PostMessage(BeFindDialogHandle, WM_BE_SEARCH_UPDATE, 0, 0);
+
+                PhReleaseQueuedLockExclusive(&SearchResultsLock);
+            }
+        }
+
+        if (dirInfo[i].Attributes & DB_FILE_ATTRIBUTE_DIRECTORY)
+        {
+            if (NT_SUCCESS(DbCreateFile(Database, &dirInfo[i].FileName->sr, File, 0, 0, 0, NULL, &file)))
+            {
+                EnumDb(Database, file, fileName, RevisionId, NamesSeen);
+                DbCloseFile(Database, file);
+            }
+        }
+
+        PhDereferenceObject(upperFileName);
+        PhDereferenceObject(fileName);
+    }
+
+    DbFreeQueryDirectoryFile(dirInfo, numberOfEntries);
 }
 
 NTSTATUS BeFindFilesThreadStart(
@@ -263,6 +413,15 @@ NTSTATUS BeFindFilesThreadStart(
 {
     NTSTATUS status;
     PDB_DATABASE database;
+    PPH_HASHTABLE namesSeen;
+    ULONGLONG lastRevisionId;
+    ULONGLONG firstRevisionId;
+    ULONGLONG revisionId;
+    PDBF_FILE directory;
+    PH_STRINGREF directoryName;
+    WCHAR directoryNameBuffer[17];
+    PH_HASHTABLE_ENUM_CONTEXT enumContext;
+    PPH_STRING *entry;
 
     // Refuse to search with no filter.
     if (SearchString->Length == 0)
@@ -273,8 +432,38 @@ NTSTATUS BeFindFilesThreadStart(
     if (!NT_SUCCESS(status))
         goto Exit;
 
+    namesSeen = PhCreateHashtable(sizeof(PPH_STRING), BeStringCompareFunction, BeStringHashFunction, 100);
 
+    DbQueryRevisionIdsDatabase(database, &lastRevisionId, &firstRevisionId);
 
+    for (revisionId = lastRevisionId; revisionId >= firstRevisionId; revisionId--)
+    {
+        if (revisionId == lastRevisionId)
+        {
+            PhInitializeStringRef(&directoryName, L"head");
+        }
+        else
+        {
+            EnpFormatRevisionId(revisionId, directoryNameBuffer);
+            directoryName.Buffer = directoryNameBuffer;
+            directoryName.Length = 16 * sizeof(WCHAR);
+        }
+
+        status = DbCreateFile(database, &directoryName, NULL, 0, DB_FILE_OPEN, DB_FILE_ATTRIBUTE_DIRECTORY, NULL, &directory);
+
+        if (!NT_SUCCESS(status))
+            continue;
+
+        EnumDb(database, directory, NULL, revisionId, namesSeen);
+        DbCloseFile(database, directory);
+    }
+
+    PhBeginEnumHashtable(namesSeen, &enumContext);
+
+    while (entry = PhNextEnumHashtable(&enumContext))
+        PhDereferenceObject(*entry);
+
+    PhDereferenceObject(namesSeen);
     DbCloseDatabase(database);
 
 Exit:
@@ -282,13 +471,3 @@ Exit:
 
     return STATUS_SUCCESS;
 }
-
-                    //PhAcquireQueuedLockExclusive(&SearchResultsLock);
-
-                    //PhAddItemList(SearchResults, searchResult);
-
-                    //// Update the search results in batches of 40.
-                    //if (SearchResults->Count % 40 == 0)
-                    //    PostMessage(BeFindDialogHandle, WM_BE_SEARCH_UPDATE, 0, 0);
-
-                    //PhReleaseQueuedLockExclusive(&SearchResultsLock);

@@ -30,6 +30,10 @@ INT_PTR CALLBACK BeExplorerDlgProc(
     __in LPARAM lParam
     );
 
+BOOLEAN BeSetCurrentRevision(
+    __in ULONGLONG RevisionId
+    );
+
 VOID BeSelectFullPath(
     __in PPH_STRINGREF FullPath
     );

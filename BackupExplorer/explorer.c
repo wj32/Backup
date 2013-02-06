@@ -48,6 +48,7 @@ INT_PTR CALLBACK BeExplorerDlgProc(
 
             PhInitializeLayoutManager(&BeLayoutManager, hwndDlg);
             PhAddLayoutItem(&BeLayoutManager, BeRevisionListHandle, NULL, PH_ANCHOR_LEFT | PH_ANCHOR_TOP | PH_ANCHOR_BOTTOM);
+            PhAddLayoutItem(&BeLayoutManager, GetDlgItem(hwndDlg, IDC_FIND), NULL, PH_ANCHOR_LEFT | PH_ANCHOR_BOTTOM);
             PhAddLayoutItem(&BeLayoutManager, GetDlgItem(hwndDlg, IDC_CLEARLOG), NULL, PH_ANCHOR_LEFT | PH_ANCHOR_BOTTOM);
             PhAddLayoutItem(&BeLayoutManager, GetDlgItem(hwndDlg, IDC_FILES), NULL, PH_ANCHOR_ALL);
             PhAddLayoutItem(&BeLayoutManager, GetDlgItem(hwndDlg, IDC_LOG), NULL, PH_ANCHOR_LEFT | PH_ANCHOR_BOTTOM | PH_ANCHOR_RIGHT);
@@ -281,14 +282,14 @@ BOOLEAN BeSetCurrentRevision(
     )
 {
     NTSTATUS status;
+    ULONG i;
+    ULONG count;
 
     if (RevisionId == BeCurrentRevision)
         return TRUE;
 
     if (RevisionId == 0)
     {
-        ULONG i;
-
         BeCurrentRevision = 0;
 
         if (BeTempDatabaseHead)
@@ -361,6 +362,18 @@ BOOLEAN BeSetCurrentRevision(
 
     if (BeSelectedFullPath)
         BeSelectFullPath(&BeSelectedFullPath->sr);
+
+    count = ListView_GetItemCount(BeRevisionListHandle);
+
+    for (i = 0; i < count; i++)
+    {
+        PULONGLONG revisionId;
+
+        if (PhGetListViewItemParam(BeRevisionListHandle, i, &revisionId) && *revisionId == RevisionId)
+        {
+            ListView_SetItemState(BeRevisionListHandle, i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+        }
+    }
 
     SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(IDC_ARROW)));
 
@@ -834,6 +847,7 @@ VOID BeSelectFullPath(
     if (remainingPart.Length == 0 && currentNode)
     {
         // We made it to the correct item, so select it.
+        TreeNew_DeselectRange(BeFileListHandle, 0, -1);
         TreeNew_SelectRange(BeFileListHandle, currentNode->Node.Index, currentNode->Node.Index);
         TreeNew_EnsureVisible(BeFileListHandle, currentNode);
     }

@@ -37,10 +37,6 @@ BOOLEAN BeLoadRevisionList(
     VOID
     );
 
-BOOLEAN BeSetCurrentRevision(
-    __in ULONGLONG RevisionId
-    );
-
 // File list
 
 BOOLEAN BeFileListTreeNewCallback(
