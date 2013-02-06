@@ -38,7 +38,7 @@ INT_PTR CALLBACK BeProgressDlgProc(
     {
     case BE_PROGRESS_MESSAGE_CLOSE:
         EnableWindow(GetParent(hwndDlg), TRUE);
-        EndDialog(hwndDlg, IDOK);
+        DestroyWindow(hwndDlg);
         break;
     case BE_PROGRESS_MESSAGE_UPDATE:
         {

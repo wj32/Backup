@@ -57,6 +57,9 @@
     <ClInclude Include="explorerp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="findp.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Backup\config.c">
@@ -87,6 +90,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="revisions.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="find.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

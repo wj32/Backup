@@ -155,6 +155,7 @@
     <ClInclude Include="..\Backup\vssobj.h" />
     <ClInclude Include="explorer.h" />
     <ClInclude Include="explorerp.h" />
+    <ClInclude Include="findp.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -165,6 +166,7 @@
     <ClCompile Include="..\Backup\package.cpp" />
     <ClCompile Include="..\Backup\vssobj.cpp" />
     <ClCompile Include="explorer.c" />
+    <ClCompile Include="find.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="progress.c" />
     <ClCompile Include="revisions.c" />

@@ -20,6 +20,7 @@ extern HINSTANCE BeInstanceHandle;
 
 // explorer
 
+extern HWND BeWindowHandle;
 extern PBK_CONFIG BeConfig;
 
 INT_PTR CALLBACK BeExplorerDlgProc(
@@ -27,6 +28,14 @@ INT_PTR CALLBACK BeExplorerDlgProc(
     __in UINT uMsg,
     __in WPARAM wParam,
     __in LPARAM lParam
+    );
+
+VOID BeSelectFullPath(
+    __in PPH_STRINGREF FullPath
+    );
+
+HICON BeGetFileIconForExtension(
+    __in PPH_STRINGREF Extension
     );
 
 VOID BePreviewSingleFileWithProgress(
@@ -66,6 +75,12 @@ HWND BeCreateProgressDialog(
 VOID BeShowRevisionsDialog(
     __in HWND ParentWindowHandle,
     __in PPH_STRINGREF FileName
+    );
+
+// find
+
+VOID BeShowFindDialog(
+    VOID
     );
 
 #endif

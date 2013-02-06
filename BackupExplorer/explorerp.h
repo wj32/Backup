@@ -72,10 +72,6 @@ PPH_STRING BeComputeFullPath(
     __in PBE_FILE_NODE Node
     );
 
-VOID BeSelectFullPath(
-    __in PPH_STRINGREF FullPath
-    );
-
 // File icons
 
 typedef struct _BE_FILE_ICON_ENTRY
@@ -92,10 +88,6 @@ BOOLEAN BeFileIconEntryCompareFunction(
 
 ULONG BeFileIconEntryHashFunction(
     __in PVOID Entry
-    );
-
-HICON BeGetFileIconForExtension(
-    __in PPH_STRINGREF Extension
     );
 
 // Restore

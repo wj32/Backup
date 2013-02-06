@@ -132,6 +132,9 @@ INT_PTR CALLBACK BeExplorerDlgProc(
             case IDCANCEL:
                 EndDialog(hwndDlg, IDCANCEL);
                 break;
+            case IDC_FIND:
+                BeShowFindDialog();
+                break;
             case IDC_CLEARLOG:
                 ListBox_ResetContent(BeLogHandle);
                 break;
@@ -500,8 +503,6 @@ BOOLEAN BeFileListTreeNewCallback(
             default:
                 return FALSE;
             }
-
-            getCellText->Flags = TN_CACHE;
         }
         return TRUE;
     case TreeNewGetNodeIcon:
