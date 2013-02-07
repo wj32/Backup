@@ -393,7 +393,7 @@ BOOLEAN BeSetCurrentRevision(
     SetCursor(LoadCursor(NULL, MAKEINTRESOURCE(IDC_WAIT)));
 
     BeCurrentRevision = RevisionId;
-    BeTempDatabaseFileName = EnpFormatTempDatabaseFileName(BeConfig);
+    BeTempDatabaseFileName = EnpFormatTempDatabaseFileName(BeConfig, FALSE);
 
     status = EnpCopyFileWin32(BeDatabaseFileName->Buffer, BeTempDatabaseFileName->Buffer, FILE_ATTRIBUTE_TEMPORARY, FALSE);
 

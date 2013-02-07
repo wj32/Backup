@@ -473,6 +473,74 @@ NTSTATUS EnCompareRevisions(
     return status;
 }
 
+NTSTATUS EnCompactDatabase(
+    __in PBK_CONFIG Config,
+    __in_opt PEN_MESSAGE_HANDLER MessageHandler
+    )
+{
+    NTSTATUS status;
+    HANDLE transactionHandle;
+    PH_STRINGREF name;
+    PPH_STRING databaseFileName;
+    PPH_STRING tempDatabaseFileName;
+    PPH_STRING tempDatabaseFileName2;
+
+    if (!MessageHandler)
+        MessageHandler = EnpDefaultMessageHandler;
+
+    transactionHandle = NULL;
+
+    if (Config->UseTransactions)
+    {
+        if (!NT_SUCCESS(status = EnpCreateTransaction(&transactionHandle, MessageHandler)))
+            return status;
+
+        RtlSetCurrentTransaction(transactionHandle);
+    }
+    else
+    {
+        RtlSetCurrentTransaction(NULL);
+    }
+
+    PhInitializeStringRef(&name, EN_DATABASE_NAME);
+    databaseFileName = EnpAppendComponentToPath(&Config->DestinationDirectory->sr, &name);
+    tempDatabaseFileName = EnpFormatTempDatabaseFileName(Config, TRUE);
+    tempDatabaseFileName2 = EnpFormatTempDatabaseFileName(Config, TRUE);
+
+    status = DbCopyDatabase(databaseFileName->Buffer, tempDatabaseFileName->Buffer);
+
+    if (!NT_SUCCESS(status))
+    {
+        PhDeleteFileWin32(tempDatabaseFileName->Buffer);
+        MessageHandler(EN_MESSAGE_ERROR, PhFormatString(L"Unable to copy database %s to %s", databaseFileName->Buffer, tempDatabaseFileName->Buffer));
+        goto CleanupExit;
+    }
+
+    if (NT_SUCCESS(status = EnpRenameFileWin32(NULL, databaseFileName->Buffer, tempDatabaseFileName2->Buffer)))
+    {
+        status = EnpRenameFileWin32(NULL, tempDatabaseFileName->Buffer, databaseFileName->Buffer);
+
+        if (NT_SUCCESS(status))
+            PhDeleteFileWin32(tempDatabaseFileName2->Buffer);
+    }
+    else
+    {
+        PhDeleteFileWin32(tempDatabaseFileName->Buffer);
+    }
+
+    if (!NT_SUCCESS(status))
+        MessageHandler(EN_MESSAGE_ERROR, PhCreateString(L"Unable to rename database files"));
+
+CleanupExit:
+    status = EnpCommitAndCloseTransaction(status, transactionHandle, FALSE, MessageHandler);
+
+    PhDereferenceObject(databaseFileName);
+    PhDereferenceObject(tempDatabaseFileName);
+    PhDereferenceObject(tempDatabaseFileName2);
+
+    return status;
+}
+
 NTSTATUS EnpBackupFirstRevision(
     __in PBK_CONFIG Config,
     __in_opt HANDLE TransactionHandle,
@@ -2940,7 +3008,7 @@ NTSTATUS EnpRestoreDirectoryFromRevision(
 
     PhInitializeStringRef(&databaseName, L"\\" EN_DATABASE_NAME);
     databaseFileName = PhConcatStringRef2(&Config->DestinationDirectory->sr, &databaseName);
-    tempDatabaseFileName = EnpFormatTempDatabaseFileName(Config);
+    tempDatabaseFileName = EnpFormatTempDatabaseFileName(Config, FALSE);
 
     status = EnpCopyFileWin32(databaseFileName->Buffer, tempDatabaseFileName->Buffer, FILE_ATTRIBUTE_TEMPORARY, FALSE);
 
@@ -3414,8 +3482,8 @@ NTSTATUS EnpCompareRevisions(
 
     PhInitializeStringRef(&databaseName, L"\\" EN_DATABASE_NAME);
     databaseFileName = PhConcatStringRef2(&Config->DestinationDirectory->sr, &databaseName);
-    tempBaseDatabaseFileName = EnpFormatTempDatabaseFileName(Config);
-    tempTargetDatabaseFileName = EnpFormatTempDatabaseFileName(Config);
+    tempBaseDatabaseFileName = EnpFormatTempDatabaseFileName(Config, FALSE);
+    tempTargetDatabaseFileName = EnpFormatTempDatabaseFileName(Config, FALSE);
     tempBaseDatabaseCreated = FALSE;
     tempTargetDatabaseCreated = FALSE;
     tempBaseDatabase = NULL;
@@ -4280,7 +4348,8 @@ NTSTATUS EnpCreateTransaction(
 
     if (!NT_SUCCESS(status))
     {
-        MessageHandler(EN_MESSAGE_ERROR, PhFormatString(L"Unable to create transaction: 0x%x", status));
+        if (MessageHandler)
+            MessageHandler(EN_MESSAGE_ERROR, PhFormatString(L"Unable to create transaction: 0x%x", status));
     }
 
     return status;
@@ -4301,7 +4370,9 @@ NTSTATUS EnpCommitAndCloseTransaction(
         {
             if (!TrivialCommit)
             {
-                MessageHandler(EN_MESSAGE_PROGRESS, PhCreateString(L"Committing transaction"));
+                if (MessageHandler)
+                    MessageHandler(EN_MESSAGE_PROGRESS, PhCreateString(L"Committing transaction"));
+
                 status = NtCommitTransaction(TransactionHandle, TRUE);
             }
             else
@@ -4316,7 +4387,7 @@ NTSTATUS EnpCommitAndCloseTransaction(
 
         NtClose(TransactionHandle);
 
-        if (!NT_SUCCESS(status))
+        if (!NT_SUCCESS(status) && MessageHandler)
             MessageHandler(EN_MESSAGE_ERROR, PhFormatString(L"Unable to process transaction: 0x%x", status));
 
         if (!NT_SUCCESS(CurrentStatus))
@@ -4948,7 +5019,8 @@ PPH_STRING EnpFormatPackageName(
 }
 
 PPH_STRING EnpFormatTempDatabaseFileName(
-    __in PBK_CONFIG Config
+    __in PBK_CONFIG Config,
+    __in BOOLEAN SameDirectory
     )
 {
     WCHAR tempNameBuffer[18];
@@ -4970,7 +5042,7 @@ PPH_STRING EnpFormatTempDatabaseFileName(
     tempNameSr.Buffer = tempNameBuffer;
     tempNameSr.Length = 18 * sizeof(WCHAR);
 
-    if (GetTempPath(MAX_PATH + 1, tempPathBuffer) != 0)
+    if (!SameDirectory && GetTempPath(MAX_PATH + 1, tempPathBuffer) != 0)
     {
         PhInitializeStringRef(&tempPathSr, tempPathBuffer);
 

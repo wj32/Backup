@@ -109,4 +109,16 @@ NTSTATUS DbpRenameFile(
     __in PPH_STRINGREF NewFileName
     );
 
+NTSTATUS DbpCopyAttributesFile(
+    __in PDBF_FILE SourceFile,
+    __in PDBF_FILE DestinationFile
+    );
+
+NTSTATUS DbpCopyDirectory(
+    __in PDB_DATABASE SourceDatabase,
+    __in PDBF_FILE SourceDirectory,
+    __in PDB_DATABASE DestinationDatabase,
+    __in PDBF_FILE DestinationDirectory
+    );
+
 #endif

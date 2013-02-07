@@ -159,6 +159,44 @@ VOID DbCloseDatabase(
     PhFree(Database);
 }
 
+NTSTATUS DbCopyDatabase(
+    __in PWSTR SourceFileName,
+    __in PWSTR DestinationFileName
+    )
+{
+    NTSTATUS status;
+    PDB_DATABASE sourceDatabase;
+    PDB_DATABASE destinationDatabase;
+
+    if (!NT_SUCCESS(status = DbOpenDatabase(&sourceDatabase, SourceFileName, TRUE, FILE_SHARE_READ)))
+        return status;
+
+    if (!NT_SUCCESS(status = DbCreateDatabase(DestinationFileName)))
+    {
+        DbCloseDatabase(sourceDatabase);
+        return status;
+    }
+
+    if (!NT_SUCCESS(status = DbOpenDatabase(&destinationDatabase, DestinationFileName, FALSE, 0)))
+    {
+        DbCloseDatabase(sourceDatabase);
+        return status;
+    }
+
+    destinationDatabase->Root->RevisionId = sourceDatabase->Root->RevisionId;
+    destinationDatabase->Root->FirstRevisionId = sourceDatabase->Root->FirstRevisionId;
+
+    status = DbpCopyAttributesFile(sourceDatabase->RootDirectory, destinationDatabase->RootDirectory);
+
+    if (NT_SUCCESS(status))
+        status = DbpCopyDirectory(sourceDatabase, sourceDatabase->RootDirectory, destinationDatabase, destinationDatabase->RootDirectory);
+
+    DbCloseDatabase(destinationDatabase);
+    DbCloseDatabase(sourceDatabase);
+
+    return status;
+}
+
 VOID DbQueryRevisionIdsDatabase(
     __in PDB_DATABASE Database,
     __out_opt PULONGLONG RevisionId,
@@ -931,4 +969,102 @@ NTSTATUS DbpRenameFile(
         return STATUS_UNSUCCESSFUL;
 
     return STATUS_SUCCESS;
+}
+
+NTSTATUS DbpCopyAttributesFile(
+    __in PDBF_FILE SourceFile,
+    __in PDBF_FILE DestinationFile
+    )
+{
+    if ((SourceFile->Attributes & DB_FILE_ATTRIBUTE_DIRECTORY) != (DestinationFile->Attributes & DB_FILE_ATTRIBUTE_DIRECTORY))
+        return STATUS_INVALID_PARAMETER;
+
+    DestinationFile->Attributes = SourceFile->Attributes;
+    DestinationFile->TimeStamp = SourceFile->TimeStamp;
+    DestinationFile->RevisionId = SourceFile->RevisionId;
+
+    if (!(SourceFile->Attributes & DB_FILE_ATTRIBUTE_DIRECTORY))
+    {
+        DestinationFile->u.File.EndOfFile = SourceFile->u.File.EndOfFile;
+        DestinationFile->u.File.LastBackupTime = SourceFile->u.File.LastBackupTime;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS DbpCopyDirectory(
+    __in PDB_DATABASE SourceDatabase,
+    __in PDBF_FILE SourceDirectory,
+    __in PDB_DATABASE DestinationDatabase,
+    __in PDBF_FILE DestinationDirectory
+    )
+{
+    NTSTATUS status;
+    PDB_FILE_DIRECTORY_INFORMATION entries;
+    ULONG numberOfEntries;
+    ULONG i;
+    PDBF_FILE sourceFile;
+    PDBF_FILE destinationFile;
+
+    status = DbQueryDirectoryFile(SourceDatabase, SourceDirectory, &entries, &numberOfEntries);
+
+    if (!NT_SUCCESS(status))
+        return status;
+
+    // Create all files, then copy subdirectories.
+    // This keeps child entries close together, improving performance.
+
+    for (i = 0; i < numberOfEntries; i++)
+    {
+        status = DbCreateFile(SourceDatabase, &entries[i].FileName->sr, SourceDirectory, 0, DB_FILE_OPEN, 0, NULL, &sourceFile);
+
+        if (!NT_SUCCESS(status))
+            goto CleanupExit;
+
+        status = DbCreateFile(DestinationDatabase, &entries[i].FileName->sr, DestinationDirectory, sourceFile->Attributes, DB_FILE_CREATE, 0, NULL, &destinationFile);
+
+        if (!NT_SUCCESS(status))
+        {
+            DbCloseFile(SourceDatabase, sourceFile);
+            goto CleanupExit;
+        }
+
+        status = DbpCopyAttributesFile(sourceFile, destinationFile);
+        DbCloseFile(DestinationDatabase, destinationFile);
+        DbCloseFile(SourceDatabase, sourceFile);
+
+        if (!NT_SUCCESS(status))
+            goto CleanupExit;
+    }
+
+    for (i = 0; i < numberOfEntries; i++)
+    {
+        if (!(entries[i].Attributes & DB_FILE_ATTRIBUTE_DIRECTORY))
+            continue;
+
+        status = DbCreateFile(SourceDatabase, &entries[i].FileName->sr, SourceDirectory, 0, DB_FILE_OPEN, 0, NULL, &sourceFile);
+
+        if (!NT_SUCCESS(status))
+            goto CleanupExit;
+
+        status = DbCreateFile(DestinationDatabase, &entries[i].FileName->sr, DestinationDirectory, 0, DB_FILE_OPEN, 0, NULL, &destinationFile);
+
+        if (!NT_SUCCESS(status))
+        {
+            DbCloseFile(SourceDatabase, sourceFile);
+            goto CleanupExit;
+        }
+
+        status = DbpCopyDirectory(SourceDatabase, sourceFile, DestinationDatabase, destinationFile);
+        DbCloseFile(DestinationDatabase, destinationFile);
+        DbCloseFile(SourceDatabase, sourceFile);
+
+        if (!NT_SUCCESS(status))
+            goto CleanupExit;
+    }
+
+CleanupExit:
+    DbFreeQueryDirectoryFile(entries, numberOfEntries);
+
+    return status;
 }

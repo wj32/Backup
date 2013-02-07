@@ -487,6 +487,32 @@ LONG BkRunCommandLine(
 
         DbCloseDatabase(db);
     }
+    else if (PhEqualString2(Command, L"compact", TRUE))
+    {
+        PPH_STRING databaseFileName;
+        FILE_NETWORK_OPEN_INFORMATION oldInformation = { 0 };
+        FILE_NETWORK_OPEN_INFORMATION newInformation = { 0 };
+
+        databaseFileName = PhConcatStrings2(config->DestinationDirectory->Buffer, L"\\" EN_DATABASE_NAME);
+        PhQueryFullAttributesFileWin32(databaseFileName->Buffer, &oldInformation);
+
+        status = EnCompactDatabase(config, ConsoleMessageHandler);
+        RecoverAfterEngineMessages();
+
+        if (NT_SUCCESS(status))
+        {
+            PhQueryFullAttributesFileWin32(databaseFileName->Buffer, &newInformation);
+
+            wprintf(L"== Successfully compacted database.\n");
+            wprintf(L"== Old size: %s bytes\n", oldInformation.EndOfFile.QuadPart != 0 ? PhFormatUInt64(oldInformation.EndOfFile.QuadPart, TRUE)->Buffer : L"???");
+            wprintf(L"== New size: %s bytes\n", newInformation.EndOfFile.QuadPart != 0 ? PhFormatUInt64(newInformation.EndOfFile.QuadPart, TRUE)->Buffer : L"???");
+        }
+        else
+        {
+            wprintf(L"== Error: 0x%x\n          %s\n", status, PhGetStringOrDefault(GetNtMessage(status), L"-"));
+            return 1;
+        }
+    }
     else
     {
         wprintf(L"Unknown command '%s'\n", Command->Buffer);
@@ -834,6 +860,14 @@ static VOID PrintHelp(
                 );
             return;
         }
+        else if (PhEqualString2(Command, L"compact", TRUE))
+        {
+            wprintf(
+                L"Usage:\n\tbkc compact [-c filename]\n"
+                L"\tAttempts to reduce the size of the database.\n"
+                );
+            return;
+        }
         else if (PhEqualString2(Command, L"config", TRUE))
         {
             wprintf(
@@ -927,6 +961,7 @@ static VOID PrintHelp(
         L"\ttrim\t\tDeletes old revisions.\n"
         L"\trestore\t\tRestores a file or directory.\n"
         L"\tlist\t\tLists or searches for files in the database.\n"
+        L"\tcompact\t\tAttempts to reduce the size of the database.\n"
         L"\n"
         L"Options:\n"
         L"\t-c filename\tSpecifies the location of the configuration file.\n"

@@ -577,7 +577,8 @@ PPH_STRING EnpFormatPackageName(
     );
 
 PPH_STRING EnpFormatTempDatabaseFileName(
-    __in PBK_CONFIG Config
+    __in PBK_CONFIG Config,
+    __in BOOLEAN SameDirectory
     );
 
 NTSTATUS EnpCreateDatabase(

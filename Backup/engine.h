@@ -85,4 +85,9 @@ NTSTATUS EnCompareRevisions(
     __in PEN_MESSAGE_HANDLER MessageHandler
     );
 
+NTSTATUS EnCompactDatabase(
+    __in PBK_CONFIG Config,
+    __in_opt PEN_MESSAGE_HANDLER MessageHandler
+    );
+
 #endif

@@ -23,6 +23,11 @@ VOID DbCloseDatabase(
     __in PDB_DATABASE Database
     );
 
+NTSTATUS DbCopyDatabase(
+    __in PWSTR SourceFileName,
+    __in PWSTR DestinationFileName
+    );
+
 VOID DbQueryRevisionIdsDatabase(
     __in PDB_DATABASE Database,
     __out_opt PULONGLONG RevisionId,
