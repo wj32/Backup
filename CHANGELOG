@@ -1,4 +1,5 @@
 1.7
+ * New GUI included: Backup Explorer
  * Temporary files are now created in the system temp directory
 1.6
  * Added filter to list command
