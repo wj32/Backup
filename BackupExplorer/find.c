@@ -411,12 +411,12 @@ static BOOLEAN WordMatch(
 
         if (part.Length != 0)
         {
-            if (PhFindStringInStringRef(Text, &part, IgnoreCase) != -1)
-                return TRUE;
+            if (PhFindStringInStringRef(Text, &part, IgnoreCase) == -1)
+                return FALSE;
         }
     }
 
-    return FALSE;
+    return TRUE;
 }
 
 BOOLEAN BeStringCompareFunction(
