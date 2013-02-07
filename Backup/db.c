@@ -1042,12 +1042,12 @@ NTSTATUS DbpCopyDirectory(
         if (!(entries[i].Attributes & DB_FILE_ATTRIBUTE_DIRECTORY))
             continue;
 
-        status = DbCreateFile(SourceDatabase, &entries[i].FileName->sr, SourceDirectory, 0, DB_FILE_OPEN, 0, NULL, &sourceFile);
+        status = DbCreateFile(SourceDatabase, &entries[i].FileName->sr, SourceDirectory, 0, DB_FILE_OPEN, DB_FILE_DIRECTORY_FILE, NULL, &sourceFile);
 
         if (!NT_SUCCESS(status))
             goto CleanupExit;
 
-        status = DbCreateFile(DestinationDatabase, &entries[i].FileName->sr, DestinationDirectory, 0, DB_FILE_OPEN, 0, NULL, &destinationFile);
+        status = DbCreateFile(DestinationDatabase, &entries[i].FileName->sr, DestinationDirectory, 0, DB_FILE_OPEN, DB_FILE_DIRECTORY_FILE, NULL, &destinationFile);
 
         if (!NT_SUCCESS(status))
         {
