@@ -101,10 +101,48 @@ VOID BeLoadFileRevisions(
         }
     }
 
+    ExtendedListView_SortItems(Context->ListHandle);
+
     if (Context->Information)
         PhFree(Context->Information);
 
     Context->Information = entries;
+}
+
+static INT NTAPI BeFileRevisionRevisionCompareFunction(
+    __in PVOID Item1,
+    __in PVOID Item2,
+    __in_opt PVOID Context
+    )
+{
+    PEN_FILE_REVISION_INFORMATION item1 = Item1;
+    PEN_FILE_REVISION_INFORMATION item2 = Item2;
+
+    return uint64cmp(item1->RevisionId, item2->RevisionId);
+}
+
+static INT NTAPI BeFileRevisionSizeCompareFunction(
+    __in PVOID Item1,
+    __in PVOID Item2,
+    __in_opt PVOID Context
+    )
+{
+    PEN_FILE_REVISION_INFORMATION item1 = Item1;
+    PEN_FILE_REVISION_INFORMATION item2 = Item2;
+
+    return uint64cmp(item1->EndOfFile.QuadPart, item2->EndOfFile.QuadPart);
+}
+
+static INT NTAPI BeFileRevisionTimeModifiedCompareFunction(
+    __in PVOID Item1,
+    __in PVOID Item2,
+    __in_opt PVOID Context
+    )
+{
+    PEN_FILE_REVISION_INFORMATION item1 = Item1;
+    PEN_FILE_REVISION_INFORMATION item2 = Item2;
+
+    return uint64cmp(item1->LastBackupTime.QuadPart, item2->LastBackupTime.QuadPart);
 }
 
 INT_PTR CALLBACK BeRevisionsDlgProc(
@@ -128,12 +166,20 @@ INT_PTR CALLBACK BeRevisionsDlgProc(
             PhCenterWindow(hwndDlg, GetParent(hwndDlg));
 
             context->ListHandle = GetDlgItem(hwndDlg, IDC_LIST);
+            PhSetExtendedListView(context->ListHandle);
             PhSetListViewStyle(context->ListHandle, FALSE, TRUE);
             PhSetControlTheme(context->ListHandle, L"explorer");
 
             PhAddListViewColumn(context->ListHandle, 0, 0, 0, LVCFMT_LEFT, 55, L"Revision");
             PhAddListViewColumn(context->ListHandle, 1, 1, 1, LVCFMT_RIGHT, 80, L"Size");
             PhAddListViewColumn(context->ListHandle, 2, 2, 2, LVCFMT_LEFT, 140, L"Time Modified");
+
+            ExtendedListView_SetSortFast(context->ListHandle, TRUE);
+            ExtendedListView_SetCompareFunction(context->ListHandle, 0, BeFileRevisionRevisionCompareFunction);
+            ExtendedListView_SetCompareFunction(context->ListHandle, 1, BeFileRevisionSizeCompareFunction);
+            ExtendedListView_SetCompareFunction(context->ListHandle, 2, BeFileRevisionTimeModifiedCompareFunction);
+            ExtendedListView_AddFallbackColumn(context->ListHandle, 0);
+            ExtendedListView_SetSort(context->ListHandle, 0, DescendingSortOrder);
 
             BeLoadFileRevisions(hwndDlg, context);
         }

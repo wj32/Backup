@@ -60,6 +60,10 @@ BOOLEAN BeExpandFileNode(
     __in PBE_FILE_NODE Node
     );
 
+ULONG BeGetSelectedFileNodeCount(
+    VOID
+    );
+
 PBE_FILE_NODE BeGetSelectedFileNode(
     VOID
     );

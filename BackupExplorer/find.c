@@ -8,12 +8,16 @@
 HWND BeFindDialogHandle;
 static PH_LAYOUT_MANAGER LayoutManager;
 static HWND BeFindListHandle;
+static ULONG BeFindListSortColumn;
+static PH_SORT_ORDER BeFindListSortOrder;
 
 static HANDLE SearchThreadHandle = NULL;
 static BOOLEAN SearchStop;
+static BOOLEAN SearchWordMatch = TRUE;
 static PPH_STRING SearchString;
 static PPH_LIST SearchResults = NULL;
 static ULONG SearchResultsAddIndex;
+static ULONG SearchResultsAddThreshold;
 static PH_QUEUED_LOCK SearchResultsLock = PH_QUEUED_LOCK_INIT;
 
 static PPH_LIST SearchResultsLocal;
@@ -33,6 +37,7 @@ VOID BeShowFindDialog(
             BeWindowHandle,
             BeFindDlgProc
             );
+        BeRegisterDialog(BeFindDialogHandle);
     }
 
     ShowWindow(BeFindDialogHandle, SW_SHOW);
@@ -61,9 +66,10 @@ INT_PTR CALLBACK BeFindDlgProc(
             PhSetControlTheme(BeFindListHandle, L"explorer");
             TreeNew_SetCallback(BeFindListHandle, BeFindListTreeNewCallback, NULL);
             PhAddTreeNewColumn(BeFindListHandle, BEFTNC_FILE, TRUE, L"File", 350, PH_ALIGN_LEFT, -2, 0);
-            PhAddTreeNewColumn(BeFindListHandle, BEFTNC_SIZE, TRUE, L"Size", 80, PH_ALIGN_RIGHT, 0, DT_RIGHT);
-            PhAddTreeNewColumn(BeFindListHandle, BEFTNC_BACKUPTIME, TRUE, L"Time Modified", 140, PH_ALIGN_LEFT, 1, 0);
-            PhAddTreeNewColumn(BeFindListHandle, BEFTNC_LASTREVISION, TRUE, L"Last Revision", 55, PH_ALIGN_RIGHT, 2, DT_RIGHT);
+            PhAddTreeNewColumnEx(BeFindListHandle, BEFTNC_SIZE, TRUE, L"Size", 80, PH_ALIGN_RIGHT, 0, DT_RIGHT, TRUE);
+            PhAddTreeNewColumnEx(BeFindListHandle, BEFTNC_BACKUPTIME, TRUE, L"Time Modified", 140, PH_ALIGN_LEFT, 1, 0, TRUE);
+            PhAddTreeNewColumnEx(BeFindListHandle, BEFTNC_LASTREVISION, TRUE, L"Last Revision", 55, PH_ALIGN_RIGHT, 2, DT_RIGHT, TRUE);
+            TreeNew_SetSort(BeFindListHandle, BEFTNC_FILE, AscendingSortOrder);
         }
         break;
     case WM_SHOWWINDOW:
@@ -111,6 +117,7 @@ INT_PTR CALLBACK BeFindDlgProc(
                         // Cleanup previous results.
 
                         PhClearList(SearchResultsLocal);
+                        TreeNew_NodesStructured(BeFindListHandle);
 
                         if (SearchResults)
                         {
@@ -126,6 +133,7 @@ INT_PTR CALLBACK BeFindDlgProc(
                         PhUpperString(SearchString);
                         SearchResults = PhCreateList(128);
                         SearchResultsAddIndex = 0;
+                        SearchResultsAddThreshold = 1;
 
                         SearchThreadHandle = PhCreateThread(0, BeFindFilesThreadStart, NULL);
 
@@ -157,12 +165,16 @@ INT_PTR CALLBACK BeFindDlgProc(
         break;
     case WM_BE_SEARCH_UPDATE:
         {
+            ULONG newCount;
+
             PhAcquireQueuedLockExclusive(&SearchResultsLock);
-            PhAddItemsList(SearchResultsLocal, SearchResults->Items + SearchResultsAddIndex, SearchResults->Count - SearchResultsAddIndex);
+            newCount = SearchResults->Count - SearchResultsAddIndex;
+            PhAddItemsList(SearchResultsLocal, SearchResults->Items + SearchResultsAddIndex, newCount);
             SearchResultsAddIndex = SearchResults->Count;
             PhReleaseQueuedLockExclusive(&SearchResultsLock);
 
-            TreeNew_NodesStructured(BeFindListHandle);
+            if (newCount != 0)
+                TreeNew_NodesStructured(BeFindListHandle);
         }
         break;
     case WM_BE_SEARCH_FINISHED:
@@ -219,6 +231,49 @@ PBE_RESULT_NODE BeGetSelectedResultNode(
     return NULL;
 }
 
+#define SORT_FUNCTION(Column) BeFindListTreeNewCompare##Column
+
+#define BEGIN_SORT_FUNCTION(Column) static int __cdecl BeFindListTreeNewCompare##Column( \
+    __in void *_context, \
+    __in const void *_elem1, \
+    __in const void *_elem2 \
+    ) \
+{ \
+    PBE_RESULT_NODE node1 = *(PBE_RESULT_NODE *)_elem1; \
+    PBE_RESULT_NODE node2 = *(PBE_RESULT_NODE *)_elem2; \
+    int sortResult = 0;
+
+#define END_SORT_FUNCTION \
+    if (sortResult == 0) \
+        sortResult = PhCompareString(node1->FileName, node2->FileName, TRUE); \
+    \
+    return PhModifySort(sortResult, BeFindListSortOrder); \
+}
+
+BEGIN_SORT_FUNCTION(File)
+{
+    sortResult = PhCompareString(node1->FileName, node2->FileName, TRUE);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(Size)
+{
+    sortResult = uint64cmp(node1->EndOfFile.QuadPart, node2->EndOfFile.QuadPart);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(BackupTime)
+{
+    sortResult = uint64cmp(node1->LastBackupTime.QuadPart, node2->LastBackupTime.QuadPart);
+}
+END_SORT_FUNCTION
+
+BEGIN_SORT_FUNCTION(LastRevision)
+{
+    sortResult = uint64cmp(node1->LastRevisionId, node2->LastRevisionId);
+}
+END_SORT_FUNCTION
+
 BOOLEAN BeFindListTreeNewCallback(
     __in HWND hwnd,
     __in PH_TREENEW_MESSAGE Message,
@@ -233,10 +288,28 @@ BOOLEAN BeFindListTreeNewCallback(
     {
     case TreeNewGetChildren:
         {
+            static PVOID sortFunctions[] =
+            {
+                SORT_FUNCTION(File),
+                SORT_FUNCTION(Size),
+                SORT_FUNCTION(BackupTime),
+                SORT_FUNCTION(LastRevision)
+            };
             PPH_TREENEW_GET_CHILDREN getChildren = Parameter1;
+            int (__cdecl *sortFunction)(void *, const void *, const void *);
 
             if (getChildren->Node)
                 return FALSE;
+
+            if (BeFindListSortColumn < BEFTNC_MAXIMUM)
+                sortFunction = sortFunctions[BeFindListSortColumn];
+            else
+                sortFunction = NULL;
+
+            if (sortFunction)
+            {
+                qsort_s(SearchResultsLocal->Items, SearchResultsLocal->Count, sizeof(PVOID), sortFunction, NULL);
+            }
 
             getChildren->Children = (PPH_TREENEW_NODE *)SearchResultsLocal->Items;
             getChildren->NumberOfChildren = SearchResultsLocal->Count;
@@ -274,6 +347,13 @@ BOOLEAN BeFindListTreeNewCallback(
             }
         }
         return TRUE;
+    case TreeNewSortChanged:
+        {
+            TreeNew_GetSort(hwnd, &BeFindListSortColumn, &BeFindListSortOrder);
+            // Force a rebuild to sort the items.
+            TreeNew_NodesStructured(hwnd);
+        }
+        return TRUE;
     case TreeNewSelectionChanged:
         {
             PBE_RESULT_NODE node;
@@ -287,6 +367,31 @@ BOOLEAN BeFindListTreeNewCallback(
             }
         }
         break;
+    }
+
+    return FALSE;
+}
+
+static BOOLEAN WordMatch(
+    __in PPH_STRINGREF Text,
+    __in PPH_STRINGREF Search,
+    __in BOOLEAN IgnoreCase
+    )
+{
+    PH_STRINGREF part;
+    PH_STRINGREF remainingPart;
+
+    remainingPart = *Search;
+
+    while (remainingPart.Length != 0)
+    {
+        PhSplitStringRefAtChar(&remainingPart, ' ', &part, &remainingPart);
+
+        if (part.Length != 0)
+        {
+            if (PhFindStringInStringRef(Text, &part, IgnoreCase) != -1)
+                return TRUE;
+        }
     }
 
     return FALSE;
@@ -325,6 +430,9 @@ static VOID EnumDb(
     ULONG i;
     PPH_STRING fileName;
 
+    if (SearchStop)
+        return;
+
     if (!NT_SUCCESS(DbQueryDirectoryFile(Database, File, &dirInfo, &numberOfEntries)))
         return;
 
@@ -332,6 +440,9 @@ static VOID EnumDb(
     {
         PDBF_FILE file;
         PPH_STRING upperFileName;
+
+        if (SearchStop)
+            break;
 
         if (FileName)
         {
@@ -348,8 +459,10 @@ static VOID EnumDb(
 
         if (!(dirInfo[i].Attributes & DB_FILE_ATTRIBUTE_DELETE_TAG))
         {
-            if (!PhFindEntryHashtable(NamesSeen, &upperFileName) &&
-                PhFindStringInStringRef(&upperFileName->sr, &SearchString->sr, FALSE) != -1)
+            if (!PhFindEntryHashtable(NamesSeen, &upperFileName) && (
+                (!SearchWordMatch && PhFindStringInStringRef(&upperFileName->sr, &SearchString->sr, FALSE) != -1) ||
+                (SearchWordMatch && WordMatch(&upperFileName->sr, &SearchString->sr, FALSE))
+                ))
             {
                 PBE_RESULT_NODE result;
                 SYSTEMTIME systemTime;
@@ -376,16 +489,28 @@ static VOID EnumDb(
 
                 result->LastRevisionIdString = PhFormatUInt64(result->LastRevisionId, TRUE);
 
-                PhLargeIntegerToLocalSystemTime(&systemTime, &result->LastBackupTime);
-                result->LastBackupTimeString = PhFormatDateTime(&systemTime);
+                if (result->LastBackupTime.QuadPart != 0)
+                {
+                    PhLargeIntegerToLocalSystemTime(&systemTime, &result->LastBackupTime);
+                    result->LastBackupTimeString = PhFormatDateTime(&systemTime);
+                }
 
                 PhAcquireQueuedLockExclusive(&SearchResultsLock);
 
                 PhAddItemList(SearchResults, result);
 
-                // Update the search results in batches of 40.
-                if (SearchResults->Count % 40 == 0)
+                // Update the search results in batches.
+                if (SearchResults->Count % SearchResultsAddThreshold == 0)
+                {
                     PostMessage(BeFindDialogHandle, WM_BE_SEARCH_UPDATE, 0, 0);
+
+                    if (SearchResultsAddThreshold > 10000)
+                        SearchResultsAddThreshold += 10000;
+                    else if (SearchResultsAddThreshold > 1000)
+                        SearchResultsAddThreshold += 1000;
+                    else
+                        SearchResultsAddThreshold += 10;
+                }
 
                 PhReleaseQueuedLockExclusive(&SearchResultsLock);
             }
@@ -438,6 +563,9 @@ NTSTATUS BeFindFilesThreadStart(
 
     for (revisionId = lastRevisionId; revisionId >= firstRevisionId; revisionId--)
     {
+        if (SearchStop)
+            break;
+
         if (revisionId == lastRevisionId)
         {
             PhInitializeStringRef(&directoryName, L"head");

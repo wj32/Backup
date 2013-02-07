@@ -18,6 +18,18 @@
 
 extern HINSTANCE BeInstanceHandle;
 
+LONG BeMessageLoop(
+    VOID
+    );
+
+VOID BeRegisterDialog(
+    __in HWND DialogWindowHandle
+    );
+
+VOID BeUnregisterDialog(
+    __in HWND DialogWindowHandle
+    );
+
 // explorer
 
 extern HWND BeWindowHandle;

@@ -1,6 +1,7 @@
 #include "explorer.h"
-#include <emenu.h>
 #include <windowsx.h>
+#include <emenu.h>
+#include <cpysave.h>
 #include "explorerp.h"
 
 HWND BeWindowHandle;
@@ -8,6 +9,7 @@ HWND BeRevisionListHandle;
 PH_LAYOUT_MANAGER BeLayoutManager;
 HWND BeProgressWindowHandle;
 
+PEN_FILE_REVISION_INFORMATION BeRevisionInformation;
 PPH_STRING BeDatabaseFileName;
 ULONGLONG BeCurrentRevision;
 PPH_STRING BeTempDatabaseFileName;
@@ -26,6 +28,30 @@ PBK_CONFIG BeConfig;
 
 PPH_HASHTABLE BeFileIconHashtable;
 PH_STRINGREF BeDirectoryIconKey = PH_STRINGREF_INIT(L"\\");
+
+static INT NTAPI BeRevisionRevisionCompareFunction(
+    __in PVOID Item1,
+    __in PVOID Item2,
+    __in_opt PVOID Context
+    )
+{
+    PEN_FILE_REVISION_INFORMATION item1 = Item1;
+    PEN_FILE_REVISION_INFORMATION item2 = Item2;
+
+    return uint64cmp(item1->RevisionId, item2->RevisionId);
+}
+
+static INT NTAPI BeRevisionTimeCompareFunction(
+    __in PVOID Item1,
+    __in PVOID Item2,
+    __in_opt PVOID Context
+    )
+{
+    PEN_FILE_REVISION_INFORMATION item1 = Item1;
+    PEN_FILE_REVISION_INFORMATION item2 = Item2;
+
+    return uint64cmp(item1->TimeStamp.QuadPart, item2->TimeStamp.QuadPart);
+}
 
 INT_PTR CALLBACK BeExplorerDlgProc(
     __in HWND hwndDlg,
@@ -62,6 +88,10 @@ INT_PTR CALLBACK BeExplorerDlgProc(
             PhSetExtendedListView(BeRevisionListHandle);
             PhAddListViewColumn(BeRevisionListHandle, 0, 0, 0, LVCFMT_RIGHT, 55, L"Revision");
             PhAddListViewColumn(BeRevisionListHandle, 1, 1, 1, LVCFMT_LEFT, 140, L"Time");
+
+            ExtendedListView_SetSortFast(BeRevisionListHandle, TRUE);
+            ExtendedListView_SetCompareFunction(BeRevisionListHandle, 0, BeRevisionRevisionCompareFunction);
+            ExtendedListView_SetCompareFunction(BeRevisionListHandle, 1, BeRevisionTimeCompareFunction);
             ExtendedListView_AddFallbackColumn(BeRevisionListHandle, 0);
             ExtendedListView_SetSort(BeRevisionListHandle, 0, DescendingSortOrder);
 
@@ -69,10 +99,10 @@ INT_PTR CALLBACK BeExplorerDlgProc(
 
             PhSetControlTheme(BeFileListHandle, L"explorer");
             PhAddTreeNewColumn(BeFileListHandle, BETNC_FILE, TRUE, L"File", 200, PH_ALIGN_LEFT, -2, 0);
-            PhAddTreeNewColumn(BeFileListHandle, BETNC_SIZE, TRUE, L"Size", 80, PH_ALIGN_RIGHT, 0, DT_RIGHT);
-            PhAddTreeNewColumn(BeFileListHandle, BETNC_BACKUPTIME, TRUE, L"Time Modified", 140, PH_ALIGN_LEFT, 1, 0);
-            PhAddTreeNewColumn(BeFileListHandle, BETNC_REVISION, TRUE, L"Last Revision", 80, PH_ALIGN_RIGHT, 2, DT_RIGHT);
-            PhAddTreeNewColumn(BeFileListHandle, BETNC_TIMESTAMP, TRUE, L"Last Revision Time", 140, PH_ALIGN_LEFT, 3, 0);
+            PhAddTreeNewColumnEx(BeFileListHandle, BETNC_SIZE, TRUE, L"Size", 80, PH_ALIGN_RIGHT, 0, DT_RIGHT, TRUE);
+            PhAddTreeNewColumnEx(BeFileListHandle, BETNC_BACKUPTIME, TRUE, L"Time Modified", 140, PH_ALIGN_LEFT, 1, 0, TRUE);
+            PhAddTreeNewColumnEx(BeFileListHandle, BETNC_REVISION, TRUE, L"Revision", 55, PH_ALIGN_RIGHT, 2, DT_RIGHT, TRUE);
+            PhAddTreeNewColumnEx(BeFileListHandle, BETNC_TIMESTAMP, TRUE, L"Revision Time", 140, PH_ALIGN_LEFT, 3, 0, TRUE);
             TreeNew_SetSort(BeFileListHandle, BETNC_FILE, AscendingSortOrder);
             TreeNew_SetCallback(BeFileListHandle, BeFileListTreeNewCallback, NULL);
             TreeNew_SetExtendedFlags(BeFileListHandle, TN_FLAG_ITEM_DRAG_SELECT, TN_FLAG_ITEM_DRAG_SELECT);
@@ -94,7 +124,7 @@ INT_PTR CALLBACK BeExplorerDlgProc(
 
             if (!BeConfigFileName)
             {
-                EndDialog(hwndDlg, IDCANCEL);
+                DestroyWindow(hwndDlg);
                 break;
             }
 
@@ -104,7 +134,7 @@ INT_PTR CALLBACK BeExplorerDlgProc(
                     status = STATUS_INVALID_PARAMETER;
 
                 PhShowStatus(hwndDlg, L"Unable to read configuration file", status, 0);
-                EndDialog(hwndDlg, IDCANCEL);
+                DestroyWindow(hwndDlg);
                 break;
             }
 
@@ -119,6 +149,7 @@ INT_PTR CALLBACK BeExplorerDlgProc(
     case WM_DESTROY:
         {
             BeSetCurrentRevision(0);
+            PostQuitMessage(0);
         }
         break;
     case WM_SIZE:
@@ -131,7 +162,7 @@ INT_PTR CALLBACK BeExplorerDlgProc(
             switch (LOWORD(wParam))
             {
             case IDCANCEL:
-                EndDialog(hwndDlg, IDCANCEL);
+                DestroyWindow(hwndDlg);
                 break;
             case IDC_FIND:
                 BeShowFindDialog();
@@ -184,6 +215,15 @@ INT_PTR CALLBACK BeExplorerDlgProc(
                     }
                 }
                 break;
+            case ID_FILE_COPY:
+                {
+                    PPH_STRING text;
+
+                    text = PhGetTreeNewText(BeFileListHandle, 0);
+                    PhSetClipboardStringEx(BeFileListHandle, text->Buffer, text->Length);
+                    PhDereferenceObject(text);
+                }
+                break;
             }
         }
         break;
@@ -198,13 +238,13 @@ INT_PTR CALLBACK BeExplorerDlgProc(
                     if (header->hwndFrom == BeRevisionListHandle)
                     {
                         //LPNMITEMACTIVATE itemActivate = (LPNMITEMACTIVATE)header;
-                        PULONGLONG revisionId = NULL;
+                        PEN_FILE_REVISION_INFORMATION revisionInfo = NULL;
 
                         if (ListView_GetSelectedCount(BeRevisionListHandle) == 1)
-                            revisionId = PhGetSelectedListViewItemParam(BeRevisionListHandle);
+                            revisionInfo = PhGetSelectedListViewItemParam(BeRevisionListHandle);
 
-                        if (revisionId)
-                            BeSetCurrentRevision(*revisionId);
+                        if (revisionInfo)
+                            BeSetCurrentRevision(revisionInfo->RevisionId);
                     }
                 }
                 break;
@@ -260,7 +300,7 @@ BOOLEAN BeLoadRevisionList(
             temp = PhFormatUInt64(entries[i].RevisionId, TRUE);
         }
 
-        itemIndex = PhAddListViewItem(BeRevisionListHandle, MAXINT, temp->Buffer, PhAllocateCopy(&entries[i].RevisionId, sizeof(ULONGLONG)));
+        itemIndex = PhAddListViewItem(BeRevisionListHandle, MAXINT, temp->Buffer, &entries[i]);
         PhDereferenceObject(temp);
 
         PhLargeIntegerToLocalSystemTime(&systemTime, &entries[i].TimeStamp);
@@ -269,7 +309,10 @@ BOOLEAN BeLoadRevisionList(
         PhDereferenceObject(temp);
     }
 
-    PhFree(entries);
+    if (BeRevisionInformation)
+        PhFree(BeRevisionInformation);
+
+    BeRevisionInformation = entries;
 
     ListView_SetItemState(BeRevisionListHandle, 0, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
     ExtendedListView_SortItems(BeRevisionListHandle);
@@ -568,6 +611,26 @@ BOOLEAN BeFileListTreeNewCallback(
             }
         }
         return TRUE;
+    case TreeNewKeyDown:
+        {
+            PPH_TREENEW_KEY_EVENT keyEvent = Parameter1;
+
+            switch (keyEvent->VirtualKey)
+            {
+            case 'C':
+                if (GetKeyState(VK_CONTROL) < 0)
+                    SendMessage(BeWindowHandle, WM_COMMAND, ID_FILE_COPY, 0);
+                break;
+            case 'A':
+                if (GetKeyState(VK_CONTROL) < 0)
+                    TreeNew_SelectRange(hwnd, 0, -1);
+                break;
+            case VK_RETURN:
+                SendMessage(BeWindowHandle, WM_COMMAND, ID_FILE_PREVIEW, 0);
+                break;
+            }
+        }
+        return TRUE;
     case TreeNewLeftDoubleClick:
         {
             SendMessage(BeWindowHandle, WM_COMMAND, ID_FILE_PREVIEW, 0);
@@ -588,7 +651,13 @@ BOOLEAN BeFileListTreeNewCallback(
                 PhSetFlagsEMenuItem(menu, ID_FILE_PREVIEW, PH_EMENU_DEFAULT, PH_EMENU_DEFAULT);
 
                 if (node->IsDirectory)
-                    PhSetFlagsEMenuItem(menu, ID_FILE_PREVIEW, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
+                    PhEnableEMenuItem(menu, ID_FILE_PREVIEW, FALSE);
+
+                if (BeGetSelectedFileNodeCount() != 1)
+                {
+                    PhSetFlagsAllEMenuItems(menu, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
+                    PhEnableEMenuItem(menu, ID_FILE_COPY, TRUE);
+                }
 
                 selectedItem = PhShowEMenu(menu, hwnd, PH_EMENU_SHOW_LEFTRIGHT, PH_ALIGN_TOP | PH_ALIGN_LEFT, contextMenu->Location.x, contextMenu->Location.y);
 
@@ -736,6 +805,28 @@ BOOLEAN BeExpandFileNode(
     DbCloseFile(BeTempDatabase, directory);
 
     return NT_SUCCESS(status);
+}
+
+ULONG BeGetSelectedFileNodeCount(
+    VOID
+    )
+{
+    ULONG result;
+    ULONG count;
+    ULONG i;
+
+    result = 0;
+    count = TreeNew_GetFlatNodeCount(BeFileListHandle);
+
+    for (i = 0; i < count; i++)
+    {
+        PBE_FILE_NODE node = (PBE_FILE_NODE)TreeNew_GetFlatNode(BeFileListHandle, i);
+
+        if (node->Node.Selected)
+            result++;
+    }
+
+    return result;
 }
 
 PBE_FILE_NODE BeGetSelectedFileNode(
@@ -1243,7 +1334,10 @@ BOOLEAN BeExecuteWithProgress(
     HANDLE threadHandle;
 
     if (BeProgressWindowHandle)
+    {
+        PhShowError(ParentWindowHandle, L"Another operation is currently in progress. You must first wait for that operation to complete.");
         return FALSE;
+    }
 
     BeProgressWindowHandle = BeCreateProgressDialog(ParentWindowHandle);
     threadHandle = PhCreateThread(0, ThreadStart, Context);
