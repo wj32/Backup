@@ -385,6 +385,8 @@ BOOLEAN BeSetCurrentRevision(
         PhClearList(BeRootNode->Children);
         BeRootNode->Opened = FALSE;
 
+        TreeNew_NodesStructured(BeFileListHandle);
+
         return TRUE;
     }
 
@@ -432,11 +434,13 @@ BOOLEAN BeSetCurrentRevision(
 
     for (i = 0; i < count; i++)
     {
-        PULONGLONG revisionId;
+        PEN_FILE_REVISION_INFORMATION revisionInfo;
 
-        if (PhGetListViewItemParam(BeRevisionListHandle, i, &revisionId) && *revisionId == RevisionId)
+        if (PhGetListViewItemParam(BeRevisionListHandle, i, &revisionInfo) && revisionInfo->RevisionId == RevisionId)
         {
             ListView_SetItemState(BeRevisionListHandle, i, LVIS_SELECTED | LVIS_FOCUSED, LVIS_SELECTED | LVIS_FOCUSED);
+            ListView_EnsureVisible(BeRevisionListHandle, i, FALSE);
+            break;
         }
     }
 
