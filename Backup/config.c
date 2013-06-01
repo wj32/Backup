@@ -303,6 +303,11 @@ BOOLEAN BkCreateConfigFromString(
                         PhStringToInteger64(&rhs, 10, &integer);
                         config->UseTransactions = (ULONG)integer;
                     }
+                    else if (PhEqualStringRef2(&lhs, L"Strict", TRUE))
+                    {
+                        PhStringToInteger64(&rhs, 10, &integer);
+                        config->Strict = (ULONG)integer;
+                    }
                 }
                 break;
             }

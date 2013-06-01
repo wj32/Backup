@@ -584,11 +584,17 @@ NTSTATUS EnpBackupFirstRevision(
 
     if (Config->UseShadowCopy)
     {
-        EnpStartVssObject(Config, rootInfo, &vss, MessageHandler);
+        if (!EnpStartVssObject(Config, rootInfo, &vss, MessageHandler) && Config->Strict)
+        {
+            MessageHandler(EN_MESSAGE_ERROR, PhCreateString(L"Aborting because Strict is enabled."));
+            EnpDestroyFileInfo(rootInfo);
+            return STATUS_UNSUCCESSFUL;
+        }
     }
 
     actionList = PkCreateActionList();
     status = EnpSyncTreeFirstRevision(Config, Database, headDirectory, rootInfo, actionList, vss, MessageHandler);
+    result = S_OK;
     packageFileName = NULL;
     fileStreamCreated = FALSE;
 
@@ -687,7 +693,15 @@ NTSTATUS EnpSyncTreeFirstRevision(
                 status = EnpPopulateFsFileInfo(Config, info, Vss);
 
                 if (!NT_SUCCESS(status))
-                    MessageHandler(EN_MESSAGE_WARNING, PhFormatString(L"Unable to list contents of %s", info->FullSourceFileName->Buffer));
+                {
+                    MessageHandler(EN_MESSAGE_WARNING, PhFormatString(L"Unable to list contents of %s: 0x%x", info->FullSourceFileName->Buffer, status));
+
+                    if (Config->Strict)
+                    {
+                        MessageHandler(EN_MESSAGE_ERROR, PhCreateString(L"Aborting because Strict is enabled."));
+                        return status;
+                    }
+                }
             }
 
             if (info->Files)
@@ -929,7 +943,15 @@ NTSTATUS EnpBackupNewRevision(
 
     if (Config->UseShadowCopy)
     {
-        EnpStartVssObject(Config, rootInfo, &vss, MessageHandler);
+        if (!EnpStartVssObject(Config, rootInfo, &vss, MessageHandler) && Config->Strict)
+        {
+            MessageHandler(EN_MESSAGE_ERROR, PhCreateString(L"Aborting because Strict is enabled."));
+            EnpDestroyFileInfo(rootInfo);
+            DbUtDeleteDirectoryContents(Database, newHeadDirectory);
+            DbDeleteFile(Database, newHeadDirectory);
+            DbCloseFile(Database, headDirectory);
+            return STATUS_UNSUCCESSFUL;
+        }
     }
 
     actionList = PkCreateActionList();
@@ -1129,7 +1151,15 @@ NTSTATUS EnpDiffTreeNewRevision(
                 status = EnpPopulateFsFileInfo(Config, info, Vss);
 
                 if (!NT_SUCCESS(status))
-                    MessageHandler(EN_MESSAGE_WARNING, PhFormatString(L"Unable to list contents of %s", info->FullSourceFileName->Buffer));
+                {
+                    MessageHandler(EN_MESSAGE_WARNING, PhFormatString(L"Unable to list contents of %s: 0x%x", info->FullSourceFileName->Buffer, status));
+
+                    if (Config->Strict)
+                    {
+                        MessageHandler(EN_MESSAGE_ERROR, PhCreateString(L"Aborting because Strict is enabled."));
+                        return status;
+                    }
+                }
             }
 
             status = EnpDiffDirectoryNewRevision(Config, Database, NewRevisionId, HeadDirectory, DiffDirectory, info, ActionList, NumberOfChanges, Vss, MessageHandler);
@@ -1607,6 +1637,7 @@ HRESULT EnpBackupPackageCallback(
     __in_opt PVOID Context
     )
 {
+    NTSTATUS status;
     PEN_PACKAGE_CALLBACK_CONTEXT context = Context;
     PEN_FILEINFO fileInfo;
 
@@ -1636,8 +1667,14 @@ HRESULT EnpBackupPackageCallback(
 
             if (!fileInfo->FileStreamAttempted)
             {
-                EnpOpenStreamForFile(fileInfo, context->Vss, context->MessageHandler);
+                status = EnpOpenStreamForFile(fileInfo, context->Vss, context->MessageHandler);
                 fileInfo->FileStreamAttempted = TRUE;
+
+                if (!NT_SUCCESS(status))
+                {
+                    context->MessageHandler(EN_MESSAGE_ERROR, PhCreateString(L"Aborting because Strict is enabled."));
+                    return E_FAIL;
+                }
             }
 
             getStream->FileStream = PkCreateFileStream(fileInfo->FileStream); // creates zero-length stream if NULL
@@ -4403,13 +4440,14 @@ NTSTATUS EnpCommitAndCloseTransaction(
     return status;
 }
 
-VOID EnpStartVssObject(
+BOOLEAN EnpStartVssObject(
     __in PBK_CONFIG Config,
     __in PEN_FILEINFO Root,
     __out PBK_VSS_OBJECT *Vss,
     __in PEN_MESSAGE_HANDLER MessageHandler
     )
 {
+    BOOLEAN success = FALSE;
     HRESULT result;
     PBK_VSS_OBJECT vss;
 
@@ -4421,10 +4459,10 @@ VOID EnpStartVssObject(
         {
             EnpConfigureVssObject(vss, Root, MessageHandler);
 
-            if (!SUCCEEDED(result = BkPerformSnapshotsVssObject(vss)))
-            {
+            if (SUCCEEDED(result = BkPerformSnapshotsVssObject(vss)))
+                success = TRUE;
+            else
                 MessageHandler(EN_MESSAGE_WARNING, PhFormatString(L"Failed to perform VSS snapshots: 0x%x", result));
-            }
         }
         else
         {
@@ -4437,6 +4475,8 @@ VOID EnpStartVssObject(
     }
 
     *Vss = vss;
+
+    return success;
 }
 
 VOID EnpConfigureVssObject(

@@ -1,3 +1,6 @@
+1.8
+ * Improved VSS error handling
+ * Added Strict option
 1.7
  * New GUI included: Backup Explorer
  * Added compact command

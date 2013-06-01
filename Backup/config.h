@@ -27,6 +27,7 @@ typedef struct _BK_CONFIG
     PPH_STRING DestinationDirectory;
     ULONG CompressionLevel;
     ULONG UseTransactions;
+    ULONG Strict;
 } BK_CONFIG, *PBK_CONFIG;
 
 NTSTATUS BkCreateConfigFromFile(

@@ -189,23 +189,30 @@ bool BkpSnapshotSortFunction(
     return length2 < length1;
 }
 
-VOID BkpUpdateSnapshotProperties(
+HRESULT BkpUpdateSnapshotProperties(
     __in PBK_VSS_OBJECT Vss
     )
 {
+    HRESULT result;
     std::vector<BK_VSS_SNAPSHOT>::iterator it;
     VSS_SNAPSHOT_PROP prop;
 
     for (it = Vss->Snapshots.begin(); it != Vss->Snapshots.end(); ++it)
     {
-        if (SUCCEEDED(Vss->Object->GetSnapshotProperties(it->SnapshotId, &prop)))
+        if (SUCCEEDED(result = Vss->Object->GetSnapshotProperties(it->SnapshotId, &prop)))
         {
             PhSwapReference2((PVOID *)&it->SnapshotDevice, PhCreateString(prop.m_pwszSnapshotDeviceObject));
             VssFreeSnapshotPropertiesInternal_I(&prop);
         }
+        else
+        {
+            return result;
+        }
     }
 
     std::sort(Vss->Snapshots.begin(), Vss->Snapshots.end(), BkpSnapshotSortFunction);
+
+    return S_OK;
 }
 
 HRESULT BkPerformSnapshotsVssObject(
@@ -220,10 +227,27 @@ HRESULT BkPerformSnapshotsVssObject(
     if (!SUCCEEDED(result))
         return result;
 
-    async->Wait();
+    result = async->Wait();
+
+    if (SUCCEEDED(result))
+    {
+        if (SUCCEEDED(async->QueryStatus(&result, NULL)))
+        {
+            if (SUCCEEDED(result))
+                result = S_OK;
+        }
+        else
+        {
+            return E_UNEXPECTED;
+        }
+    }
+
     async->Release();
 
-    BkpUpdateSnapshotProperties(Vss);
+    if (!SUCCEEDED(result))
+        return result;
+
+    result = BkpUpdateSnapshotProperties(Vss);
 
     return result;
 }

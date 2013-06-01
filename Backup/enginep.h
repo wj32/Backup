@@ -503,7 +503,7 @@ NTSTATUS EnpCommitAndCloseTransaction(
     __in_opt PEN_MESSAGE_HANDLER MessageHandler
     );
 
-VOID EnpStartVssObject(
+BOOLEAN EnpStartVssObject(
     __in PBK_CONFIG Config,
     __in PEN_FILEINFO Root,
     __out PBK_VSS_OBJECT *Vss,
