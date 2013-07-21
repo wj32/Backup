@@ -142,7 +142,10 @@ INT_PTR CALLBACK BeExplorerDlgProc(
 
             // Open the configuration file.
 
-            BeConfigFileName = BePromptForConfigFileName();
+            if (BeFileName)
+                BeConfigFileName = BeFileName;
+            else
+                BeConfigFileName = BePromptForConfigFileName();
 
             if (!BeConfigFileName)
             {
@@ -152,7 +155,7 @@ INT_PTR CALLBACK BeExplorerDlgProc(
 
             if (!NT_SUCCESS(status = BkCreateConfigFromFile(BeConfigFileName->Buffer, &BeConfig)) || !BeConfig->DestinationDirectory)
             {
-                if (!BeConfig->DestinationDirectory)
+                if (BeConfig && !BeConfig->DestinationDirectory)
                     status = STATUS_INVALID_PARAMETER;
 
                 PhShowStatus(hwndDlg, L"Unable to read configuration file", status, 0);

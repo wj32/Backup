@@ -23,6 +23,19 @@
 #include "explorer.h"
 
 HINSTANCE BeInstanceHandle;
+PPH_STRING BeFileName;
+
+static BOOLEAN NTAPI BeCommandLineCallback(
+    __in_opt PPH_COMMAND_LINE_OPTION Option,
+    __in_opt PPH_STRING Value,
+    __in_opt PVOID Context
+    )
+{
+    if (!Option)
+        PhSwapReference(&BeFileName, Value);
+
+    return TRUE;
+}
 
 static PPH_LIST DialogList = NULL;
 
@@ -33,12 +46,24 @@ INT WINAPI WinMain(
     __in INT nCmdShow
     )
 {
+    PH_STRINGREF commandLine;
+
     BeInstanceHandle = hInstance;
 
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     PhInitializePhLibEx(PHLIB_INIT_MODULE_WORK_QUEUE | PHLIB_INIT_MODULE_IO_SUPPORT, 512 * 1024, 16 * 1024);
 
     PhApplicationName = L"Backup Explorer";
+
+    PhUnicodeStringToStringRef(&NtCurrentPeb()->ProcessParameters->CommandLine, &commandLine);
+    PhParseCommandLine(
+        &commandLine,
+        NULL,
+        0,
+        PH_COMMAND_LINE_IGNORE_FIRST_PART,
+        BeCommandLineCallback,
+        NULL
+        );
 
     PhGuiSupportInitialization();
     PhTreeNewInitialization();

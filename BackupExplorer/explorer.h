@@ -17,6 +17,7 @@
 // main
 
 extern HINSTANCE BeInstanceHandle;
+extern PPH_STRING BeFileName;
 
 LONG BeMessageLoop(
     VOID
