@@ -70,55 +70,55 @@ typedef struct _DB_DATABASE
 } DB_DATABASE, *PDB_DATABASE;
 
 PDBF_FILE DbpAllocateFile(
-    __in PDB_DATABASE Database,
-    __out_opt PULONG FileRva
+    _In_ PDB_DATABASE Database,
+    _Out_opt_ PULONG FileRva
     );
 
 BOOLEAN DbpSetNameFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in PPH_STRINGREF Name
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_ PPH_STRINGREF Name
     );
 
 BOOLEAN DbpLinkFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE ParentFile,
-    __in ULONG ParentFileRva,
-    __in PDBF_FILE File,
-    __in ULONG FileRva
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE ParentFile,
+    _In_ ULONG ParentFileRva,
+    _In_ PDBF_FILE File,
+    _In_ ULONG FileRva
     );
 
 BOOLEAN DbpUnlinkFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE ParentFile,
-    __in PDBF_FILE File,
-    __in ULONG FileRva
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE ParentFile,
+    _In_ PDBF_FILE File,
+    _In_ ULONG FileRva
     );
 
 PDBF_FILE DbpFindFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE ParentFile,
-    __in PPH_STRINGREF Name,
-    __out_opt PULONG FileRva
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE ParentFile,
+    _In_ PPH_STRINGREF Name,
+    _Out_opt_ PULONG FileRva
     );
 
 NTSTATUS DbpRenameFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in_opt PDBF_FILE RootDirectory,
-    __in PPH_STRINGREF NewFileName
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_opt_ PDBF_FILE RootDirectory,
+    _In_ PPH_STRINGREF NewFileName
     );
 
 NTSTATUS DbpCopyAttributesFile(
-    __in PDBF_FILE SourceFile,
-    __in PDBF_FILE DestinationFile
+    _In_ PDBF_FILE SourceFile,
+    _In_ PDBF_FILE DestinationFile
     );
 
 NTSTATUS DbpCopyDirectory(
-    __in PDB_DATABASE SourceDatabase,
-    __in PDBF_FILE SourceDirectory,
-    __in PDB_DATABASE DestinationDatabase,
-    __in PDBF_FILE DestinationDirectory
+    _In_ PDB_DATABASE SourceDatabase,
+    _In_ PDBF_FILE SourceDirectory,
+    _In_ PDB_DATABASE DestinationDatabase,
+    _In_ PDBF_FILE DestinationDirectory
     );
 
 #endif

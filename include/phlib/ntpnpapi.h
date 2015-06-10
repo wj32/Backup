@@ -98,44 +98,60 @@ typedef enum _PLUGPLAY_CONTROL_CLASS
     MaxPlugPlayControl
 } PLUGPLAY_CONTROL_CLASS, *PPLUGPLAY_CONTROL_CLASS;
 
+#if (PHNT_VERSION < PHNT_WIN8)
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtGetPlugPlayEvent(
-    __in HANDLE EventHandle,
-    __in_opt PVOID Context,
-    __out_bcount(EventBufferSize) PPLUGPLAY_EVENT_BLOCK EventBlock,
-    __in ULONG EventBufferSize
+    _In_ HANDLE EventHandle,
+    _In_opt_ PVOID Context,
+    _Out_writes_bytes_(EventBufferSize) PPLUGPLAY_EVENT_BLOCK EventBlock,
+    _In_ ULONG EventBufferSize
     );
+#endif
 
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtPlugPlayControl(
-    __in PLUGPLAY_CONTROL_CLASS PnPControlClass,
-    __inout_bcount(PnPControlDataLength) PVOID PnPControlData,
-    __in ULONG PnPControlDataLength
+    _In_ PLUGPLAY_CONTROL_CLASS PnPControlClass,
+    _Inout_updates_bytes_(PnPControlDataLength) PVOID PnPControlData,
+    _In_ ULONG PnPControlDataLength
     );
 
 #if (PHNT_VERSION >= PHNT_WIN7)
-// rev
+
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtSerializeBoot(
     VOID
     );
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtEnableLastKnownGood(
+    VOID
+    );
+
+NTSYSCALLAPI
+NTSTATUS
+NTAPI
+NtDisableLastKnownGood(
+    VOID
+    );
+
 #endif
 
 #if (PHNT_VERSION >= PHNT_VISTA)
-// private
 NTSYSCALLAPI
 NTSTATUS
 NTAPI
 NtReplacePartitionUnit(
-    __in PUNICODE_STRING TargetInstancePath,
-    __in PUNICODE_STRING SpareInstancePath,
-    __in ULONG Flags
+    _In_ PUNICODE_STRING TargetInstancePath,
+    _In_ PUNICODE_STRING SpareInstancePath,
+    _In_ ULONG Flags
     );
 #endif
 

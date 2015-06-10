@@ -24,8 +24,8 @@
 #include "config.h"
 
 PPH_STRING BkpCreateStringFromFileBuffer(
-    __in PVOID Buffer,
-    __in SIZE_T Size
+    _In_ PVOID Buffer,
+    _In_ SIZE_T Size
     )
 {
     PPH_STRING string;
@@ -44,14 +44,14 @@ PPH_STRING BkpCreateStringFromFileBuffer(
 
     if ((result & IS_TEXT_UNICODE_ODD_LENGTH) && Size >= 3 && byteOrderMark == 0xbbef && *((PUCHAR)Buffer + 2) == 0xbf)
     {
-        // UTF-8 (treat as ANSI)
-        string = PhCreateStringFromAnsiEx((PCHAR)Buffer + 3, Size - 3);
+        // UTF-8
+        string = PhConvertUtf8ToUtf16Ex((PCHAR)Buffer + 3, Size - 3);
     }
     else if (result & (IS_TEXT_UNICODE_UNICODE_MASK | IS_TEXT_UNICODE_REVERSE_MASK))
     {
         if (byteOrderMark == 0xfeff || byteOrderMark == 0xfffe)
         {
-            // UTF-16 (treat as UCS-16)
+            // UTF-16
 
             string = PhCreateStringEx((PWSTR)((PCHAR)Buffer + 2), Size - 2);
 
@@ -79,15 +79,15 @@ PPH_STRING BkpCreateStringFromFileBuffer(
     }
     else
     {
-        string = PhCreateStringFromAnsiEx(Buffer, Size);
+        string = PhConvertMultiByteToUtf16Ex(Buffer, Size);
     }
 
     return string;
 }
 
 NTSTATUS BkCreateConfigFromFile(
-    __in PWSTR FileName,
-    __out PBK_CONFIG *Config
+    _In_ PWSTR FileName,
+    _Out_ PBK_CONFIG *Config
     )
 {
     NTSTATUS status;
@@ -144,7 +144,7 @@ NTSTATUS BkCreateConfigFromFile(
 }
 
 BOOLEAN BkpIsWhitespaceChar(
-    __in WCHAR Char
+    _In_ WCHAR Char
     )
 {
     if (Char == ' ' || Char == '\t' || Char == '\r' || Char == '\f' || Char == '\v')
@@ -154,23 +154,16 @@ BOOLEAN BkpIsWhitespaceChar(
 }
 
 VOID BkpTrimString(
-    __inout PPH_STRINGREF String
+    _Inout_ PPH_STRINGREF String
     )
 {
-    while (String->Length != 0 && BkpIsWhitespaceChar(String->Buffer[0]))
-    {
-        String->Buffer++;
-        String->Length -= sizeof(WCHAR);
-    }
+    static PH_STRINGREF charSet = PH_STRINGREF_INIT(L" \t\r\f\v");
 
-    while (String->Length != 0 && BkpIsWhitespaceChar(String->Buffer[String->Length / sizeof(WCHAR) - 1]))
-    {
-        String->Length -= sizeof(WCHAR);
-    }
+    PhTrimStringRef(String, &charSet, 0);
 }
 
 ULONG BkpSectionNameToNumber(
-    __in PPH_STRINGREF SectionName
+    _In_ PPH_STRINGREF SectionName
     )
 {
     if (PhEqualStringRef2(SectionName, L"Map", TRUE))
@@ -186,8 +179,8 @@ ULONG BkpSectionNameToNumber(
 }
 
 BOOLEAN BkCreateConfigFromString(
-    __in PPH_STRINGREF String,
-    __out PBK_CONFIG *Config
+    _In_ PPH_STRINGREF String,
+    _Out_ PBK_CONFIG *Config
     )
 {
     PBK_CONFIG config;
@@ -291,7 +284,7 @@ BOOLEAN BkCreateConfigFromString(
                 {
                     if (PhEqualStringRef2(&lhs, L"Directory", TRUE))
                     {
-                        PhSwapReference2(&config->DestinationDirectory, PhCreateStringEx(rhs.Buffer, rhs.Length));
+                        PhMoveReference(&config->DestinationDirectory, PhCreateStringEx(rhs.Buffer, rhs.Length));
                     }
                     else if (PhEqualStringRef2(&lhs, L"CompressionLevel", TRUE))
                     {
@@ -320,7 +313,7 @@ BOOLEAN BkCreateConfigFromString(
 }
 
 VOID BkDereferenceStringList(
-    __in PPH_LIST List
+    _In_ PPH_LIST List
     )
 {
     ULONG i;
@@ -334,7 +327,7 @@ VOID BkDereferenceStringList(
 }
 
 VOID BkFreeConfig(
-    __in PBK_CONFIG Config
+    _In_ PBK_CONFIG Config
     )
 {
     BkDereferenceStringList(Config->MapFromList);

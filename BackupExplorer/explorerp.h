@@ -40,24 +40,24 @@ BOOLEAN BeLoadRevisionList(
 // File list
 
 BOOLEAN BeFileListTreeNewCallback(
-    __in HWND hwnd,
-    __in PH_TREENEW_MESSAGE Message,
-    __in_opt PVOID Parameter1,
-    __in_opt PVOID Parameter2,
-    __in_opt PVOID Context
+    _In_ HWND hwnd,
+    _In_ PH_TREENEW_MESSAGE Message,
+    _In_opt_ PVOID Parameter1,
+    _In_opt_ PVOID Parameter2,
+    _In_opt_ PVOID Context
     );
 
 PBE_FILE_NODE BeCreateFileNode(
-    __in_opt PDB_FILE_DIRECTORY_INFORMATION Information,
-    __in_opt PBE_FILE_NODE ParentNode
+    _In_opt_ PDB_FILE_DIRECTORY_INFORMATION Information,
+    _In_opt_ PBE_FILE_NODE ParentNode
     );
 
 VOID BeDestroyFileNode(
-    __in PBE_FILE_NODE Node
+    _In_ PBE_FILE_NODE Node
     );
 
 BOOLEAN BeExpandFileNode(
-    __in PBE_FILE_NODE Node
+    _In_ PBE_FILE_NODE Node
     );
 
 ULONG BeGetSelectedFileNodeCount(
@@ -69,7 +69,7 @@ PBE_FILE_NODE BeGetSelectedFileNode(
     );
 
 PPH_STRING BeComputeFullPath(
-    __in PBE_FILE_NODE Node
+    _In_ PBE_FILE_NODE Node
     );
 
 // File icons
@@ -82,12 +82,12 @@ typedef struct _BE_FILE_ICON_ENTRY
 } BE_FILE_ICON_ENTRY, *PBE_FILE_ICON_ENTRY;
 
 BOOLEAN BeFileIconEntryCompareFunction(
-    __in PVOID Entry1,
-    __in PVOID Entry2
+    _In_ PVOID Entry1,
+    _In_ PVOID Entry2
     );
 
 ULONG BeFileIconEntryHashFunction(
-    __in PVOID Entry
+    _In_ PVOID Entry
     );
 
 // Restore
@@ -101,15 +101,15 @@ typedef struct _BE_RESTORE_PARAMETERS
 } BE_RESTORE_PARAMETERS, *PBE_RESTORE_PARAMETERS;
 
 VOID BeDestroyRestoreParameters(
-    __in PBE_RESTORE_PARAMETERS Parameters
+    _In_ PBE_RESTORE_PARAMETERS Parameters
     );
 
 NTSTATUS BePreviewSingleFileThreadStart(
-    __in PVOID Parameter
+    _In_ PVOID Parameter
     );
 
 NTSTATUS BeRestoreFileOrDirectoryThreadStart(
-    __in PVOID Parameter
+    _In_ PVOID Parameter
     );
 
 // Support functions
@@ -119,13 +119,13 @@ PPH_STRING BePromptForConfigFileName(
     );
 
 ULONG BeGetProgressFromMessage(
-    __in PPH_STRINGREF Message
+    _In_ PPH_STRINGREF Message
     );
 
 BOOLEAN BeExecuteWithProgress(
-    __in HWND ParentWindowHandle,
-    __in PUSER_THREAD_START_ROUTINE ThreadStart,
-    __in_opt PVOID Context
+    _In_ HWND ParentWindowHandle,
+    _In_ PUSER_THREAD_START_ROUTINE ThreadStart,
+    _In_opt_ PVOID Context
     );
 
 VOID BeCompleteWithProgress(
@@ -137,8 +137,8 @@ PPH_STRING BeGetTempDirectoryName(
     );
 
 NTSTATUS BeIsDirectoryEmpty(
-    __in PWSTR DirectoryName,
-    __out PBOOLEAN Empty
+    _In_ PWSTR DirectoryName,
+    _Out_ PBOOLEAN Empty
     );
 
 #endif

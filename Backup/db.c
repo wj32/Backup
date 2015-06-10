@@ -25,7 +25,7 @@
 #include "dbp.h"
 
 NTSTATUS DbCreateDatabase(
-    __in PWSTR FileName
+    _In_ PWSTR FileName
     )
 {
     NTSTATUS status;
@@ -97,10 +97,10 @@ Fail:
 }
 
 NTSTATUS DbOpenDatabase(
-    __out PDB_DATABASE *Database,
-    __in PWSTR FileName,
-    __in BOOLEAN ReadOnly,
-    __in ULONG ShareAccess
+    _Out_ PDB_DATABASE *Database,
+    _In_ PWSTR FileName,
+    _In_ BOOLEAN ReadOnly,
+    _In_ ULONG ShareAccess
     )
 {
     NTSTATUS status;
@@ -152,7 +152,7 @@ PreDatabaseError:
 }
 
 VOID DbCloseDatabase(
-    __in PDB_DATABASE Database
+    _In_ PDB_DATABASE Database
     )
 {
     PhDestroyFilePool(Database->Pool);
@@ -160,8 +160,8 @@ VOID DbCloseDatabase(
 }
 
 NTSTATUS DbCopyDatabase(
-    __in PWSTR SourceFileName,
-    __in PWSTR DestinationFileName
+    _In_ PWSTR SourceFileName,
+    _In_ PWSTR DestinationFileName
     )
 {
     NTSTATUS status;
@@ -198,9 +198,9 @@ NTSTATUS DbCopyDatabase(
 }
 
 VOID DbQueryRevisionIdsDatabase(
-    __in PDB_DATABASE Database,
-    __out_opt PULONGLONG RevisionId,
-    __out_opt PULONGLONG FirstRevisionId
+    _In_ PDB_DATABASE Database,
+    _Out_opt_ PULONGLONG RevisionId,
+    _Out_opt_ PULONGLONG FirstRevisionId
     )
 {
     if (RevisionId)
@@ -210,9 +210,9 @@ VOID DbQueryRevisionIdsDatabase(
 }
 
 VOID DbSetRevisionIdsDatabase(
-    __in PDB_DATABASE Database,
-    __in_opt PULONGLONG RevisionId,
-    __in_opt PULONGLONG FirstRevisionId
+    _In_ PDB_DATABASE Database,
+    _In_opt_ PULONGLONG RevisionId,
+    _In_opt_ PULONGLONG FirstRevisionId
     )
 {
     if (RevisionId)
@@ -222,22 +222,22 @@ VOID DbSetRevisionIdsDatabase(
 }
 
 VOID DbCloseFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File
     )
 {
     PhDereferenceFilePool(Database->Pool, File);
 }
 
 NTSTATUS DbCreateFile(
-    __in PDB_DATABASE Database,
-    __in PPH_STRINGREF FileName,
-    __in_opt PDBF_FILE RootDirectory,
-    __in ULONG Attributes,
-    __in ULONG CreateDisposition,
-    __in ULONG Options,
-    __out_opt PULONG CreateStatus,
-    __out PDBF_FILE *File
+    _In_ PDB_DATABASE Database,
+    _In_ PPH_STRINGREF FileName,
+    _In_opt_ PDBF_FILE RootDirectory,
+    _In_ ULONG Attributes,
+    _In_ ULONG CreateDisposition,
+    _In_ ULONG Options,
+    _Out_opt_ PULONG CreateStatus,
+    _Out_ PDBF_FILE *File
     )
 {
     PH_STRINGREF currentName;
@@ -366,8 +366,8 @@ NTSTATUS DbCreateFile(
 }
 
 NTSTATUS DbDeleteFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File
     )
 {
     ULONG fileRva;
@@ -402,11 +402,11 @@ NTSTATUS DbDeleteFile(
 }
 
 NTSTATUS DbQueryInformationFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in DB_FILE_INFORMATION_CLASS FileInformationClass,
-    __out_bcount(FileInformationLength) PVOID FileInformation,
-    __in ULONG FileInformationLength
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_ DB_FILE_INFORMATION_CLASS FileInformationClass,
+    _Out_writes_bytes_(FileInformationLength) PVOID FileInformation,
+    _In_ ULONG FileInformationLength
     )
 {
     switch (FileInformationClass)
@@ -463,11 +463,11 @@ NTSTATUS DbQueryInformationFile(
 }
 
 NTSTATUS DbSetInformationFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in DB_FILE_INFORMATION_CLASS FileInformationClass,
-    __in_bcount_opt(FileInformationLength) PVOID FileInformation,
-    __in ULONG FileInformationLength
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_ DB_FILE_INFORMATION_CLASS FileInformationClass,
+    _In_reads_bytes_opt_(FileInformationLength) PVOID FileInformation,
+    _In_ ULONG FileInformationLength
     )
 {
     NTSTATUS status;
@@ -536,10 +536,10 @@ NTSTATUS DbSetInformationFile(
 }
 
 NTSTATUS DbQueryDirectoryFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __out PDB_FILE_DIRECTORY_INFORMATION *Entries,
-    __out PULONG NumberOfEntries
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _Out_ PDB_FILE_DIRECTORY_INFORMATION *Entries,
+    _Out_ PULONG NumberOfEntries
     )
 {
     NTSTATUS status;
@@ -634,8 +634,8 @@ Fail:
 }
 
 VOID DbFreeQueryDirectoryFile(
-    __in PDB_FILE_DIRECTORY_INFORMATION Entries,
-    __in ULONG NumberOfEntries
+    _In_ PDB_FILE_DIRECTORY_INFORMATION Entries,
+    _In_ ULONG NumberOfEntries
     )
 {
     ULONG i;
@@ -649,8 +649,8 @@ VOID DbFreeQueryDirectoryFile(
 }
 
 ULONG DbHashName(
-    __in PWSTR String,
-    __in SIZE_T Count
+    _In_ PWSTR String,
+    _In_ SIZE_T Count
     )
 {
     ULONG hash = (ULONG)Count;
@@ -668,8 +668,8 @@ ULONG DbHashName(
 }
 
 PDBF_FILE DbpAllocateFile(
-    __in PDB_DATABASE Database,
-    __out_opt PULONG FileRva
+    _In_ PDB_DATABASE Database,
+    _Out_opt_ PULONG FileRva
     )
 {
     PDBF_FILE file;
@@ -685,9 +685,9 @@ PDBF_FILE DbpAllocateFile(
 }
 
 BOOLEAN DbpSetNameFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in PPH_STRINGREF Name
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_ PPH_STRINGREF Name
     )
 {
     PWSTR nameBlock;
@@ -712,11 +712,11 @@ BOOLEAN DbpSetNameFile(
 }
 
 BOOLEAN DbpLinkFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE ParentFile,
-    __in ULONG ParentFileRva,
-    __in PDBF_FILE File,
-    __in ULONG FileRva
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE ParentFile,
+    _In_ ULONG ParentFileRva,
+    _In_ PDBF_FILE File,
+    _In_ ULONG FileRva
     )
 {
     ULONG bucketIndex;
@@ -738,10 +738,10 @@ BOOLEAN DbpLinkFile(
 }
 
 BOOLEAN DbpUnlinkFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE ParentFile,
-    __in PDBF_FILE File,
-    __in ULONG FileRva
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE ParentFile,
+    _In_ PDBF_FILE File,
+    _In_ ULONG FileRva
     )
 {
     BOOLEAN result;
@@ -811,10 +811,10 @@ BOOLEAN DbpUnlinkFile(
 }
 
 PDBF_FILE DbpFindFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE ParentFile,
-    __in PPH_STRINGREF Name,
-    __out_opt PULONG FileRva
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE ParentFile,
+    _In_ PPH_STRINGREF Name,
+    _Out_opt_ PULONG FileRva
     )
 {
     ULONG nameHash;
@@ -873,10 +873,10 @@ PDBF_FILE DbpFindFile(
 }
 
 NTSTATUS DbpRenameFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in_opt PDBF_FILE RootDirectory,
-    __in PPH_STRINGREF NewFileName
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_opt_ PDBF_FILE RootDirectory,
+    _In_ PPH_STRINGREF NewFileName
     )
 {
     NTSTATUS status;
@@ -972,8 +972,8 @@ NTSTATUS DbpRenameFile(
 }
 
 NTSTATUS DbpCopyAttributesFile(
-    __in PDBF_FILE SourceFile,
-    __in PDBF_FILE DestinationFile
+    _In_ PDBF_FILE SourceFile,
+    _In_ PDBF_FILE DestinationFile
     )
 {
     if ((SourceFile->Attributes & DB_FILE_ATTRIBUTE_DIRECTORY) != (DestinationFile->Attributes & DB_FILE_ATTRIBUTE_DIRECTORY))
@@ -993,10 +993,10 @@ NTSTATUS DbpCopyAttributesFile(
 }
 
 NTSTATUS DbpCopyDirectory(
-    __in PDB_DATABASE SourceDatabase,
-    __in PDBF_FILE SourceDirectory,
-    __in PDB_DATABASE DestinationDatabase,
-    __in PDBF_FILE DestinationDirectory
+    _In_ PDB_DATABASE SourceDatabase,
+    _In_ PDBF_FILE SourceDirectory,
+    _In_ PDB_DATABASE DestinationDatabase,
+    _In_ PDBF_FILE DestinationDirectory
     )
 {
     NTSTATUS status;

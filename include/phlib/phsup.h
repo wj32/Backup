@@ -12,13 +12,14 @@
 
 #define PTR_ADD_OFFSET(Pointer, Offset) ((PVOID)((ULONG_PTR)(Pointer) + (ULONG_PTR)(Offset)))
 #define PTR_SUB_OFFSET(Pointer, Offset) ((PVOID)((ULONG_PTR)(Pointer) - (ULONG_PTR)(Offset)))
-#define PTR_ALIGN(Pointer, Align) ((PVOID)(((ULONG_PTR)(Pointer) + (Align) - 1) & ~((Align) - 1)))
-#define REBASE_ADDRESS(Pointer, OldBase, NewBase) \
-    ((PVOID)((ULONG_PTR)(Pointer) - (ULONG_PTR)(OldBase) + (ULONG_PTR)(NewBase)))
+#define ALIGN_UP_BY(Address, Align) (((ULONG_PTR)(Address) + (Align) - 1) & ~((Align) - 1))
+#define ALIGN_UP_POINTER_BY(Pointer, Align) ((PVOID)ALIGN_UP_BY(Pointer, Align))
+#define ALIGN_UP(Address, Type) ALIGN_UP_BY(Address, sizeof(Type))
+#define ALIGN_UP_POINTER(Pointer, Type) ((PVOID)ALIGN_UP(Pointer, Type))
 
 #define PAGE_SIZE 0x1000
 
-#define PH_LARGE_BUFFER_SIZE (16 * 1024 * 1024)
+#define PH_LARGE_BUFFER_SIZE (256 * 1024 * 1024)
 
 // Exceptions
 
@@ -58,12 +59,6 @@
 // Annotations
 
 /**
- * Indicates that a function assumes the relevant
- * locks have been acquired.
- */
-#define __assumeLocked
-
-/**
  * Indicates that a function assumes the specified
  * number of references are available for the object.
  *
@@ -73,10 +68,12 @@
  * itself. In effect these references are "transferred"
  * to the function and must not be used. E.g. if you
  * create an object and immediately call a function
- * with __assumeRefs(1), you may no longer use the object
+ * with _Assume_refs_(1), you may no longer use the object
  * since that one reference you held is no longer yours.
  */
-#define __assumeRefs(count)
+#define _Assume_refs_(count)
+
+#define _Callback_
 
 /**
  * Indicates that a function may raise a software
@@ -86,13 +83,13 @@
  * temporary usages of exceptions, e.g. unimplemented
  * functions.
  */
-#define __mayRaise
+#define _May_raise_
 
 /**
  * Indicates that a function requires the specified
  * value to be aligned at the specified number of bytes.
  */
-#define __needsAlign(align)
+#define _Needs_align_(align)
 
 // Casts
 
@@ -116,8 +113,8 @@ typedef enum _PH_SORT_ORDER
 } PH_SORT_ORDER, *PPH_SORT_ORDER;
 
 FORCEINLINE LONG PhModifySort(
-    __in LONG Result,
-    __in PH_SORT_ORDER Order
+    _In_ LONG Result,
+    _In_ PH_SORT_ORDER Order
     )
 {
     if (Order == AscendingSortOrder)
@@ -137,104 +134,104 @@ FORCEINLINE LONG PhModifySort(
     return 0
 
 FORCEINLINE int charcmp(
-    __in signed char value1,
-    __in signed char value2
+    _In_ signed char value1,
+    _In_ signed char value2
     )
 {
     return C_1sTo4(value1 - value2);
 }
 
 FORCEINLINE int ucharcmp(
-    __in unsigned char value1,
-    __in unsigned char value2
+    _In_ unsigned char value1,
+    _In_ unsigned char value2
     )
 {
     PH_BUILTIN_COMPARE(value1, value2);
 }
 
 FORCEINLINE int shortcmp(
-    __in signed short value1,
-    __in signed short value2
+    _In_ signed short value1,
+    _In_ signed short value2
     )
 {
     return C_2sTo4(value1 - value2);
 }
 
 FORCEINLINE int ushortcmp(
-    __in unsigned short value1,
-    __in unsigned short value2
+    _In_ unsigned short value1,
+    _In_ unsigned short value2
     )
 {
     PH_BUILTIN_COMPARE(value1, value2);
 }
 
 FORCEINLINE int intcmp(
-    __in int value1,
-    __in int value2
+    _In_ int value1,
+    _In_ int value2
     )
 {
     return value1 - value2;
 }
 
 FORCEINLINE int uintcmp(
-    __in unsigned int value1,
-    __in unsigned int value2
+    _In_ unsigned int value1,
+    _In_ unsigned int value2
     )
 {
     PH_BUILTIN_COMPARE(value1, value2);
 }
 
 FORCEINLINE int int64cmp(
-    __in __int64 value1,
-    __in __int64 value2
+    _In_ __int64 value1,
+    _In_ __int64 value2
     )
 {
     PH_BUILTIN_COMPARE(value1, value2);
 }
 
 FORCEINLINE int uint64cmp(
-    __in unsigned __int64 value1,
-    __in unsigned __int64 value2
+    _In_ unsigned __int64 value1,
+    _In_ unsigned __int64 value2
     )
 {
     PH_BUILTIN_COMPARE(value1, value2);
 }
 
 FORCEINLINE int intptrcmp(
-    __in LONG_PTR value1,
-    __in LONG_PTR value2
+    _In_ LONG_PTR value1,
+    _In_ LONG_PTR value2
     )
 {
     PH_BUILTIN_COMPARE(value1, value2);
 }
 
 FORCEINLINE int uintptrcmp(
-    __in ULONG_PTR value1,
-    __in ULONG_PTR value2
+    _In_ ULONG_PTR value1,
+    _In_ ULONG_PTR value2
     )
 {
     PH_BUILTIN_COMPARE(value1, value2);
 }
 
 FORCEINLINE int singlecmp(
-    __in float value1,
-    __in float value2
+    _In_ float value1,
+    _In_ float value2
     )
 {
     PH_BUILTIN_COMPARE(value1, value2);
 }
 
 FORCEINLINE int doublecmp(
-    __in double value1,
-    __in double value2
+    _In_ double value1,
+    _In_ double value2
     )
 {
     PH_BUILTIN_COMPARE(value1, value2);
 }
 
 FORCEINLINE int wcsicmp2(
-    __in_opt PWSTR Value1,
-    __in_opt PWSTR Value2
+    _In_opt_ PWSTR Value1,
+    _In_opt_ PWSTR Value2
     )
 {
     if (Value1 && Value2)
@@ -247,7 +244,7 @@ FORCEINLINE int wcsicmp2(
 
 // Synchronization
 
-#ifdef _M_IX86
+#ifndef _WIN64
 
 #ifndef _InterlockedCompareExchangePointer
 void *_InterlockedCompareExchangePointer(
@@ -257,6 +254,7 @@ void *_InterlockedCompareExchangePointer(
     );
 #endif
 
+#ifndef _InterlockedExchangePointer
 FORCEINLINE void *_InterlockedExchangePointer(
     void *volatile *Destination,
     void *Exchange
@@ -267,69 +265,70 @@ FORCEINLINE void *_InterlockedExchangePointer(
         (LONG_PTR)Exchange
         );
 }
+#endif
 
 #endif
 
 FORCEINLINE LONG_PTR _InterlockedExchangeAddPointer(
-    __inout LONG_PTR volatile *Addend,
-    __in LONG_PTR Value
+    _Inout_ _Interlocked_operand_ LONG_PTR volatile *Addend,
+    _In_ LONG_PTR Value
     )
 {
-#ifdef _M_IX86
-    return (LONG_PTR)_InterlockedExchangeAdd((PLONG)Addend, (LONG)Value);
-#else
+#ifdef _WIN64
     return (LONG_PTR)_InterlockedExchangeAdd64((PLONG64)Addend, (LONG64)Value);
+#else
+    return (LONG_PTR)_InterlockedExchangeAdd((PLONG)Addend, (LONG)Value);
 #endif
 }
 
 FORCEINLINE LONG_PTR _InterlockedIncrementPointer(
-    __inout LONG_PTR volatile *Addend
+    _Inout_ _Interlocked_operand_ LONG_PTR volatile *Addend
     )
 {
-#ifdef _M_IX86
-    return (LONG_PTR)_InterlockedIncrement((PLONG)Addend);
-#else
+#ifdef _WIN64
     return (LONG_PTR)_InterlockedIncrement64((PLONG64)Addend);
+#else
+    return (LONG_PTR)_InterlockedIncrement((PLONG)Addend);
 #endif
 }
 
 FORCEINLINE LONG_PTR _InterlockedDecrementPointer(
-    __inout LONG_PTR volatile *Addend
+    _Inout_ _Interlocked_operand_ LONG_PTR volatile *Addend
     )
 {
-#ifdef _M_IX86
-    return (LONG_PTR)_InterlockedDecrement((PLONG)Addend);
-#else
+#ifdef _WIN64
     return (LONG_PTR)_InterlockedDecrement64((PLONG64)Addend);
+#else
+    return (LONG_PTR)_InterlockedDecrement((PLONG)Addend);
 #endif
 }
 
 FORCEINLINE BOOLEAN _InterlockedBitTestAndResetPointer(
-    __inout LONG_PTR volatile *Base,
-    __in LONG_PTR Bit
+    _Inout_ _Interlocked_operand_ LONG_PTR volatile *Base,
+    _In_ LONG_PTR Bit
     )
 {
-#ifdef _M_IX86
-    return _interlockedbittestandreset((PLONG)Base, (LONG)Bit);
-#else
+#ifdef _WIN64
     return _interlockedbittestandreset64((PLONG64)Base, (LONG64)Bit);
+#else
+    return _interlockedbittestandreset((PLONG)Base, (LONG)Bit);
 #endif
 }
 
 FORCEINLINE BOOLEAN _InterlockedBitTestAndSetPointer(
-    __inout LONG_PTR volatile *Base,
-    __in LONG_PTR Bit
+    _Inout_ _Interlocked_operand_ LONG_PTR volatile *Base,
+    _In_ LONG_PTR Bit
     )
 {
-#ifdef _M_IX86
-    return _interlockedbittestandset((PLONG)Base, (LONG)Bit);
-#else
+#ifdef _WIN64
     return _interlockedbittestandset64((PLONG64)Base, (LONG64)Bit);
+#else
+    return _interlockedbittestandset((PLONG)Base, (LONG)Bit);
 #endif
 }
 
 FORCEINLINE BOOLEAN _InterlockedIncrementNoZero(
-    __inout LONG volatile *Addend
+    _Inout_ _Interlocked_operand_ LONG volatile *Addend
     )
 {
     LONG value;
@@ -373,65 +372,55 @@ FORCEINLINE BOOLEAN _InterlockedIncrementNoZero(
 #define WSTR_IEQUAL(Str1, Str2) (wcsicmp(Str1, Str2) == 0)
 
 FORCEINLINE VOID PhPrintInt32(
-    __out_ecount(PH_INT32_STR_LEN_1) PWSTR Destination,
-    __in LONG Int32
+    _Out_writes_(PH_INT32_STR_LEN_1) PWSTR Destination,
+    _In_ LONG Int32
     )
 {
     _ltow(Int32, Destination, 10);
 }
 
 FORCEINLINE VOID PhPrintUInt32(
-    __out_ecount(PH_INT32_STR_LEN_1) PWSTR Destination,
-    __in ULONG UInt32
+    _Out_writes_(PH_INT32_STR_LEN_1) PWSTR Destination,
+    _In_ ULONG UInt32
     )
 {
     _ultow(UInt32, Destination, 10);
 }
 
 FORCEINLINE VOID PhPrintInt64(
-    __out_ecount(PH_INT64_STR_LEN_1) PWSTR Destination,
-    __in LONG64 Int64
+    _Out_writes_(PH_INT64_STR_LEN_1) PWSTR Destination,
+    _In_ LONG64 Int64
     )
 {
     _i64tow(Int64, Destination, 10);
 }
 
 FORCEINLINE VOID PhPrintUInt64(
-    __out_ecount(PH_INT64_STR_LEN_1) PWSTR Destination,
-    __in ULONG64 UInt64
+    _Out_writes_(PH_INT64_STR_LEN_1) PWSTR Destination,
+    _In_ ULONG64 UInt64
     )
 {
     _ui64tow(UInt64, Destination, 10);
 }
 
 FORCEINLINE VOID PhPrintPointer(
-    __out_ecount(PH_PTR_STR_LEN_1) PWSTR Destination,
-    __in PVOID Pointer
+    _Out_writes_(PH_PTR_STR_LEN_1) PWSTR Destination,
+    _In_ PVOID Pointer
     )
 {
     Destination[0] = '0';
     Destination[1] = 'x';
-#ifdef _M_IX86
-    _ultow((ULONG)Pointer, &Destination[2], 16);
-#else
+#ifdef _WIN64
     _ui64tow((ULONG64)Pointer, &Destination[2], 16);
+#else
+    _ultow((ULONG)Pointer, &Destination[2], 16);
 #endif
 }
 
 // Misc.
 
-FORCEINLINE NTSTATUS PhGetLastWin32ErrorAsNtStatus()
-{
-    ULONG win32Result;
-
-    // This is needed because NTSTATUS_FROM_WIN32 uses the argument multiple times.
-    win32Result = GetLastError();
-
-    return NTSTATUS_FROM_WIN32(win32Result);
-}
-
 FORCEINLINE ULONG PhCountBits(
-    __in ULONG Value
+    _In_ ULONG Value
     )
 {
     ULONG count = 0;
@@ -446,8 +435,8 @@ FORCEINLINE ULONG PhCountBits(
 }
 
 FORCEINLINE ULONG PhRoundNumber(
-    __in ULONG Value,
-    __in ULONG Multiplier
+    _In_ ULONG Value,
+    _In_ ULONG Multiplier
     )
 {
     ULONG newValue;
@@ -470,27 +459,12 @@ FORCEINLINE ULONG PhRoundNumber(
         return newValue + Multiplier;
 }
 
-FORCEINLINE PVOID PhGetProcAddress(
-    __in PWSTR LibraryName,
-    __in PSTR ProcName
-    )
-{
-    HMODULE module;
-
-    module = GetModuleHandle(LibraryName);
-
-    if (module)
-        return GetProcAddress(module, ProcName);
-    else
-        return NULL;
-}
-
 FORCEINLINE VOID PhProbeAddress(
-    __in PVOID UserAddress,
-    __in SIZE_T UserLength,
-    __in PVOID BufferAddress,
-    __in SIZE_T BufferLength,
-    __in ULONG Alignment
+    _In_ PVOID UserAddress,
+    _In_ SIZE_T UserLength,
+    _In_ PVOID BufferAddress,
+    _In_ SIZE_T BufferLength,
+    _In_ ULONG Alignment
     )
 {
     if (UserLength != 0)
@@ -508,8 +482,8 @@ FORCEINLINE VOID PhProbeAddress(
 }
 
 FORCEINLINE PLARGE_INTEGER PhTimeoutFromMilliseconds(
-    __out PLARGE_INTEGER Timeout,
-    __in ULONG Milliseconds
+    _Out_ PLARGE_INTEGER Timeout,
+    _In_ ULONG Milliseconds
     )
 {
     if (Milliseconds == INFINITE)
@@ -518,6 +492,31 @@ FORCEINLINE PLARGE_INTEGER PhTimeoutFromMilliseconds(
     Timeout->QuadPart = -(LONGLONG)UInt32x32To64(Milliseconds, PH_TIMEOUT_MS);
 
     return Timeout;
+}
+
+FORCEINLINE NTSTATUS PhGetLastWin32ErrorAsNtStatus()
+{
+    ULONG win32Result;
+
+    // This is needed because NTSTATUS_FROM_WIN32 uses the argument multiple times.
+    win32Result = GetLastError();
+
+    return NTSTATUS_FROM_WIN32(win32Result);
+}
+
+FORCEINLINE PVOID PhGetModuleProcAddress(
+    _In_ PWSTR ModuleName,
+    _In_ PSTR ProcName
+    )
+{
+    HMODULE module;
+
+    module = GetModuleHandle(ModuleName);
+
+    if (module)
+        return GetProcAddress(module, ProcName);
+    else
+        return NULL;
 }
 
 #endif

@@ -1,14 +1,26 @@
 #ifndef _PH_VERIFYP_H
 #define _PH_VERIFYP_H
 
-#include <wintrust.h>
-#include <softpub.h>
-
 typedef struct _CATALOG_INFO
 {
     DWORD cbStruct;
     WCHAR wszCatalogFile[MAX_PATH];
 } CATALOG_INFO, *PCATALOG_INFO;
+
+typedef struct tagCRYPTUI_VIEWSIGNERINFO_STRUCT {
+    DWORD dwSize;
+    HWND hwndParent;
+    DWORD dwFlags;
+    LPCTSTR szTitle;
+    CMSG_SIGNER_INFO *pSignerInfo;
+    HCRYPTMSG hMsg;
+    LPCSTR pszOID;
+    DWORD_PTR dwReserved;
+    DWORD cStores;
+    HCERTSTORE *rghStores;
+    DWORD cPropSheetPages;
+    LPCPROPSHEETPAGE rgPropSheetPages;
+} CRYPTUI_VIEWSIGNERINFO_STRUCT, *PCRYPTUI_VIEWSIGNERINFO_STRUCT;
 
 typedef BOOL (WINAPI *_CryptCATAdminCalcHashFromFileHandle)(
     HANDLE hFile,
@@ -87,6 +99,18 @@ typedef DWORD (WINAPI *_CertNameToStr)(
     DWORD dwStrType,
     LPTSTR psz,
     DWORD csz
+    );
+
+typedef PCCERT_CONTEXT (WINAPI *_CertDuplicateCertificateContext)(
+    _In_ PCCERT_CONTEXT pCertContext
+    );
+
+typedef BOOL (WINAPI *_CertFreeCertificateContext)(
+    _In_ PCCERT_CONTEXT pCertContext
+    );
+
+typedef BOOL (WINAPI *_CryptUIDlgViewSignerInfo)(
+    _In_ CRYPTUI_VIEWSIGNERINFO_STRUCT *pcvsi
     );
 
 #endif

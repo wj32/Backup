@@ -26,9 +26,9 @@ HINSTANCE BeInstanceHandle;
 PPH_STRING BeFileName;
 
 static BOOLEAN NTAPI BeCommandLineCallback(
-    __in_opt PPH_COMMAND_LINE_OPTION Option,
-    __in_opt PPH_STRING Value,
-    __in_opt PVOID Context
+    _In_opt_ PPH_COMMAND_LINE_OPTION Option,
+    _In_opt_ PPH_STRING Value,
+    _In_opt_ PVOID Context
     )
 {
     if (!Option)
@@ -40,10 +40,10 @@ static BOOLEAN NTAPI BeCommandLineCallback(
 static PPH_LIST DialogList = NULL;
 
 INT WINAPI WinMain(
-    __in HINSTANCE hInstance,
-    __in_opt HINSTANCE hPrevInstance,
-    __in LPSTR lpCmdLine,
-    __in INT nCmdShow
+    _In_ HINSTANCE hInstance,
+    _In_opt_ HINSTANCE hPrevInstance,
+    _In_ LPSTR lpCmdLine,
+    _In_ INT nCmdShow
     )
 {
     PH_STRINGREF commandLine;
@@ -133,7 +133,7 @@ LONG BeMessageLoop(
 // Copied from Process Hacker's main.c
 
 VOID BeRegisterDialog(
-    __in HWND DialogWindowHandle
+    _In_ HWND DialogWindowHandle
     )
 {
     if (!DialogList)
@@ -143,7 +143,7 @@ VOID BeRegisterDialog(
 }
 
 VOID BeUnregisterDialog(
-    __in HWND DialogWindowHandle
+    _In_ HWND DialogWindowHandle
     )
 {
     ULONG indexOfDialog;

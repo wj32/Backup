@@ -11,54 +11,54 @@
 #define EN_MESSAGE_ERROR 3
 
 typedef VOID (NTAPI *PEN_MESSAGE_HANDLER)(
-    __in ULONG Level,
-    __in __assumeRefs(1) PPH_STRING Message
+    _In_ ULONG Level,
+    _In_ _Assume_refs_(1) PPH_STRING Message
     );
 
 NTSTATUS EnQueryRevision(
-    __in PBK_CONFIG Config,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler,
-    __out_opt PULONGLONG RevisionId,
-    __out_opt PLARGE_INTEGER RevisionTimeStamp,
-    __out_opt PULONGLONG FirstRevisionId,
-    __out_opt PLARGE_INTEGER FirstRevisionTimeStamp
+    _In_ PBK_CONFIG Config,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_opt_ PULONGLONG RevisionId,
+    _Out_opt_ PLARGE_INTEGER RevisionTimeStamp,
+    _Out_opt_ PULONGLONG FirstRevisionId,
+    _Out_opt_ PLARGE_INTEGER FirstRevisionTimeStamp
     );
 
 NTSTATUS EnBackupToRevision(
-    __in PBK_CONFIG Config,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler,
-    __out_opt PULONGLONG RevisionId
+    _In_ PBK_CONFIG Config,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_opt_ PULONGLONG RevisionId
     );
 
 NTSTATUS EnTestBackupToRevision(
-    __in PBK_CONFIG Config,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler
     );
 
 NTSTATUS EnRevertToRevision(
-    __in PBK_CONFIG Config,
-    __in ULONGLONG TargetRevisionId,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler,
-    __out_opt PULONGLONG RevisionId
+    _In_ PBK_CONFIG Config,
+    _In_ ULONGLONG TargetRevisionId,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_opt_ PULONGLONG RevisionId
     );
 
 NTSTATUS EnTrimToRevision(
-    __in PBK_CONFIG Config,
-    __in ULONGLONG TargetFirstRevisionId,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler,
-    __out_opt PULONGLONG FirstRevisionId
+    _In_ PBK_CONFIG Config,
+    _In_ ULONGLONG TargetFirstRevisionId,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_opt_ PULONGLONG FirstRevisionId
     );
 
 #define EN_RESTORE_OVERWRITE_FILES 0x1
 
 NTSTATUS EnRestoreFromRevision(
-    __in PBK_CONFIG Config,
-    __in ULONG Flags,
-    __in PPH_STRINGREF FileName,
-    __in_opt ULONGLONG RevisionId,
-    __in PPH_STRINGREF RestoreToDirectory,
-    __in_opt PPH_STRINGREF RestoreToName,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ ULONG Flags,
+    _In_ PPH_STRINGREF FileName,
+    _In_opt_ ULONGLONG RevisionId,
+    _In_ PPH_STRINGREF RestoreToDirectory,
+    _In_opt_ PPH_STRINGREF RestoreToName,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler
     );
 
 typedef struct _EN_FILE_REVISION_INFORMATION
@@ -71,23 +71,23 @@ typedef struct _EN_FILE_REVISION_INFORMATION
 } EN_FILE_REVISION_INFORMATION, *PEN_FILE_REVISION_INFORMATION;
 
 NTSTATUS EnQueryFileRevisions(
-    __in PBK_CONFIG Config,
-    __in PPH_STRINGREF FileName,
-    __in PEN_MESSAGE_HANDLER MessageHandler,
-    __out PEN_FILE_REVISION_INFORMATION *Entries,
-    __out PULONG NumberOfEntries
+    _In_ PBK_CONFIG Config,
+    _In_ PPH_STRINGREF FileName,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_ PEN_FILE_REVISION_INFORMATION *Entries,
+    _Out_ PULONG NumberOfEntries
     );
 
 NTSTATUS EnCompareRevisions(
-    __in PBK_CONFIG Config,
-    __in ULONGLONG BaseRevisionId,
-    __in_opt ULONGLONG TargetRevisionId,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ ULONGLONG BaseRevisionId,
+    _In_opt_ ULONGLONG TargetRevisionId,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     );
 
 NTSTATUS EnCompactDatabase(
-    __in PBK_CONFIG Config,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler
     );
 
 #endif

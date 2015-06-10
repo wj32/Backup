@@ -23,26 +23,26 @@ typedef struct _BE_RESULT_NODE
 } BE_RESULT_NODE, *PBE_RESULT_NODE;
 
 INT_PTR CALLBACK BeFindDlgProc(
-    __in HWND hwndDlg,
-    __in UINT uMsg,
-    __in WPARAM wParam,
-    __in LPARAM lParam
+    _In_ HWND hwndDlg,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
     );
 
 VOID BeDestroyResultNode(
-    __in PBE_RESULT_NODE Node
+    _In_ PBE_RESULT_NODE Node
     );
 
 BOOLEAN BeFindListTreeNewCallback(
-    __in HWND hwnd,
-    __in PH_TREENEW_MESSAGE Message,
-    __in_opt PVOID Parameter1,
-    __in_opt PVOID Parameter2,
-    __in_opt PVOID Context
+    _In_ HWND hwnd,
+    _In_ PH_TREENEW_MESSAGE Message,
+    _In_opt_ PVOID Parameter1,
+    _In_opt_ PVOID Parameter2,
+    _In_opt_ PVOID Context
     );
 
 NTSTATUS BeFindFilesThreadStart(
-    __in PVOID Parameter
+    _In_ PVOID Parameter
     );
 
 #endif

@@ -12,15 +12,15 @@ typedef PVOID PPK_PACKAGE;
 typedef PVOID PPK_FILE_STREAM;
 
 PPK_FILE_STREAM PkCreateFileStream(
-    __in_opt PPH_FILE_STREAM FileStream
+    _In_opt_ PPH_FILE_STREAM FileStream
     );
 
 VOID PkReferenceFileStream(
-    __in PPK_FILE_STREAM FileStream
+    _In_ PPK_FILE_STREAM FileStream
     );
 
 VOID PkDereferenceFileStream(
-    __in PPK_FILE_STREAM FileStream
+    _In_ PPK_FILE_STREAM FileStream
     );
 
 // Action list
@@ -82,44 +82,44 @@ PPK_ACTION_LIST PkCreateActionList(
     );
 
 VOID PkDestroyActionList(
-    __in PPK_ACTION_LIST List
+    _In_ PPK_ACTION_LIST List
     );
 
 ULONG PkQueryCountActionList(
-    __in PPK_ACTION_LIST List
+    _In_ PPK_ACTION_LIST List
     );
 
 VOID PkAppendAddToActionList(
-    __in PPK_ACTION_LIST List,
-    __in ULONG Flags,
-    __in PPH_STRING Destination,
-    __in_opt PVOID Context
+    _In_ PPK_ACTION_LIST List,
+    _In_ ULONG Flags,
+    _In_ PPH_STRING Destination,
+    _In_opt_ PVOID Context
     );
 
 VOID PkAppendAddFromPackageToActionList(
-    __in PPK_ACTION_LIST List,
-    __in PPK_PACKAGE Package,
-    __in ULONG IndexInPackage,
-    __in_opt PVOID Context
+    _In_ PPK_ACTION_LIST List,
+    _In_ PPK_PACKAGE Package,
+    _In_ ULONG IndexInPackage,
+    _In_opt_ PVOID Context
     );
 
 VOID PkAppendUpdateToActionList(
-    __in PPK_ACTION_LIST List,
-    __in ULONG Index,
-    __in_opt PVOID Context
+    _In_ PPK_ACTION_LIST List,
+    _In_ ULONG Index,
+    _In_opt_ PVOID Context
     );
 
 PPK_ACTION PkIndexInActionList(
-    __in PPK_ACTION_LIST List,
-    __in ULONG Index,
-    __out_opt PPK_ACTION_SEGMENT *Segment
+    _In_ PPK_ACTION_LIST List,
+    _In_ ULONG Index,
+    _Out_opt_ PPK_ACTION_SEGMENT *Segment
     );
 
 PPK_ACTION PkGetNextAction(
-    __in PPK_ACTION Action,
-    __in ULONG Index,
-    __in PPK_ACTION_SEGMENT Segment,
-    __out_opt PPK_ACTION_SEGMENT *NewSegment
+    _In_ PPK_ACTION Action,
+    _In_ ULONG Index,
+    _In_ PPK_ACTION_SEGMENT Segment,
+    _Out_opt_ PPK_ACTION_SEGMENT *NewSegment
     );
 
 // Package
@@ -158,48 +158,48 @@ typedef struct _PK_PARAMETER_PROGRESS
 } PK_PARAMETER_PROGRESS, *PPK_PARAMETER_PROGRESS;
 
 typedef HRESULT (NTAPI *PPK_PACKAGE_CALLBACK)(
-    __in PK_PACKAGE_CALLBACK_MESSAGE Message,
-    __in_opt PPK_ACTION Action,
-    __in PVOID Parameter,
-    __in_opt PVOID Context
+    _In_ PK_PACKAGE_CALLBACK_MESSAGE Message,
+    _In_opt_ PPK_ACTION Action,
+    _In_ PVOID Parameter,
+    _In_opt_ PVOID Context
     );
 
 HRESULT PkCreatePackage(
-    __in PPK_FILE_STREAM FileStream,
-    __in PPK_ACTION_LIST ActionList,
-    __in PPK_PACKAGE_CALLBACK Callback,
-    __in_opt PVOID Context
+    _In_ PPK_FILE_STREAM FileStream,
+    _In_ PPK_ACTION_LIST ActionList,
+    _In_ PPK_PACKAGE_CALLBACK Callback,
+    _In_opt_ PVOID Context
     );
 
 VOID PkReferencePackage(
-    __in PPK_PACKAGE Package
+    _In_ PPK_PACKAGE Package
     );
 
 VOID PkDereferencePackage(
-    __in PPK_PACKAGE Package
+    _In_ PPK_PACKAGE Package
     );
 
 HRESULT PkOpenPackageWithFilter(
-    __in PPK_FILE_STREAM FileStream,
-    __inout_opt PPK_ACTION_LIST ActionList,
-    __in_opt PPK_PACKAGE_CALLBACK Callback,
-    __in_opt PVOID Context,
-    __out PPK_PACKAGE *Package
+    _In_ PPK_FILE_STREAM FileStream,
+    _Inout_opt_ PPK_ACTION_LIST ActionList,
+    _In_opt_ PPK_PACKAGE_CALLBACK Callback,
+    _In_opt_ PVOID Context,
+    _Out_ PPK_PACKAGE *Package
     );
 
 HRESULT PkUpdatePackage(
-    __in PPK_FILE_STREAM FileStream,
-    __in PPK_PACKAGE Package,
-    __in PPK_ACTION_LIST ActionList,
-    __in PPK_PACKAGE_CALLBACK Callback,
-    __in_opt PVOID Context
+    _In_ PPK_FILE_STREAM FileStream,
+    _In_ PPK_PACKAGE Package,
+    _In_ PPK_ACTION_LIST ActionList,
+    _In_ PPK_PACKAGE_CALLBACK Callback,
+    _In_opt_ PVOID Context
     );
 
 HRESULT PkExtractPackage(
-    __in PPK_PACKAGE Package,
-    __in_opt PPK_ACTION_LIST ActionList,
-    __in PPK_PACKAGE_CALLBACK Callback,
-    __in_opt PVOID Context
+    _In_ PPK_PACKAGE Package,
+    _In_opt_ PPK_ACTION_LIST ActionList,
+    _In_ PPK_PACKAGE_CALLBACK Callback,
+    _In_opt_ PVOID Context
     );
 
 #ifdef __cplusplus

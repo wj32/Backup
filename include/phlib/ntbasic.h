@@ -13,22 +13,24 @@
 
 typedef struct _QUAD
 {
-    double DoNotUseThisField;
-} QUAD, *PQUAD, UQUAD, *PUQUAD;
+    union
+    {
+        __int64 UseThisFieldToCopy;
+        double DoNotUseThisField;
+    };
+} QUAD, *PQUAD;
 
 // This isn't in NT, but it's useful.
 typedef struct DECLSPEC_ALIGN(MEMORY_ALLOCATION_ALIGNMENT) _QUAD_PTR
 {
     ULONG_PTR DoNotUseThisField1;
     ULONG_PTR DoNotUseThisField2;
-} QUAD_PTR, *PQUAD_PTR, UQUAD_PTR, *PUQUAD_PTR;
-
-typedef PVOID *PPVOID;
+} QUAD_PTR, *PQUAD_PTR;
 
 typedef ULONG LOGICAL;
 typedef ULONG *PLOGICAL;
 
-typedef __success(return >= 0) LONG NTSTATUS;
+typedef _Success_(return >= 0) LONG NTSTATUS;
 typedef NTSTATUS *PNTSTATUS;
 
 // Cardinal types
@@ -40,6 +42,8 @@ typedef ULONG CLONG;
 typedef CCHAR *PCCHAR;
 typedef CSHORT *PCSHORT;
 typedef CLONG *PCLONG;
+
+typedef PCSTR PCSZ;
 
 // Specific
 
@@ -65,7 +69,7 @@ typedef LARGE_INTEGER PHYSICAL_ADDRESS, *PPHYSICAL_ADDRESS;
 
 // Functions
 
-#ifdef _M_IX86
+#ifndef _WIN64
 #define FASTCALL __fastcall
 #else
 #define FASTCALL
@@ -97,7 +101,7 @@ typedef struct _STRING
 {
     USHORT Length;
     USHORT MaximumLength;
-    __field_bcount_part_opt(MaximumLength, Length) PCHAR Buffer;
+    _Field_size_bytes_part_opt_(MaximumLength, Length) PCHAR Buffer;
 } STRING, *PSTRING, ANSI_STRING, *PANSI_STRING, OEM_STRING, *POEM_STRING;
 
 typedef const STRING *PCSTRING;
@@ -108,7 +112,7 @@ typedef struct _UNICODE_STRING
 {
     USHORT Length;
     USHORT MaximumLength;
-    __field_bcount_part(MaximumLength, Length) PWCH Buffer;
+    _Field_size_bytes_part_(MaximumLength, Length) PWCH Buffer;
 } UNICODE_STRING, *PUNICODE_STRING;
 
 typedef const UNICODE_STRING *PCUNICODE_STRING;

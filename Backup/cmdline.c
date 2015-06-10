@@ -522,9 +522,9 @@ LONG BkRunCommandLine(
 }
 
 static BOOLEAN NTAPI CommandLineCallback(
-    __in_opt PPH_COMMAND_LINE_OPTION Option,
-    __in_opt PPH_STRING Value,
-    __in_opt PVOID Context
+    _In_opt_ PPH_COMMAND_LINE_OPTION Option,
+    _In_opt_ PPH_STRING Value,
+    _In_opt_ PVOID Context
     )
 {
     LONG64 integer;
@@ -605,7 +605,7 @@ static BOOLEAN NTAPI CommandLineCallback(
 }
 
 static PPH_STRING GetNtMessage(
-    __in NTSTATUS Status
+    _In_ NTSTATUS Status
     )
 {
     PPH_STRING string;
@@ -633,14 +633,14 @@ static PPH_STRING GetNtMessage(
 
     if (newString.Buffer != string->Buffer || newString.Length != string->Length)
     {
-        PhSwapReference2(&string, PhCreateStringEx(newString.Buffer, newString.Length));
+        PhMoveReference(&string, PhCreateStringEx(newString.Buffer, newString.Length));
     }
 
     return string;
 }
 
 static PPH_STRING FormatUtcTime(
-    __in PLARGE_INTEGER Time
+    _In_ PLARGE_INTEGER Time
     )
 {
     SYSTEMTIME systemTime;
@@ -659,8 +659,8 @@ static VOID RecoverAfterEngineMessages(
 }
 
 static VOID ConsoleMessageHandler(
-    __in ULONG Level,
-    __in __assumeRefs(1) PPH_STRING Message
+    _In_ ULONG Level,
+    _In_ _Assume_refs_(1) PPH_STRING Message
     )
 {
     static ULONG ProgressCounter = 0;
@@ -695,9 +695,9 @@ static VOID ConsoleMessageHandler(
 }
 
 static VOID EnumDb(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in_opt PPH_STRING FileName
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_opt_ PPH_STRING FileName
     )
 {
     PDB_FILE_DIRECTORY_INFORMATION dirInfo;
@@ -743,7 +743,7 @@ static VOID EnumDb(
 }
 
 static VOID PrintHelp(
-    __in_opt PPH_STRING Command
+    _In_opt_ PPH_STRING Command
     )
 {
     if (Command)
@@ -979,7 +979,7 @@ static VOID PrintHelp(
 }
 
 static PPH_STRING FixMultipleBackslashes(
-    __in PPH_STRINGREF String
+    _In_ PPH_STRINGREF String
     )
 {
     PH_STRING_BUILDER sb;

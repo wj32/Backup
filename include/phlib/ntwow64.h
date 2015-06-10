@@ -7,24 +7,20 @@
 #define WOW64_X86_TAG_U L" (x86)"
 
 // In USER_SHARED_DATA
-// symbols
 typedef enum _WOW64_SHARED_INFORMATION
 {
-    SharedNtdll32LdrInitializeThunk = 0,
-    SharedNtdll32KiUserExceptionDispatcher = 1,
-    SharedNtdll32KiUserApcDispatcher = 2,
-    SharedNtdll32KiUserCallbackDispatcher = 3,
-    SharedNtdll32LdrHotPatchRoutine = 4,
-    SharedNtdll32ExpInterlockedPopEntrySListFault = 5,
-    SharedNtdll32ExpInterlockedPopEntrySListResume = 6,
-    SharedNtdll32ExpInterlockedPopEntrySListEnd = 7,
-    SharedNtdll32RtlUserThreadStart = 8,
-    SharedNtdll32pQueryProcessDebugInformationRemote = 9,
-    SharedNtdll32EtwpNotificationThread = 10,
-    SharedNtdll32BaseAddress = 11,
-    SharedNtdll32RtlpWnfNotificationThread = 12,
-    SharedNtdll32LdrSystemDllInitBlock = 13,
-    Wow64SharedPageEntriesCount = 14
+    SharedNtdll32LdrInitializeThunk,
+    SharedNtdll32KiUserExceptionDispatcher,
+    SharedNtdll32KiUserApcDispatcher,
+    SharedNtdll32KiUserCallbackDispatcher,
+    SharedNtdll32ExpInterlockedPopEntrySListFault,
+    SharedNtdll32ExpInterlockedPopEntrySListResume,
+    SharedNtdll32ExpInterlockedPopEntrySListEnd,
+    SharedNtdll32RtlUserThreadStart,
+    SharedNtdll32pQueryProcessDebugInformationRemote,
+    SharedNtdll32BaseAddress,
+    SharedNtdll32LdrSystemDllInitBlock,
+    Wow64SharedPageEntriesCount
 } WOW64_SHARED_INFORMATION;
 
 // 32-bit definitions
@@ -99,7 +95,9 @@ typedef struct _LDR_DDAG_NODE32
     ULONG LowestLink;
 } LDR_DDAG_NODE32, *PLDR_DDAG_NODE32;
 
-#define LDR_DATA_TABLE_ENTRY_SIZE_WINXP32 FIELD_OFFSET(LDR_DATA_TABLE_ENTRY32, DdagNode)
+#define LDR_DATA_TABLE_ENTRY_SIZE_WINXP_32 FIELD_OFFSET(LDR_DATA_TABLE_ENTRY32, DdagNode)
+#define LDR_DATA_TABLE_ENTRY_SIZE_WIN7_32 FIELD_OFFSET(LDR_DATA_TABLE_ENTRY32, BaseNameHashValue)
+#define LDR_DATA_TABLE_ENTRY_SIZE_WIN8_32 FIELD_OFFSET(LDR_DATA_TABLE_ENTRY32, ImplicitPathOptions)
 
 typedef struct _LDR_DATA_TABLE_ENTRY32
 {
@@ -133,9 +131,10 @@ typedef struct _LDR_DATA_TABLE_ENTRY32
             ULONG InExceptionTable : 1;
             ULONG ReservedFlags1 : 2;
             ULONG LoadInProgress : 1;
-            ULONG ReservedFlags2 : 1;
+            ULONG LoadConfigProcessed : 1;
             ULONG EntryProcessed : 1;
-            ULONG ReservedFlags3 : 3;
+            ULONG ProtectDelayLoad : 1;
+            ULONG ReservedFlags3 : 2;
             ULONG DontCallForThreads : 1;
             ULONG ProcessAttachCalled : 1;
             ULONG ProcessAttachFailed : 1;
@@ -154,10 +153,11 @@ typedef struct _LDR_DATA_TABLE_ENTRY32
     LIST_ENTRY32 HashLinks;
     ULONG TimeDateStamp;
     WOW64_POINTER(struct _ACTIVATION_CONTEXT *) EntryPointActivationContext;
-    WOW64_POINTER(PVOID) PatchInformation;
+    WOW64_POINTER(PVOID) Lock;
     WOW64_POINTER(PLDR_DDAG_NODE) DdagNode;
     LIST_ENTRY32 NodeModuleLink;
-    WOW64_POINTER(struct _LDRP_DLL_SNAP_CONTEXT *) SnapContext;
+    WOW64_POINTER(struct _LDRP_LOAD_CONTEXT *) LoadContext;
+    WOW64_POINTER(PVOID) ParentDllBase;
     WOW64_POINTER(PVOID) SwitchBackContext;
     RTL_BALANCED_NODE32 BaseAddressIndexNode;
     RTL_BALANCED_NODE32 MappingInfoIndexNode;
@@ -165,6 +165,8 @@ typedef struct _LDR_DATA_TABLE_ENTRY32
     LARGE_INTEGER LoadTime;
     ULONG BaseNameHashValue;
     LDR_DLL_LOAD_REASON LoadReason;
+    ULONG ImplicitPathOptions;
+    ULONG ReferenceCount;
 } LDR_DATA_TABLE_ENTRY32, *PLDR_DATA_TABLE_ENTRY32;
 
 typedef struct _CURDIR32
@@ -221,6 +223,7 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS32
     ULONG EnvironmentVersion;
     WOW64_POINTER(PVOID) PackageDependencyData;
     ULONG ProcessGroupId;
+    ULONG LoaderThreads;
 } RTL_USER_PROCESS_PARAMETERS32, *PRTL_USER_PROCESS_PARAMETERS32;
 
 typedef struct _PEB32
@@ -280,7 +283,7 @@ typedef struct _PEB32
     ULONG TlsBitmapBits[2];
     WOW64_POINTER(PVOID) ReadOnlySharedMemoryBase;
     WOW64_POINTER(PVOID) HotpatchInformation;
-    WOW64_POINTER(PPVOID) ReadOnlyStaticServerData;
+    WOW64_POINTER(PVOID *) ReadOnlyStaticServerData;
     WOW64_POINTER(PVOID) AnsiCodePageData;
     WOW64_POINTER(PVOID) OemCodePageData;
     WOW64_POINTER(PVOID) UnicodeCaseTableData;
@@ -296,7 +299,7 @@ typedef struct _PEB32
 
     ULONG NumberOfHeaps;
     ULONG MaximumNumberOfHeaps;
-    WOW64_POINTER(PPVOID) ProcessHeaps;
+    WOW64_POINTER(PVOID *) ProcessHeaps;
 
     WOW64_POINTER(PVOID) GdiSharedHandleTable;
     WOW64_POINTER(PVOID) ProcessStarterHelper;
@@ -335,7 +338,7 @@ typedef struct _PEB32
 
     WOW64_POINTER(SIZE_T) MinimumStackCommit;
 
-    WOW64_POINTER(PPVOID) FlsCallback;
+    WOW64_POINTER(PVOID *) FlsCallback;
     LIST_ENTRY32 FlsListHead;
     WOW64_POINTER(PVOID) FlsBitmap;
     ULONG FlsBitmapBits[FLS_MAXIMUM_AVAILABLE / (sizeof(ULONG) * 8)];
@@ -421,8 +424,8 @@ typedef struct _TEB32
 // Conversion
 
 FORCEINLINE VOID UStr32ToUStr(
-    __out PUNICODE_STRING Destination,
-    __in PUNICODE_STRING32 Source
+    _Out_ PUNICODE_STRING Destination,
+    _In_ PUNICODE_STRING32 Source
     )
 {
     Destination->Length = Source->Length;
@@ -431,8 +434,8 @@ FORCEINLINE VOID UStr32ToUStr(
 }
 
 FORCEINLINE VOID UStrToUStr32(
-    __out PUNICODE_STRING32 Destination,
-    __in PUNICODE_STRING Source
+    _Out_ PUNICODE_STRING32 Destination,
+    _In_ PUNICODE_STRING Source
     )
 {
     Destination->Length = Source->Length;

@@ -75,12 +75,12 @@ PH_STRINGREF EnpBackslashString = PH_STRINGREF_INIT(L"\\");
 PH_STRINGREF EnpNewSuffixString = PH_STRINGREF_INIT(L".new.tmp");
 
 NTSTATUS EnQueryRevision(
-    __in PBK_CONFIG Config,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler,
-    __out_opt PULONGLONG RevisionId,
-    __out_opt PLARGE_INTEGER RevisionTimeStamp,
-    __out_opt PULONGLONG FirstRevisionId,
-    __out_opt PLARGE_INTEGER FirstRevisionTimeStamp
+    _In_ PBK_CONFIG Config,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_opt_ PULONGLONG RevisionId,
+    _Out_opt_ PLARGE_INTEGER RevisionTimeStamp,
+    _Out_opt_ PULONGLONG FirstRevisionId,
+    _Out_opt_ PLARGE_INTEGER FirstRevisionTimeStamp
     )
 {
     NTSTATUS status;
@@ -158,9 +158,9 @@ NTSTATUS EnQueryRevision(
 }
 
 NTSTATUS EnBackupToRevision(
-    __in PBK_CONFIG Config,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler,
-    __out_opt PULONGLONG RevisionId
+    _In_ PBK_CONFIG Config,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_opt_ PULONGLONG RevisionId
     )
 {
     NTSTATUS status;
@@ -248,8 +248,8 @@ NTSTATUS EnBackupToRevision(
 }
 
 NTSTATUS EnTestBackupToRevision(
-    __in PBK_CONFIG Config,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -283,10 +283,10 @@ NTSTATUS EnTestBackupToRevision(
 }
 
 NTSTATUS EnRevertToRevision(
-    __in PBK_CONFIG Config,
-    __in ULONGLONG TargetRevisionId,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler,
-    __out_opt PULONGLONG RevisionId
+    _In_ PBK_CONFIG Config,
+    _In_ ULONGLONG TargetRevisionId,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_opt_ PULONGLONG RevisionId
     )
 {
     NTSTATUS status;
@@ -334,10 +334,10 @@ NTSTATUS EnRevertToRevision(
 }
 
 NTSTATUS EnTrimToRevision(
-    __in PBK_CONFIG Config,
-    __in ULONGLONG TargetFirstRevisionId,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler,
-    __out_opt PULONGLONG FirstRevisionId
+    _In_ PBK_CONFIG Config,
+    _In_ ULONGLONG TargetFirstRevisionId,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_opt_ PULONGLONG FirstRevisionId
     )
 {
     NTSTATUS status;
@@ -385,13 +385,13 @@ NTSTATUS EnTrimToRevision(
 }
 
 NTSTATUS EnRestoreFromRevision(
-    __in PBK_CONFIG Config,
-    __in ULONG Flags,
-    __in PPH_STRINGREF FileName,
-    __in_opt ULONGLONG RevisionId,
-    __in PPH_STRINGREF RestoreToDirectory,
-    __in_opt PPH_STRINGREF RestoreToName,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ ULONG Flags,
+    _In_ PPH_STRINGREF FileName,
+    _In_opt_ ULONGLONG RevisionId,
+    _In_ PPH_STRINGREF RestoreToDirectory,
+    _In_opt_ PPH_STRINGREF RestoreToName,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -415,11 +415,11 @@ NTSTATUS EnRestoreFromRevision(
 }
 
 NTSTATUS EnQueryFileRevisions(
-    __in PBK_CONFIG Config,
-    __in PPH_STRINGREF FileName,
-    __in PEN_MESSAGE_HANDLER MessageHandler,
-    __out PEN_FILE_REVISION_INFORMATION *Entries,
-    __out PULONG NumberOfEntries
+    _In_ PBK_CONFIG Config,
+    _In_ PPH_STRINGREF FileName,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_ PEN_FILE_REVISION_INFORMATION *Entries,
+    _Out_ PULONG NumberOfEntries
     )
 {
     NTSTATUS status;
@@ -447,10 +447,10 @@ NTSTATUS EnQueryFileRevisions(
 }
 
 NTSTATUS EnCompareRevisions(
-    __in PBK_CONFIG Config,
-    __in ULONGLONG BaseRevisionId,
-    __in_opt ULONGLONG TargetRevisionId,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ ULONGLONG BaseRevisionId,
+    _In_opt_ ULONGLONG TargetRevisionId,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -474,8 +474,8 @@ NTSTATUS EnCompareRevisions(
 }
 
 NTSTATUS EnCompactDatabase(
-    __in PBK_CONFIG Config,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -542,10 +542,10 @@ CleanupExit:
 }
 
 NTSTATUS EnpBackupFirstRevision(
-    __in PBK_CONFIG Config,
-    __in_opt HANDLE TransactionHandle,
-    __in PDB_DATABASE Database,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_opt_ HANDLE TransactionHandle,
+    _In_ PDB_DATABASE Database,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -664,13 +664,13 @@ NTSTATUS EnpBackupFirstRevision(
 }
 
 NTSTATUS EnpSyncTreeFirstRevision(
-    __in PBK_CONFIG Config,
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE Directory,
-    __inout PEN_FILEINFO Root,
-    __in PPK_ACTION_LIST ActionList,
-    __in_opt PBK_VSS_OBJECT Vss,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE Directory,
+    _Inout_ PEN_FILEINFO Root,
+    _In_ PPK_ACTION_LIST ActionList,
+    _In_opt_ PBK_VSS_OBJECT Vss,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -768,12 +768,12 @@ NTSTATUS EnpSyncTreeFirstRevision(
 }
 
 NTSTATUS EnpSyncFileFirstRevision(
-    __in PBK_CONFIG Config,
-    __in PDB_DATABASE Database,
-    __in PEN_FILEINFO FileInfo,
-    __in PPK_ACTION_LIST ActionList,
-    __in_opt PBK_VSS_OBJECT Vss,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ PDB_DATABASE Database,
+    _In_ PEN_FILEINFO FileInfo,
+    _In_ PPK_ACTION_LIST ActionList,
+    _In_opt_ PBK_VSS_OBJECT Vss,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -830,10 +830,10 @@ NTSTATUS EnpSyncFileFirstRevision(
 }
 
 NTSTATUS EnpBackupNewRevision(
-    __in PBK_CONFIG Config,
-    __in_opt HANDLE TransactionHandle,
-    __in PDB_DATABASE Database,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_opt_ HANDLE TransactionHandle,
+    _In_ PDB_DATABASE Database,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -1062,9 +1062,9 @@ NTSTATUS EnpBackupNewRevision(
 }
 
 NTSTATUS EnpTestBackupNewRevision(
-    __in PBK_CONFIG Config,
-    __in PDB_DATABASE Database,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ PDB_DATABASE Database,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -1120,16 +1120,16 @@ NTSTATUS EnpTestBackupNewRevision(
 }
 
 NTSTATUS EnpDiffTreeNewRevision(
-    __in PBK_CONFIG Config,
-    __in PDB_DATABASE Database,
-    __in ULONGLONG NewRevisionId,
-    __in PDBF_FILE HeadDirectory,
-    __in_opt PDBF_FILE DiffDirectory,
-    __inout PEN_FILEINFO Root,
-    __in_opt PPK_ACTION_LIST ActionList,
-    __inout PULONGLONG NumberOfChanges,
-    __in_opt PBK_VSS_OBJECT Vss,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ PDB_DATABASE Database,
+    _In_ ULONGLONG NewRevisionId,
+    _In_ PDBF_FILE HeadDirectory,
+    _In_opt_ PDBF_FILE DiffDirectory,
+    _Inout_ PEN_FILEINFO Root,
+    _In_opt_ PPK_ACTION_LIST ActionList,
+    _Inout_ PULONGLONG NumberOfChanges,
+    _In_opt_ PBK_VSS_OBJECT Vss,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -1221,16 +1221,16 @@ NTSTATUS EnpDiffTreeNewRevision(
 }
 
 NTSTATUS EnpDiffDirectoryNewRevision(
-    __in PBK_CONFIG Config,
-    __in PDB_DATABASE Database,
-    __in ULONGLONG NewRevisionId,
-    __in PDBF_FILE HeadDirectory,
-    __in_opt PDBF_FILE DiffDirectory,
-    __in PEN_FILEINFO FileInfo,
-    __in_opt PPK_ACTION_LIST ActionList,
-    __inout PULONGLONG NumberOfChanges,
-    __in_opt PBK_VSS_OBJECT Vss,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ PDB_DATABASE Database,
+    _In_ ULONGLONG NewRevisionId,
+    _In_ PDBF_FILE HeadDirectory,
+    _In_opt_ PDBF_FILE DiffDirectory,
+    _In_ PEN_FILEINFO FileInfo,
+    _In_opt_ PPK_ACTION_LIST ActionList,
+    _Inout_ PULONGLONG NumberOfChanges,
+    _In_opt_ PBK_VSS_OBJECT Vss,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -1405,15 +1405,15 @@ NTSTATUS EnpDiffDirectoryNewRevision(
 }
 
 NTSTATUS EnpDiffAddFileNewRevision(
-    __in PDB_DATABASE Database,
-    __in ULONGLONG NewRevisionId,
-    __in PDBF_FILE HeadDirectory,
-    __in PDBF_FILE DiffDirectory,
-    __in PDBF_FILE ThisDirectoryInHead,
-    __in PEN_FILEINFO FileInfo,
-    __in BOOLEAN CreateDiffFile,
-    __in PPK_ACTION_LIST ActionList,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PDB_DATABASE Database,
+    _In_ ULONGLONG NewRevisionId,
+    _In_ PDBF_FILE HeadDirectory,
+    _In_ PDBF_FILE DiffDirectory,
+    _In_ PDBF_FILE ThisDirectoryInHead,
+    _In_ PEN_FILEINFO FileInfo,
+    _In_ BOOLEAN CreateDiffFile,
+    _In_ PPK_ACTION_LIST ActionList,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -1493,14 +1493,14 @@ NTSTATUS EnpDiffAddFileNewRevision(
 }
 
 NTSTATUS EnpDiffDeleteFileNewRevision(
-    __in PDB_DATABASE Database,
-    __in ULONGLONG NewRevisionId,
-    __in PDBF_FILE HeadDirectory,
-    __in PDBF_FILE DiffDirectory,
-    __in PDBF_FILE ThisDirectoryInHead,
-    __in PEN_FILEINFO DirectoryFileInfo,
-    __in PDB_FILE_DIRECTORY_INFORMATION Entry,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PDB_DATABASE Database,
+    _In_ ULONGLONG NewRevisionId,
+    _In_ PDBF_FILE HeadDirectory,
+    _In_ PDBF_FILE DiffDirectory,
+    _In_ PDBF_FILE ThisDirectoryInHead,
+    _In_ PEN_FILEINFO DirectoryFileInfo,
+    _In_ PDB_FILE_DIRECTORY_INFORMATION Entry,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -1546,15 +1546,15 @@ NTSTATUS EnpDiffDeleteFileNewRevision(
 }
 
 NTSTATUS EnpDiffModifyFileNewRevision(
-    __in PDB_DATABASE Database,
-    __in ULONGLONG NewRevisionId,
-    __in PDBF_FILE HeadDirectory,
-    __in PDBF_FILE DiffDirectory,
-    __in PDBF_FILE ThisDirectoryInHead,
-    __in PEN_FILEINFO FileInfo,
-    __in PDB_FILE_DIRECTORY_INFORMATION Entry,
-    __in PPK_ACTION_LIST ActionList,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PDB_DATABASE Database,
+    _In_ ULONGLONG NewRevisionId,
+    _In_ PDBF_FILE HeadDirectory,
+    _In_ PDBF_FILE DiffDirectory,
+    _In_ PDBF_FILE ThisDirectoryInHead,
+    _In_ PEN_FILEINFO FileInfo,
+    _In_ PDB_FILE_DIRECTORY_INFORMATION Entry,
+    _In_ PPK_ACTION_LIST ActionList,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -1593,8 +1593,8 @@ NTSTATUS EnpDiffModifyFileNewRevision(
 }
 
 BOOLEAN EnpDirectoryEntryCompareFunction(
-    __in PVOID Entry1,
-    __in PVOID Entry2
+    _In_ PVOID Entry1,
+    _In_ PVOID Entry2
     )
 {
     PDB_FILE_DIRECTORY_INFORMATION fileInfo1 = *(PDB_FILE_DIRECTORY_INFORMATION *)Entry1;
@@ -1604,7 +1604,7 @@ BOOLEAN EnpDirectoryEntryCompareFunction(
 }
 
 ULONG EnpDirectoryEntryHashFunction(
-    __in PVOID Entry
+    _In_ PVOID Entry
     )
 {
     PDB_FILE_DIRECTORY_INFORMATION fileInfo = *(PDB_FILE_DIRECTORY_INFORMATION *)Entry;
@@ -1613,8 +1613,8 @@ ULONG EnpDirectoryEntryHashFunction(
 }
 
 PDB_FILE_DIRECTORY_INFORMATION EnpFindDirectoryEntry(
-    __in PPH_HASHTABLE Hashtable,
-    __in PPH_STRING Name
+    _In_ PPH_HASHTABLE Hashtable,
+    _In_ PPH_STRING Name
     )
 {
     DB_FILE_DIRECTORY_INFORMATION lookupEntry;
@@ -1631,10 +1631,10 @@ PDB_FILE_DIRECTORY_INFORMATION EnpFindDirectoryEntry(
 }
 
 HRESULT EnpBackupPackageCallback(
-    __in PK_PACKAGE_CALLBACK_MESSAGE Message,
-    __in_opt PPK_ACTION Action,
-    __in PVOID Parameter,
-    __in_opt PVOID Context
+    _In_ PK_PACKAGE_CALLBACK_MESSAGE Message,
+    _In_opt_ PPK_ACTION Action,
+    _In_ PVOID Parameter,
+    _In_opt_ PVOID Context
     )
 {
     NTSTATUS status;
@@ -1704,9 +1704,9 @@ HRESULT EnpBackupPackageCallback(
 }
 
 NTSTATUS EnpOpenStreamForFile(
-    __in PEN_FILEINFO FileInfo,
-    __in_opt PBK_VSS_OBJECT Vss,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PEN_FILEINFO FileInfo,
+    _In_opt_ PBK_VSS_OBJECT Vss,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -1771,11 +1771,11 @@ NTSTATUS EnpOpenStreamForFile(
 }
 
 NTSTATUS EnpRevertToRevision(
-    __in PBK_CONFIG Config,
-    __in_opt HANDLE TransactionHandle,
-    __in PDB_DATABASE Database,
-    __in ULONGLONG TargetRevisionId,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_opt_ HANDLE TransactionHandle,
+    _In_ PDB_DATABASE Database,
+    _In_ ULONGLONG TargetRevisionId,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -1940,10 +1940,10 @@ NTSTATUS EnpRevertToRevision(
 }
 
 NTSTATUS EnpMergeDirectoryToHead(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE DirectoryInHead,
-    __in PDBF_FILE DirectoryInDiff,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE DirectoryInHead,
+    _In_ PDBF_FILE DirectoryInDiff,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -2065,11 +2065,11 @@ NTSTATUS EnpMergeDirectoryToHead(
 }
 
 NTSTATUS EnpTrimToRevision(
-    __in PBK_CONFIG Config,
-    __in_opt HANDLE TransactionHandle,
-    __in PDB_DATABASE Database,
-    __in ULONGLONG TargetFirstRevisionId,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_opt_ HANDLE TransactionHandle,
+    _In_ PDB_DATABASE Database,
+    _In_ ULONGLONG TargetFirstRevisionId,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -2153,10 +2153,10 @@ CleanupExit:
 }
 
 NTSTATUS EnpAddMergeFileNamesFromDirectory(
-    __in PDB_DATABASE Database,
-    __in PPH_HASHTABLE RevisionEntries,
-    __in PDBF_FILE Directory,
-    __in_opt PPH_STRING DirectoryName
+    _In_ PDB_DATABASE Database,
+    _In_ PPH_HASHTABLE RevisionEntries,
+    _In_ PDBF_FILE Directory,
+    _In_opt_ PPH_STRING DirectoryName
     )
 {
     NTSTATUS status;
@@ -2229,12 +2229,12 @@ NTSTATUS EnpAddMergeFileNamesFromDirectory(
 }
 
 NTSTATUS EnpMergePackages(
-    __in PBK_CONFIG Config,
-    __in_opt HANDLE TransactionHandle,
-    __in ULONGLONG OldFirstRevisionId,
-    __in ULONGLONG NewFirstRevisionId,
-    __in PPH_HASHTABLE RevisionEntries,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_opt_ HANDLE TransactionHandle,
+    _In_ ULONGLONG OldFirstRevisionId,
+    _In_ ULONGLONG NewFirstRevisionId,
+    _In_ PPH_HASHTABLE RevisionEntries,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -2471,10 +2471,10 @@ CleanupExit:
 }
 
 HRESULT EnpMergePackageCallback(
-    __in PK_PACKAGE_CALLBACK_MESSAGE Message,
-    __in_opt PPK_ACTION Action,
-    __in PVOID Parameter,
-    __in_opt PVOID Context
+    _In_ PK_PACKAGE_CALLBACK_MESSAGE Message,
+    _In_opt_ PPK_ACTION Action,
+    _In_ PVOID Parameter,
+    _In_opt_ PVOID Context
     )
 {
     PEN_PACKAGE_CALLBACK_CONTEXT context = Context;
@@ -2515,10 +2515,10 @@ HRESULT EnpMergePackageCallback(
 }
 
 NTSTATUS EnpUpdateDatabaseAfterTrim(
-    __in PDB_DATABASE Database,
-    __in ULONGLONG OldFirstRevisionId,
-    __in ULONGLONG NewFirstRevisionId,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PDB_DATABASE Database,
+    _In_ ULONGLONG OldFirstRevisionId,
+    _In_ ULONGLONG NewFirstRevisionId,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -2567,9 +2567,9 @@ NTSTATUS EnpUpdateDatabaseAfterTrim(
 }
 
 NTSTATUS EnpUpdateDirectoryMinimumRevisionIds(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE Directory,
-    __in ULONGLONG FirstRevisionId
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE Directory,
+    _In_ ULONGLONG FirstRevisionId
     )
 {
     NTSTATUS status;
@@ -2614,8 +2614,8 @@ NTSTATUS EnpUpdateDirectoryMinimumRevisionIds(
 }
 
 BOOLEAN EnpRevisionEntryCompareFunction(
-    __in PVOID Entry1,
-    __in PVOID Entry2
+    _In_ PVOID Entry1,
+    _In_ PVOID Entry2
     )
 {
     PEN_REVISION_ENTRY revisionEntry1 = Entry1;
@@ -2625,7 +2625,7 @@ BOOLEAN EnpRevisionEntryCompareFunction(
 }
 
 ULONG EnpRevisionEntryHashFunction(
-    __in PVOID Entry
+    _In_ PVOID Entry
     )
 {
     PEN_REVISION_ENTRY revisionEntry = Entry;
@@ -2634,14 +2634,14 @@ ULONG EnpRevisionEntryHashFunction(
 }
 
 NTSTATUS EnpRestoreFromRevision(
-    __in PBK_CONFIG Config,
-    __in PDB_DATABASE Database,
-    __in ULONG Flags,
-    __in PPH_STRINGREF FileName,
-    __in_opt ULONGLONG RevisionId,
-    __in PPH_STRINGREF RestoreToDirectory,
-    __in_opt PPH_STRINGREF RestoreToName,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ PDB_DATABASE Database,
+    _In_ ULONG Flags,
+    _In_ PPH_STRINGREF FileName,
+    _In_opt_ ULONGLONG RevisionId,
+    _In_ PPH_STRINGREF RestoreToDirectory,
+    _In_opt_ PPH_STRINGREF RestoreToName,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -2809,14 +2809,14 @@ NTSTATUS EnpRestoreFromRevision(
 }
 
 NTSTATUS EnpRestoreSingleFileFromRevision(
-    __in PBK_CONFIG Config,
-    __in PDB_DATABASE Database,
-    __in ULONG Flags,
-    __in PPH_STRINGREF FileName,
-    __in ULONGLONG RevisionId,
-    __in PPH_STRINGREF RestoreToDirectory,
-    __in_opt PPH_STRINGREF RestoreToName,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ PDB_DATABASE Database,
+    _In_ ULONG Flags,
+    _In_ PPH_STRINGREF FileName,
+    _In_ ULONGLONG RevisionId,
+    _In_ PPH_STRINGREF RestoreToDirectory,
+    _In_opt_ PPH_STRINGREF RestoreToName,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -2847,12 +2847,12 @@ NTSTATUS EnpRestoreSingleFileFromRevision(
 }
 
 NTSTATUS EnpRestoreDirectoryFromHead(
-    __in PBK_CONFIG Config,
-    __in PDB_DATABASE Database,
-    __in ULONG Flags,
-    __in PPH_STRINGREF FileName,
-    __in PPH_STRINGREF RestoreToDirectory,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ PDB_DATABASE Database,
+    _In_ ULONG Flags,
+    _In_ PPH_STRINGREF FileName,
+    _In_ PPH_STRINGREF RestoreToDirectory,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -2955,10 +2955,10 @@ NTSTATUS EnpRestoreDirectoryFromHead(
 }
 
 NTSTATUS EnpAddRestoreFileNamesFromDirectory(
-    __in PDB_DATABASE Database,
-    __in PPH_HASHTABLE RevisionEntries,
-    __in PDBF_FILE Directory,
-    __in PPH_STRING DirectoryName
+    _In_ PDB_DATABASE Database,
+    _In_ PPH_HASHTABLE RevisionEntries,
+    _In_ PDBF_FILE Directory,
+    _In_ PPH_STRING DirectoryName
     )
 {
     NTSTATUS status;
@@ -3027,12 +3027,12 @@ NTSTATUS EnpAddRestoreFileNamesFromDirectory(
 }
 
 NTSTATUS EnpRestoreDirectoryFromRevision(
-    __in PBK_CONFIG Config,
-    __in ULONG Flags,
-    __in PPH_STRINGREF FileName,
-    __in ULONGLONG RevisionId,
-    __in PPH_STRINGREF RestoreToDirectory,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ ULONG Flags,
+    _In_ PPH_STRINGREF FileName,
+    _In_ ULONGLONG RevisionId,
+    _In_ PPH_STRINGREF RestoreToDirectory,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -3091,10 +3091,10 @@ NTSTATUS EnpRestoreDirectoryFromRevision(
 }
 
 NTSTATUS EnpMergeToHeadUntilRevision(
-    __in PDB_DATABASE Database,
-    __in ULONGLONG TargetRevisionId,
-    __in PEN_MESSAGE_HANDLER MessageHandler,
-    __out_opt PDBF_FILE *HeadDirectory
+    _In_ PDB_DATABASE Database,
+    _In_ ULONGLONG TargetRevisionId,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler,
+    _Out_opt_ PDBF_FILE *HeadDirectory
     )
 {
     NTSTATUS status;
@@ -3155,14 +3155,14 @@ NTSTATUS EnpMergeToHeadUntilRevision(
 }
 
 NTSTATUS EnpExtractFromPackage(
-    __in PBK_CONFIG Config,
-    __in ULONG Flags,
-    __in ULONGLONG RevisionId,
-    __in_opt PPH_STRINGREF BaseFileName,
-    __in PPH_HASHTABLE FileNames,
-    __in PPH_STRINGREF RestoreToDirectory,
-    __in_opt PPH_STRINGREF RestoreToName,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ ULONG Flags,
+    _In_ ULONGLONG RevisionId,
+    _In_opt_ PPH_STRINGREF BaseFileName,
+    _In_ PPH_HASHTABLE FileNames,
+    _In_ PPH_STRINGREF RestoreToDirectory,
+    _In_opt_ PPH_STRINGREF RestoreToName,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -3235,10 +3235,10 @@ NTSTATUS EnpExtractFromPackage(
 }
 
 HRESULT EnpRestorePackageCallback(
-    __in PK_PACKAGE_CALLBACK_MESSAGE Message,
-    __in_opt PPK_ACTION Action,
-    __in PVOID Parameter,
-    __in_opt PVOID Context
+    _In_ PK_PACKAGE_CALLBACK_MESSAGE Message,
+    _In_opt_ PPK_ACTION Action,
+    _In_ PVOID Parameter,
+    _In_opt_ PVOID Context
     )
 {
     NTSTATUS status;
@@ -3365,13 +3365,13 @@ HRESULT EnpRestorePackageCallback(
 }
 
 NTSTATUS EnpQueryFileRevisions(
-    __in PDB_DATABASE Database,
-    __in PPH_STRINGREF FileName,
-    __in ULONGLONG FirstRevisionId,
-    __in ULONGLONG LastRevisionId,
-    __out PEN_FILE_REVISION_INFORMATION *Entries,
-    __out PULONG NumberOfEntries,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PDB_DATABASE Database,
+    _In_ PPH_STRINGREF FileName,
+    _In_ ULONGLONG FirstRevisionId,
+    _In_ ULONGLONG LastRevisionId,
+    _Out_ PEN_FILE_REVISION_INFORMATION *Entries,
+    _Out_ PULONG NumberOfEntries,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -3469,11 +3469,11 @@ NTSTATUS EnpQueryFileRevisions(
 }
 
 NTSTATUS EnpCompareRevisions(
-    __in PBK_CONFIG Config,
-    __in PDB_DATABASE Database,
-    __in ULONGLONG BaseRevisionId,
-    __in_opt ULONGLONG TargetRevisionId,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ PDB_DATABASE Database,
+    _In_ ULONGLONG BaseRevisionId,
+    _In_opt_ ULONGLONG TargetRevisionId,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -3623,13 +3623,13 @@ CleanupExit:
 }
 
 NTSTATUS EnpDiffDirectoryCompareRevisions(
-    __in_opt PDB_DATABASE BaseDatabase,
-    __in PDB_DATABASE TargetDatabase,
-    __in_opt PDBF_FILE BaseDirectory,
-    __in PDBF_FILE TargetDirectory,
-    __in PPH_STRING FileName,
-    __inout PULONGLONG NumberOfChanges,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_opt_ PDB_DATABASE BaseDatabase,
+    _In_ PDB_DATABASE TargetDatabase,
+    _In_opt_ PDBF_FILE BaseDirectory,
+    _In_ PDBF_FILE TargetDirectory,
+    _In_ PPH_STRING FileName,
+    _Inout_ PULONGLONG NumberOfChanges,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -3830,7 +3830,7 @@ PPH_HASHTABLE EnpCreateFileNameHashtable(
 }
 
 VOID EnpDestroyFileNameHashtable(
-    __in PPH_HASHTABLE Hashtable
+    _In_ PPH_HASHTABLE Hashtable
     )
 {
     PH_HASHTABLE_ENUM_CONTEXT enumContext;
@@ -3845,8 +3845,8 @@ VOID EnpDestroyFileNameHashtable(
 }
 
 VOID EnpAddToFileNameHashtable(
-    __in PPH_HASHTABLE Hashtable,
-    __in PPH_STRING FileName
+    _In_ PPH_HASHTABLE Hashtable,
+    _In_ PPH_STRING FileName
     )
 {
     BOOLEAN added;
@@ -3858,8 +3858,8 @@ VOID EnpAddToFileNameHashtable(
 }
 
 PPH_STRING EnpFindInFileNameHashtable(
-    __in PPH_HASHTABLE Hashtable,
-    __in PPH_STRINGREF FileName
+    _In_ PPH_HASHTABLE Hashtable,
+    _In_ PPH_STRINGREF FileName
     )
 {
     PH_STRING lookupString;
@@ -3876,8 +3876,8 @@ PPH_STRING EnpFindInFileNameHashtable(
 }
 
 BOOLEAN EnpRemoveFromFileNameHashtable(
-    __in PPH_HASHTABLE Hashtable,
-    __in PPH_STRINGREF FileName
+    _In_ PPH_HASHTABLE Hashtable,
+    _In_ PPH_STRINGREF FileName
     )
 {
     PH_STRING lookupString;
@@ -3888,8 +3888,8 @@ BOOLEAN EnpRemoveFromFileNameHashtable(
 }
 
 BOOLEAN EnpFileNameCompareFunction(
-    __in PVOID Entry1,
-    __in PVOID Entry2
+    _In_ PVOID Entry1,
+    _In_ PVOID Entry2
     )
 {
     PPH_STRING string1 = *(PPH_STRING *)Entry1;
@@ -3899,7 +3899,7 @@ BOOLEAN EnpFileNameCompareFunction(
 }
 
 ULONG EnpFileNameHashFunction(
-    __in PVOID Entry
+    _In_ PVOID Entry
     )
 {
     PPH_STRING string = *(PPH_STRING *)Entry;
@@ -3908,9 +3908,9 @@ ULONG EnpFileNameHashFunction(
 }
 
 PEN_FILEINFO EnpCreateFileInfo(
-    __in_opt PEN_FILEINFO Parent,
-    __in_opt PPH_STRINGREF Name,
-    __in_opt PPH_STRINGREF SourceName
+    _In_opt_ PEN_FILEINFO Parent,
+    _In_opt_ PPH_STRINGREF Name,
+    _In_opt_ PPH_STRINGREF SourceName
     )
 {
     PEN_FILEINFO fileInfo;
@@ -3944,8 +3944,8 @@ PEN_FILEINFO EnpCreateFileInfo(
 }
 
 BOOLEAN EnpFileInfoCompareFunction(
-    __in PVOID Entry1,
-    __in PVOID Entry2
+    _In_ PVOID Entry1,
+    _In_ PVOID Entry2
     )
 {
     PEN_FILEINFO fileInfo1 = *(PEN_FILEINFO *)Entry1;
@@ -3955,7 +3955,7 @@ BOOLEAN EnpFileInfoCompareFunction(
 }
 
 ULONG EnpFileInfoHashFunction(
-    __in PVOID Entry
+    _In_ PVOID Entry
     )
 {
     PEN_FILEINFO fileInfo = *(PEN_FILEINFO *)Entry;
@@ -3964,7 +3964,7 @@ ULONG EnpFileInfoHashFunction(
 }
 
 VOID EnpCreateHashtableFileInfo(
-    __inout PEN_FILEINFO FileInfo
+    _Inout_ PEN_FILEINFO FileInfo
     )
 {
     assert(!FileInfo->Files);
@@ -3977,7 +3977,7 @@ VOID EnpCreateHashtableFileInfo(
 }
 
 VOID EnpDestroyFileInfo(
-    __in PEN_FILEINFO FileInfo
+    _In_ PEN_FILEINFO FileInfo
     )
 {
     if (FileInfo->Files)
@@ -3987,7 +3987,7 @@ VOID EnpDestroyFileInfo(
 }
 
 VOID EnpClearFileInfo(
-    __in PEN_FILEINFO FileInfo
+    _In_ PEN_FILEINFO FileInfo
     )
 {
     PH_HASHTABLE_ENUM_CONTEXT enumContext;
@@ -4004,7 +4004,7 @@ VOID EnpClearFileInfo(
 }
 
 VOID EnpFreeFileInfo(
-    __in PEN_FILEINFO FileInfo
+    _In_ PEN_FILEINFO FileInfo
     )
 {
     PhSwapReference(&FileInfo->Name, NULL);
@@ -4015,8 +4015,8 @@ VOID EnpFreeFileInfo(
 }
 
 PEN_FILEINFO EnpFindFileInfo(
-    __in PEN_FILEINFO FileInfo,
-    __in PPH_STRINGREF Name
+    _In_ PEN_FILEINFO FileInfo,
+    _In_ PPH_STRINGREF Name
     )
 {
     EN_FILEINFO lookupFileInfo;
@@ -4049,12 +4049,12 @@ PEN_FILEINFO EnpCreateRootFileInfo(
 }
 
 VOID EnpMapBaseNamesFileInfo(
-    __in PBK_CONFIG Config,
-    __inout PEN_FILEINFO FileInfo
+    _In_ PBK_CONFIG Config,
+    _Inout_ PEN_FILEINFO FileInfo
     )
 {
     // Perform required mappings.
-    PhSwapReference2(&FileInfo->FullSourceFileName, EnpMapFileName(
+    PhMoveReference(&FileInfo->FullSourceFileName, EnpMapFileName(
         Config,
         &FileInfo->FullSourceFileName->sr,
         FileInfo->FullSourceFileName
@@ -4062,7 +4062,7 @@ VOID EnpMapBaseNamesFileInfo(
 }
 
 VOID EnpTrimTrailingBackslashes(
-    __inout PPH_STRINGREF String
+    _Inout_ PPH_STRINGREF String
     )
 {
     // Remove trailing backslashes.
@@ -4071,10 +4071,10 @@ VOID EnpTrimTrailingBackslashes(
 }
 
 VOID EnpAddSourceToRoot(
-    __in PBK_CONFIG Config,
-    __in PEN_FILEINFO Root,
-    __in PPH_STRINGREF SourceFileName,
-    __in BOOLEAN Directory
+    _In_ PBK_CONFIG Config,
+    _In_ PEN_FILEINFO Root,
+    _In_ PPH_STRINGREF SourceFileName,
+    _In_ BOOLEAN Directory
     )
 {
     PH_STRINGREF part;
@@ -4170,8 +4170,8 @@ VOID EnpAddSourceToRoot(
 }
 
 VOID EnpPopulateRootFileInfo(
-    __in PBK_CONFIG Config,
-    __inout PEN_FILEINFO Root
+    _In_ PBK_CONFIG Config,
+    _Inout_ PEN_FILEINFO Root
     )
 {
     ULONG i;
@@ -4195,8 +4195,8 @@ VOID EnpPopulateRootFileInfo(
 }
 
 BOOLEAN NTAPI EnpEnumDirectoryFile(
-    __in PFILE_DIRECTORY_INFORMATION Information,
-    __in_opt PVOID Context
+    _In_ PFILE_DIRECTORY_INFORMATION Information,
+    _In_opt_ PVOID Context
     )
 {
     PEN_POPULATE_FS_CONTEXT context = Context;
@@ -4248,9 +4248,9 @@ BOOLEAN NTAPI EnpEnumDirectoryFile(
 }
 
 NTSTATUS EnpPopulateFsFileInfo(
-    __in PBK_CONFIG Config,
-    __inout PEN_FILEINFO FileInfo,
-    __in_opt PBK_VSS_OBJECT Vss
+    _In_ PBK_CONFIG Config,
+    _Inout_ PEN_FILEINFO FileInfo,
+    _In_opt_ PBK_VSS_OBJECT Vss
     )
 {
     NTSTATUS status;
@@ -4268,7 +4268,7 @@ NTSTATUS EnpPopulateFsFileInfo(
 
     if (Vss)
     {
-        PhSwapReference2(&sourceFileName, BkMapFileNameVssObject(Vss, sourceFileName));
+        PhMoveReference(&sourceFileName, BkMapFileNameVssObject(Vss, sourceFileName));
     }
 
     fileName = sourceFileName->Buffer;
@@ -4321,8 +4321,8 @@ NTSTATUS EnpPopulateFsFileInfo(
 }
 
 NTSTATUS EnpUpdateFsFileInfo(
-    __inout PEN_FILEINFO FileInfo,
-    __in_opt PBK_VSS_OBJECT Vss
+    _Inout_ PEN_FILEINFO FileInfo,
+    _In_opt_ PBK_VSS_OBJECT Vss
     )
 {
     NTSTATUS status;
@@ -4345,8 +4345,8 @@ NTSTATUS EnpUpdateFsFileInfo(
 }
 
 VOID EnpSetDiffFlagsFileInfo(
-    __inout PEN_FILEINFO FileInfo,
-    __in UCHAR DiffFlags
+    _Inout_ PEN_FILEINFO FileInfo,
+    _In_ UCHAR DiffFlags
     )
 {
     PH_HASHTABLE_ENUM_CONTEXT enumContext;
@@ -4364,8 +4364,8 @@ VOID EnpSetDiffFlagsFileInfo(
 }
 
 NTSTATUS EnpCreateTransaction(
-    __out PHANDLE TransactionHandle,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler
+    _Out_ PHANDLE TransactionHandle,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -4393,10 +4393,10 @@ NTSTATUS EnpCreateTransaction(
 }
 
 NTSTATUS EnpCommitAndCloseTransaction(
-    __in NTSTATUS CurrentStatus,
-    __in_opt HANDLE TransactionHandle,
-    __in BOOLEAN TrivialCommit,
-    __in_opt PEN_MESSAGE_HANDLER MessageHandler
+    _In_ NTSTATUS CurrentStatus,
+    _In_opt_ HANDLE TransactionHandle,
+    _In_ BOOLEAN TrivialCommit,
+    _In_opt_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     NTSTATUS status;
@@ -4441,10 +4441,10 @@ NTSTATUS EnpCommitAndCloseTransaction(
 }
 
 BOOLEAN EnpStartVssObject(
-    __in PBK_CONFIG Config,
-    __in PEN_FILEINFO Root,
-    __out PBK_VSS_OBJECT *Vss,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_CONFIG Config,
+    _In_ PEN_FILEINFO Root,
+    _Out_ PBK_VSS_OBJECT *Vss,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     BOOLEAN success = FALSE;
@@ -4480,9 +4480,9 @@ BOOLEAN EnpStartVssObject(
 }
 
 VOID EnpConfigureVssObject(
-    __in PBK_VSS_OBJECT Vss,
-    __in PEN_FILEINFO Root,
-    __in PEN_MESSAGE_HANDLER MessageHandler
+    _In_ PBK_VSS_OBJECT Vss,
+    _In_ PEN_FILEINFO Root,
+    _In_ PEN_MESSAGE_HANDLER MessageHandler
     )
 {
     HRESULT result;
@@ -4538,8 +4538,8 @@ VOID EnpConfigureVssObject(
 }
 
 BOOLEAN EnpMatchFileName(
-    __in PBK_CONFIG Config,
-    __in PPH_STRING FileName
+    _In_ PBK_CONFIG Config,
+    _In_ PPH_STRING FileName
     )
 {
     ULONG i;
@@ -4577,9 +4577,9 @@ BOOLEAN EnpMatchFileName(
 }
 
 BOOLEAN EnpMatchFileSize(
-    __in PBK_CONFIG Config,
-    __in PPH_STRING FileName,
-    __in PLARGE_INTEGER Size
+    _In_ PBK_CONFIG Config,
+    _In_ PPH_STRING FileName,
+    _In_ PLARGE_INTEGER Size
     )
 {
     ULONG i;
@@ -4617,9 +4617,9 @@ BOOLEAN EnpMatchFileSize(
 }
 
 BOOLEAN EnpMatchFileSizeAgainstExpression(
-    __in PPH_STRING String,
-    __in PPH_STRING FileName,
-    __in PLARGE_INTEGER Size
+    _In_ PPH_STRING String,
+    _In_ PPH_STRING FileName,
+    _In_ PLARGE_INTEGER Size
     )
 {
     PH_STRINGREF filePart;
@@ -4673,7 +4673,7 @@ BOOLEAN EnpMatchFileSizeAgainstExpression(
 }
 
 ULONG64 EnpStringToSize(
-    __in PPH_STRINGREF String
+    _In_ PPH_STRINGREF String
     )
 {
     PH_STRINGREF string;
@@ -4716,9 +4716,9 @@ ULONG64 EnpStringToSize(
 }
 
 PPH_STRING EnpMapFileName(
-    __in PBK_CONFIG Config,
-    __in_opt PPH_STRINGREF FileName,
-    __in_opt PPH_STRING FileNameString
+    _In_ PBK_CONFIG Config,
+    _In_opt_ PPH_STRINGREF FileName,
+    _In_opt_ PPH_STRING FileNameString
     )
 {
     ULONG i;
@@ -4757,8 +4757,8 @@ PPH_STRING EnpMapFileName(
 }
 
 PPH_STRING EnpAppendComponentToPath(
-    __in PPH_STRINGREF FileName,
-    __in PPH_STRINGREF Component
+    _In_ PPH_STRINGREF FileName,
+    _In_ PPH_STRINGREF Component
     )
 {
     PH_STRINGREF fileName;
@@ -4784,8 +4784,8 @@ PPH_STRING EnpAppendComponentToPath(
 }
 
 NTSTATUS EnpQueryFullAttributesFileWin32(
-    __in PWSTR FileName,
-    __out PFILE_NETWORK_OPEN_INFORMATION FileInformation
+    _In_ PWSTR FileName,
+    _Out_ PFILE_NETWORK_OPEN_INFORMATION FileInformation
     )
 {
     NTSTATUS status;
@@ -4815,9 +4815,9 @@ NTSTATUS EnpQueryFullAttributesFileWin32(
 }
 
 NTSTATUS EnpRenameFileWin32(
-    __in_opt HANDLE FileHandle,
-    __in_opt PWSTR FileName,
-    __in PWSTR NewFileName
+    _In_opt_ HANDLE FileHandle,
+    _In_opt_ PWSTR FileName,
+    _In_ PWSTR NewFileName
     )
 {
     NTSTATUS status;
@@ -4876,10 +4876,10 @@ NTSTATUS EnpRenameFileWin32(
 }
 
 NTSTATUS EnpCopyFileWin32(
-    __in PWSTR FileName,
-    __in PWSTR NewFileName,
-    __in ULONG NewFileAttributes,
-    __in BOOLEAN OverwriteIfExists
+    _In_ PWSTR FileName,
+    _In_ PWSTR NewFileName,
+    _In_ ULONG NewFileAttributes,
+    _In_ BOOLEAN OverwriteIfExists
     )
 {
     NTSTATUS status;
@@ -5026,8 +5026,8 @@ NTSTATUS EnpCopyFileWin32(
 }
 
 VOID EnpFormatRevisionId(
-    __in ULONGLONG RevisionId,
-    __out_ecount(17) PWSTR String
+    _In_ ULONGLONG RevisionId,
+    _Out_writes_(17) PWSTR String
     )
 {
     PH_FORMAT format;
@@ -5041,8 +5041,8 @@ VOID EnpFormatRevisionId(
 }
 
 PPH_STRING EnpFormatPackageName(
-    __in PBK_CONFIG Config,
-    __in ULONGLONG RevisionId
+    _In_ PBK_CONFIG Config,
+    _In_ ULONGLONG RevisionId
     )
 {
     PH_FORMAT format[4];
@@ -5059,8 +5059,8 @@ PPH_STRING EnpFormatPackageName(
 }
 
 PPH_STRING EnpFormatTempDatabaseFileName(
-    __in PBK_CONFIG Config,
-    __in BOOLEAN SameDirectory
+    _In_ PBK_CONFIG Config,
+    _In_ BOOLEAN SameDirectory
     )
 {
     WCHAR tempNameBuffer[18];
@@ -5095,7 +5095,7 @@ PPH_STRING EnpFormatTempDatabaseFileName(
 }
 
 NTSTATUS EnpCreateDatabase(
-    __in PBK_CONFIG Config
+    _In_ PBK_CONFIG Config
     )
 {
     NTSTATUS status;
@@ -5112,9 +5112,9 @@ NTSTATUS EnpCreateDatabase(
 }
 
 NTSTATUS EnpOpenDatabase(
-    __in PBK_CONFIG Config,
-    __in BOOLEAN ReadOnly,
-    __out PDB_DATABASE *Database
+    _In_ PBK_CONFIG Config,
+    _In_ BOOLEAN ReadOnly,
+    _Out_ PDB_DATABASE *Database
     )
 {
     NTSTATUS status;
@@ -5131,8 +5131,8 @@ NTSTATUS EnpOpenDatabase(
 }
 
 VOID EnpDefaultMessageHandler(
-    __in ULONG Level,
-    __in __assumeRefs(1) PPH_STRING Message
+    _In_ ULONG Level,
+    _In_ _Assume_refs_(1) PPH_STRING Message
     )
 {
     PhDereferenceObject(Message);

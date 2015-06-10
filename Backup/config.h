@@ -31,21 +31,21 @@ typedef struct _BK_CONFIG
 } BK_CONFIG, *PBK_CONFIG;
 
 NTSTATUS BkCreateConfigFromFile(
-    __in PWSTR FileName,
-    __out PBK_CONFIG *Config
+    _In_ PWSTR FileName,
+    _Out_ PBK_CONFIG *Config
     );
 
 BOOLEAN BkCreateConfigFromString(
-    __in PPH_STRINGREF String,
-    __out PBK_CONFIG *Config
+    _In_ PPH_STRINGREF String,
+    _Out_ PBK_CONFIG *Config
     );
 
 VOID BkDereferenceStringList(
-    __in PPH_LIST List
+    _In_ PPH_LIST List
     );
 
 VOID BkFreeConfig(
-    __in PBK_CONFIG Config
+    _In_ PBK_CONFIG Config
     );
 
 #endif

@@ -24,9 +24,9 @@
 #include "dbutils.h"
 
 NTSTATUS DbUtTouchFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in_opt PLARGE_INTEGER TimeStamp
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_opt_ PLARGE_INTEGER TimeStamp
     )
 {
     NTSTATUS status;
@@ -48,9 +48,9 @@ NTSTATUS DbUtTouchFile(
 }
 
 NTSTATUS DbUtCreateParentDirectories(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE RootDirectory,
-    __in PPH_STRINGREF FileName
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE RootDirectory,
+    _In_ PPH_STRINGREF FileName
     )
 {
     NTSTATUS status;
@@ -107,11 +107,11 @@ NTSTATUS DbUtCreateParentDirectories(
 }
 
 NTSTATUS DbUtCopyFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in_opt PDBF_FILE RootDirectory,
-    __in PPH_STRINGREF FileName,
-    __out_opt PDBF_FILE *NewFile
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_opt_ PDBF_FILE RootDirectory,
+    _In_ PPH_STRINGREF FileName,
+    _Out_opt_ PDBF_FILE *NewFile
     )
 {
     NTSTATUS status;
@@ -151,9 +151,9 @@ NTSTATUS DbUtCopyFile(
 }
 
 NTSTATUS DbUtCopyDirectoryContents(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE FromDirectory,
-    __in PDBF_FILE ToDirectory
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE FromDirectory,
+    _In_ PDBF_FILE ToDirectory
     )
 {
     NTSTATUS status;
@@ -211,8 +211,8 @@ NTSTATUS DbUtCopyDirectoryContents(
 }
 
 NTSTATUS DbUtDeleteDirectoryContents(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE Directory
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE Directory
     )
 {
     NTSTATUS status;

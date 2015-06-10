@@ -9,40 +9,40 @@ typedef struct _DB_DATABASE *PDB_DATABASE;
 #define DB_FILE_ATTRIBUTE_DELETE_TAG 0x2
 
 NTSTATUS DbCreateDatabase(
-    __in PWSTR FileName
+    _In_ PWSTR FileName
     );
 
 NTSTATUS DbOpenDatabase(
-    __out PDB_DATABASE *Database,
-    __in PWSTR FileName,
-    __in BOOLEAN ReadOnly,
-    __in ULONG ShareAccess
+    _Out_ PDB_DATABASE *Database,
+    _In_ PWSTR FileName,
+    _In_ BOOLEAN ReadOnly,
+    _In_ ULONG ShareAccess
     );
 
 VOID DbCloseDatabase(
-    __in PDB_DATABASE Database
+    _In_ PDB_DATABASE Database
     );
 
 NTSTATUS DbCopyDatabase(
-    __in PWSTR SourceFileName,
-    __in PWSTR DestinationFileName
+    _In_ PWSTR SourceFileName,
+    _In_ PWSTR DestinationFileName
     );
 
 VOID DbQueryRevisionIdsDatabase(
-    __in PDB_DATABASE Database,
-    __out_opt PULONGLONG RevisionId,
-    __out_opt PULONGLONG FirstRevisionId
+    _In_ PDB_DATABASE Database,
+    _Out_opt_ PULONGLONG RevisionId,
+    _Out_opt_ PULONGLONG FirstRevisionId
     );
 
 VOID DbSetRevisionIdsDatabase(
-    __in PDB_DATABASE Database,
-    __in_opt PULONGLONG RevisionId,
-    __in_opt PULONGLONG FirstRevisionId
+    _In_ PDB_DATABASE Database,
+    _In_opt_ PULONGLONG RevisionId,
+    _In_opt_ PULONGLONG FirstRevisionId
     );
 
 VOID DbCloseFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File
     );
 
 // CreateDisposition
@@ -59,19 +59,19 @@ VOID DbCloseFile(
 #define DB_FILE_CREATED 2
 
 NTSTATUS DbCreateFile(
-    __in PDB_DATABASE Database,
-    __in PPH_STRINGREF FileName,
-    __in_opt PDBF_FILE RootDirectory,
-    __in ULONG Attributes,
-    __in ULONG CreateDisposition,
-    __in ULONG Options,
-    __out_opt PULONG CreateStatus,
-    __out PDBF_FILE *File
+    _In_ PDB_DATABASE Database,
+    _In_ PPH_STRINGREF FileName,
+    _In_opt_ PDBF_FILE RootDirectory,
+    _In_ ULONG Attributes,
+    _In_ ULONG CreateDisposition,
+    _In_ ULONG Options,
+    _Out_opt_ PULONG CreateStatus,
+    _Out_ PDBF_FILE *File
     );
 
 NTSTATUS DbDeleteFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File
     );
 
 typedef enum _DB_FILE_INFORMATION_CLASS
@@ -113,19 +113,19 @@ typedef struct _DB_FILE_RENAME_INFORMATION
 } DB_FILE_RENAME_INFORMATION, *PDB_FILE_RENAME_INFORMATION;
 
 NTSTATUS DbQueryInformationFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in DB_FILE_INFORMATION_CLASS FileInformationClass,
-    __out_bcount(FileInformationLength) PVOID FileInformation,
-    __in ULONG FileInformationLength
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_ DB_FILE_INFORMATION_CLASS FileInformationClass,
+    _Out_writes_bytes_(FileInformationLength) PVOID FileInformation,
+    _In_ ULONG FileInformationLength
     );
 
 NTSTATUS DbSetInformationFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in DB_FILE_INFORMATION_CLASS FileInformationClass,
-    __in_bcount_opt(FileInformationLength) PVOID FileInformation,
-    __in ULONG FileInformationLength
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_ DB_FILE_INFORMATION_CLASS FileInformationClass,
+    _In_reads_bytes_opt_(FileInformationLength) PVOID FileInformation,
+    _In_ ULONG FileInformationLength
     );
 
 typedef struct _DB_FILE_DIRECTORY_INFORMATION
@@ -139,20 +139,20 @@ typedef struct _DB_FILE_DIRECTORY_INFORMATION
 } DB_FILE_DIRECTORY_INFORMATION, *PDB_FILE_DIRECTORY_INFORMATION;
 
 NTSTATUS DbQueryDirectoryFile(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __out PDB_FILE_DIRECTORY_INFORMATION *Entries,
-    __out PULONG NumberOfEntries
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _Out_ PDB_FILE_DIRECTORY_INFORMATION *Entries,
+    _Out_ PULONG NumberOfEntries
     );
 
 VOID DbFreeQueryDirectoryFile(
-    __in PDB_FILE_DIRECTORY_INFORMATION Entries,
-    __in ULONG NumberOfEntries
+    _In_ PDB_FILE_DIRECTORY_INFORMATION Entries,
+    _In_ ULONG NumberOfEntries
     );
 
 ULONG DbHashName(
-    __in PWSTR String,
-    __in SIZE_T Count
+    _In_ PWSTR String,
+    _In_ SIZE_T Count
     );
 
 #endif

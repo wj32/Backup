@@ -23,14 +23,14 @@
 #include "explorer.h"
 
 INT_PTR CALLBACK BeProgressDlgProc(
-    __in HWND hwndDlg,
-    __in UINT uMsg,
-    __in WPARAM wParam,
-    __in LPARAM lParam
+    _In_ HWND hwndDlg,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
     );
 
 HWND BeCreateProgressDialog(
-    __in HWND ParentWindowHandle
+    _In_ HWND ParentWindowHandle
     )
 {
     HWND windowHandle;
@@ -50,10 +50,10 @@ HWND BeCreateProgressDialog(
 }
 
 INT_PTR CALLBACK BeProgressDlgProc(
-    __in HWND hwndDlg,
-    __in UINT uMsg,
-    __in WPARAM wParam,
-    __in LPARAM lParam
+    _In_ HWND hwndDlg,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
     )
 {
     switch (uMsg)

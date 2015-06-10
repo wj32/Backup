@@ -8,29 +8,29 @@ extern "C" {
 typedef struct _BK_VSS_OBJECT *PBK_VSS_OBJECT;
 
 HRESULT BkCreateVssObject(
-    __out PBK_VSS_OBJECT *Vss
+    _Out_ PBK_VSS_OBJECT *Vss
     );
 
 VOID BkDestroyVssObject(
-    __in PBK_VSS_OBJECT Vss
+    _In_ PBK_VSS_OBJECT Vss
     );
 
 HRESULT BkStartSnapshotsVssObject(
-    __in PBK_VSS_OBJECT Vss
+    _In_ PBK_VSS_OBJECT Vss
     );
 
 HRESULT BkAddSnapshotVssObject(
-    __in PBK_VSS_OBJECT Vss,
-    __in PPH_STRING Volume
+    _In_ PBK_VSS_OBJECT Vss,
+    _In_ PPH_STRING Volume
     );
 
 HRESULT BkPerformSnapshotsVssObject(
-    __in PBK_VSS_OBJECT Vss
+    _In_ PBK_VSS_OBJECT Vss
     );
 
 PPH_STRING BkMapFileNameVssObject(
-    __in PBK_VSS_OBJECT Vss,
-    __in PPH_STRING FileName
+    _In_ PBK_VSS_OBJECT Vss,
+    _In_ PPH_STRING FileName
     );
 
 #ifdef __cplusplus

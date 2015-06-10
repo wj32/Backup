@@ -67,10 +67,10 @@ VOID BeShowFindDialog(
 }
 
 INT_PTR CALLBACK BeFindDlgProc(
-    __in HWND hwndDlg,
-    __in UINT uMsg,
-    __in WPARAM wParam,
-    __in LPARAM lParam
+    _In_ HWND hwndDlg,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
     )
 {
     switch (uMsg)
@@ -223,7 +223,7 @@ INT_PTR CALLBACK BeFindDlgProc(
 }
 
 VOID BeDestroyResultNode(
-    __in PBE_RESULT_NODE Node
+    _In_ PBE_RESULT_NODE Node
     )
 {
     PhSwapReference(&Node->FileName, NULL);
@@ -256,9 +256,9 @@ PBE_RESULT_NODE BeGetSelectedResultNode(
 #define SORT_FUNCTION(Column) BeFindListTreeNewCompare##Column
 
 #define BEGIN_SORT_FUNCTION(Column) static int __cdecl BeFindListTreeNewCompare##Column( \
-    __in void *_context, \
-    __in const void *_elem1, \
-    __in const void *_elem2 \
+    _In_ void *_context, \
+    _In_ const void *_elem1, \
+    _In_ const void *_elem2 \
     ) \
 { \
     PBE_RESULT_NODE node1 = *(PBE_RESULT_NODE *)_elem1; \
@@ -297,11 +297,11 @@ BEGIN_SORT_FUNCTION(LastRevision)
 END_SORT_FUNCTION
 
 BOOLEAN BeFindListTreeNewCallback(
-    __in HWND hwnd,
-    __in PH_TREENEW_MESSAGE Message,
-    __in_opt PVOID Parameter1,
-    __in_opt PVOID Parameter2,
-    __in_opt PVOID Context
+    _In_ HWND hwnd,
+    _In_ PH_TREENEW_MESSAGE Message,
+    _In_opt_ PVOID Parameter1,
+    _In_opt_ PVOID Parameter2,
+    _In_opt_ PVOID Context
     )
 {
     PBE_RESULT_NODE node;
@@ -395,9 +395,9 @@ BOOLEAN BeFindListTreeNewCallback(
 }
 
 static BOOLEAN WordMatch(
-    __in PPH_STRINGREF Text,
-    __in PPH_STRINGREF Search,
-    __in BOOLEAN IgnoreCase
+    _In_ PPH_STRINGREF Text,
+    _In_ PPH_STRINGREF Search,
+    _In_ BOOLEAN IgnoreCase
     )
 {
     PH_STRINGREF part;
@@ -420,8 +420,8 @@ static BOOLEAN WordMatch(
 }
 
 BOOLEAN BeStringCompareFunction(
-    __in PVOID Entry1,
-    __in PVOID Entry2
+    _In_ PVOID Entry1,
+    _In_ PVOID Entry2
     )
 {
     PPH_STRING entry1 = *(PPH_STRING *)Entry1;
@@ -431,7 +431,7 @@ BOOLEAN BeStringCompareFunction(
 }
 
 ULONG BeStringHashFunction(
-    __in PVOID Entry
+    _In_ PVOID Entry
     )
 {
     PPH_STRING entry = *(PPH_STRING *)Entry;
@@ -440,11 +440,11 @@ ULONG BeStringHashFunction(
 }
 
 static VOID EnumDb(
-    __in PDB_DATABASE Database,
-    __in PDBF_FILE File,
-    __in_opt PPH_STRING FileName,
-    __in ULONGLONG RevisionId,
-    __in PPH_HASHTABLE NamesSeen
+    _In_ PDB_DATABASE Database,
+    _In_ PDBF_FILE File,
+    _In_opt_ PPH_STRING FileName,
+    _In_ ULONGLONG RevisionId,
+    _In_ PPH_HASHTABLE NamesSeen
     )
 {
     PDB_FILE_DIRECTORY_INFORMATION dirInfo;
@@ -555,7 +555,7 @@ static VOID EnumDb(
 }
 
 NTSTATUS BeFindFilesThreadStart(
-    __in PVOID Parameter
+    _In_ PVOID Parameter
     )
 {
     NTSTATUS status;

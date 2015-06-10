@@ -723,7 +723,7 @@ HRESULT PkUpdateArchiveExtractCallback::SetOperationResult(Int32 resultEOperatio
 VOID PkUpdateArchiveExtractCallback::StartThread()
 {
     ThreadStarted = TRUE;
-    PhQueueItemGlobalWorkQueue((PTHREAD_START_ROUTINE)ThreadStart, this);
+    PhQueueItemGlobalWorkQueue(ThreadStart, this);
 }
 
 VOID PkUpdateArchiveExtractCallback::StopThread()
@@ -980,7 +980,7 @@ PPK_ACTION PkArchiveExtractCallback::GetAction(ULONG index)
 }
 
 PPK_FILE_STREAM PkCreateFileStream(
-    __in_opt PPH_FILE_STREAM FileStream
+    _In_opt_ PPH_FILE_STREAM FileStream
     )
 {
     PkFileStream *fileStream;
@@ -991,7 +991,7 @@ PPK_FILE_STREAM PkCreateFileStream(
 }
 
 VOID PkReferenceFileStream(
-    __in PPK_FILE_STREAM FileStream
+    _In_ PPK_FILE_STREAM FileStream
     )
 {
     PkFileStream *fileStream;
@@ -1001,7 +1001,7 @@ VOID PkReferenceFileStream(
 }
 
 VOID PkDereferenceFileStream(
-    __in PPK_FILE_STREAM FileStream
+    _In_ PPK_FILE_STREAM FileStream
     )
 {
     PkFileStream *fileStream;
@@ -1025,7 +1025,7 @@ PPK_ACTION_LIST PkCreateActionList(
 }
 
 VOID PkDestroyActionList(
-    __in PPK_ACTION_LIST List
+    _In_ PPK_ACTION_LIST List
     )
 {
     PPK_ACTION_SEGMENT segment;
@@ -1050,17 +1050,17 @@ VOID PkDestroyActionList(
 }
 
 ULONG PkQueryCountActionList(
-    __in PPK_ACTION_LIST List
+    _In_ PPK_ACTION_LIST List
     )
 {
     return List->NumberOfActions;
 }
 
 VOID PkAppendAddToActionList(
-    __in PPK_ACTION_LIST List,
-    __in ULONG Flags,
-    __in PPH_STRING Destination,
-    __in_opt PVOID Context
+    _In_ PPK_ACTION_LIST List,
+    _In_ ULONG Flags,
+    _In_ PPH_STRING Destination,
+    _In_opt_ PVOID Context
     )
 {
     PK_ACTION action;
@@ -1074,10 +1074,10 @@ VOID PkAppendAddToActionList(
 }
 
 VOID PkAppendAddFromPackageToActionList(
-    __in PPK_ACTION_LIST List,
-    __in PPK_PACKAGE Package,
-    __in ULONG IndexInPackage,
-    __in_opt PVOID Context
+    _In_ PPK_ACTION_LIST List,
+    _In_ PPK_PACKAGE Package,
+    _In_ ULONG IndexInPackage,
+    _In_opt_ PVOID Context
     )
 {
     PK_ACTION action;
@@ -1091,9 +1091,9 @@ VOID PkAppendAddFromPackageToActionList(
 }
 
 VOID PkAppendUpdateToActionList(
-    __in PPK_ACTION_LIST List,
-    __in ULONG Index,
-    __in_opt PVOID Context
+    _In_ PPK_ACTION_LIST List,
+    _In_ ULONG Index,
+    _In_opt_ PVOID Context
     )
 {
     PK_ACTION action;
@@ -1105,9 +1105,9 @@ VOID PkAppendUpdateToActionList(
 }
 
 PPK_ACTION PkIndexInActionList(
-    __in PPK_ACTION_LIST List,
-    __in ULONG Index,
-    __out_opt PPK_ACTION_SEGMENT *Segment
+    _In_ PPK_ACTION_LIST List,
+    _In_ ULONG Index,
+    _Out_opt_ PPK_ACTION_SEGMENT *Segment
     )
 {
     ULONG segmentIndex;
@@ -1138,10 +1138,10 @@ PPK_ACTION PkIndexInActionList(
 }
 
 PPK_ACTION PkGetNextAction(
-    __in PPK_ACTION Action,
-    __in ULONG Index,
-    __in PPK_ACTION_SEGMENT Segment,
-    __out_opt PPK_ACTION_SEGMENT *NewSegment
+    _In_ PPK_ACTION Action,
+    _In_ ULONG Index,
+    _In_ PPK_ACTION_SEGMENT Segment,
+    _Out_opt_ PPK_ACTION_SEGMENT *NewSegment
     )
 {
     if (Index == PK_ACTION_SEGMENT_SIZE)
@@ -1169,7 +1169,7 @@ PPK_ACTION PkGetNextAction(
 }
 
 VOID PkpDeleteAction(
-    __in PPK_ACTION Action
+    _In_ PPK_ACTION Action
     )
 {
     switch (Action->Type)
@@ -1184,7 +1184,7 @@ VOID PkpDeleteAction(
 }
 
 PPK_ACTION_SEGMENT PkpAllocateActionSegment(
-    __in ULONG SegmentIndex
+    _In_ ULONG SegmentIndex
     )
 {
     PPK_ACTION_SEGMENT segment;
@@ -1198,8 +1198,8 @@ PPK_ACTION_SEGMENT PkpAllocateActionSegment(
 }
 
 VOID PkpAddToActionList(
-    __in PPK_ACTION_LIST List,
-    __in PPK_ACTION Action
+    _In_ PPK_ACTION_LIST List,
+    _In_ PPK_ACTION Action
     )
 {
     PPK_ACTION_SEGMENT segment;
@@ -1227,9 +1227,9 @@ VOID PkpAddToActionList(
 }
 
 HRESULT PkpCreateSevenZipObject(
-    __in PGUID ClassId,
-    __in PGUID InterfaceId,
-    __out PVOID *Object
+    _In_ PGUID ClassId,
+    _In_ PGUID InterfaceId,
+    _Out_ PVOID *Object
     )
 {
     if (PhBeginInitOnce(&SevenZipInitOnce))
@@ -1251,7 +1251,7 @@ HRESULT PkpCreateSevenZipObject(
 }
 
 HRESULT PkpCloseExtractCallback(
-    __in PkArchiveUpdateCallback *UpdateCallback
+    _In_ PkArchiveUpdateCallback *UpdateCallback
     )
 {
     HRESULT result;
@@ -1271,10 +1271,10 @@ HRESULT PkpCloseExtractCallback(
 }
 
 HRESULT PkCreatePackage(
-    __in PPK_FILE_STREAM FileStream,
-    __in PPK_ACTION_LIST ActionList,
-    __in PPK_PACKAGE_CALLBACK Callback,
-    __in_opt PVOID Context
+    _In_ PPK_FILE_STREAM FileStream,
+    _In_ PPK_ACTION_LIST ActionList,
+    _In_ PPK_PACKAGE_CALLBACK Callback,
+    _In_opt_ PVOID Context
     )
 {
     HRESULT result;
@@ -1313,25 +1313,25 @@ HRESULT PkCreatePackage(
 }
 
 VOID PkReferencePackage(
-    __in PPK_PACKAGE Package
+    _In_ PPK_PACKAGE Package
     )
 {
     ((IInArchive *)Package)->AddRef();
 }
 
 VOID PkDereferencePackage(
-    __in PPK_PACKAGE Package
+    _In_ PPK_PACKAGE Package
     )
 {
     ((IInArchive *)Package)->Release();
 }
 
 HRESULT PkOpenPackageWithFilter(
-    __in PPK_FILE_STREAM FileStream,
-    __inout_opt PPK_ACTION_LIST ActionList,
-    __in_opt PPK_PACKAGE_CALLBACK Callback,
-    __in_opt PVOID Context,
-    __out PPK_PACKAGE *Package
+    _In_ PPK_FILE_STREAM FileStream,
+    _Inout_opt_ PPK_ACTION_LIST ActionList,
+    _In_opt_ PPK_PACKAGE_CALLBACK Callback,
+    _In_opt_ PVOID Context,
+    _Out_ PPK_PACKAGE *Package
     )
 {
     HRESULT result;
@@ -1427,11 +1427,11 @@ HRESULT PkOpenPackageWithFilter(
 }
 
 HRESULT PkUpdatePackage(
-    __in PPK_FILE_STREAM FileStream,
-    __in PPK_PACKAGE Package,
-    __in PPK_ACTION_LIST ActionList,
-    __in PPK_PACKAGE_CALLBACK Callback,
-    __in_opt PVOID Context
+    _In_ PPK_FILE_STREAM FileStream,
+    _In_ PPK_PACKAGE Package,
+    _In_ PPK_ACTION_LIST ActionList,
+    _In_ PPK_PACKAGE_CALLBACK Callback,
+    _In_opt_ PVOID Context
     )
 {
     HRESULT result;
@@ -1469,10 +1469,10 @@ HRESULT PkUpdatePackage(
 }
 
 HRESULT PkExtractPackage(
-    __in PPK_PACKAGE Package,
-    __in_opt PPK_ACTION_LIST ActionList,
-    __in PPK_PACKAGE_CALLBACK Callback,
-    __in_opt PVOID Context
+    _In_ PPK_PACKAGE Package,
+    _In_opt_ PPK_ACTION_LIST ActionList,
+    _In_ PPK_PACKAGE_CALLBACK Callback,
+    _In_opt_ PVOID Context
     )
 {
     HRESULT result;

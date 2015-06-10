@@ -1,31 +1,5 @@
-#ifndef _NTIMPORT_H
-#define _NTIMPORT_H
-
-#ifdef _PH_NTIMPORT_PRIVATE
-#define EXT DECLSPEC_SELECTANY
-#else
-#define EXT extern
-#endif
-
-// Only functions appearing in Windows XP and below may be
-// imported normally. The other functions are imported here.
-
-typedef NTSTATUS (NTAPI *_NtGetNextProcess)(
-    _In_ HANDLE ProcessHandle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_ ULONG HandleAttributes,
-    _In_ ULONG Flags,
-    _Out_ PHANDLE NewProcessHandle
-    );
-
-typedef NTSTATUS (NTAPI *_NtGetNextThread)(
-    _In_ HANDLE ProcessHandle,
-    _In_ HANDLE ThreadHandle,
-    _In_ ACCESS_MASK DesiredAccess,
-    _In_ ULONG HandleAttributes,
-    _In_ ULONG Flags,
-    _Out_ PHANDLE NewThreadHandle
-    );
+#ifndef _APIIMPORT_H
+#define _APIIMPORT_H
 
 typedef NTSTATUS (NTAPI *_NtQueryInformationEnlistment)(
     _In_ HANDLE EnlistmentHandle,
@@ -59,13 +33,11 @@ typedef NTSTATUS (NTAPI *_NtQueryInformationTransactionManager)(
     _Out_opt_ PULONG ReturnLength
     );
 
-EXT _NtGetNextProcess NtGetNextProcess_I;
-EXT _NtGetNextThread NtGetNextThread_I;
-EXT _NtQueryInformationEnlistment NtQueryInformationEnlistment_I;
-EXT _NtQueryInformationResourceManager NtQueryInformationResourceManager_I;
-EXT _NtQueryInformationTransaction NtQueryInformationTransaction_I;
-EXT _NtQueryInformationTransactionManager NtQueryInformationTransactionManager_I;
+#define PH_DECLARE_IMPORT(Name) _##Name Name##_Import(VOID)
 
-BOOLEAN PhInitializeImports();
+PH_DECLARE_IMPORT(NtQueryInformationEnlistment);
+PH_DECLARE_IMPORT(NtQueryInformationResourceManager);
+PH_DECLARE_IMPORT(NtQueryInformationTransaction);
+PH_DECLARE_IMPORT(NtQueryInformationTransactionManager);
 
 #endif

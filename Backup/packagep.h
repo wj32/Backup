@@ -348,28 +348,28 @@ private:
 // Action list
 
 VOID PkpDeleteAction(
-    __in PPK_ACTION Action
+    _In_ PPK_ACTION Action
     );
 
 PPK_ACTION_SEGMENT PkpAllocateActionSegment(
-    __in ULONG SegmentIndex
+    _In_ ULONG SegmentIndex
     );
 
 VOID PkpAddToActionList(
-    __in PPK_ACTION_LIST List,
-    __in PPK_ACTION Action
+    _In_ PPK_ACTION_LIST List,
+    _In_ PPK_ACTION Action
     );
 
 // Package
 
 HRESULT PkpCreateSevenZipObject(
-    __in PGUID ClassId,
-    __in PGUID InterfaceId,
-    __out PVOID *Object
+    _In_ PGUID ClassId,
+    _In_ PGUID InterfaceId,
+    _Out_ PVOID *Object
     );
 
 HRESULT PkpWaitForExtractCallback(
-    __in PkArchiveUpdateCallback *UpdateCallback
+    _In_ PkArchiveUpdateCallback *UpdateCallback
     );
 
 #endif

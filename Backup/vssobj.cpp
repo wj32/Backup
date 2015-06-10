@@ -29,11 +29,11 @@
 #include <algorithm>
 
 typedef HRESULT (STDAPICALLTYPE *_CreateVssBackupComponentsInternal)(
-    __out IVssBackupComponents **ppBackup
+    _Out_ IVssBackupComponents **ppBackup
     );
 
 typedef void (APIENTRY *_VssFreeSnapshotPropertiesInternal)(
-    __in VSS_SNAPSHOT_PROP *pProp
+    _In_ VSS_SNAPSHOT_PROP *pProp
     );
 
 typedef struct _BK_VSS_SNAPSHOT
@@ -55,7 +55,7 @@ static _CreateVssBackupComponentsInternal CreateVssBackupComponentsInternal_I;
 static _VssFreeSnapshotPropertiesInternal VssFreeSnapshotPropertiesInternal_I;
 
 HRESULT BkCreateVssObject(
-    __out PBK_VSS_OBJECT *Vss
+    _Out_ PBK_VSS_OBJECT *Vss
     )
 {
     static PH_INITONCE initOnce = PH_INITONCE_INIT;
@@ -96,7 +96,7 @@ HRESULT BkCreateVssObject(
 }
 
 VOID BkDestroyVssObject(
-    __in PBK_VSS_OBJECT Vss
+    _In_ PBK_VSS_OBJECT Vss
     )
 {
     std::vector<BK_VSS_SNAPSHOT>::iterator it;
@@ -112,7 +112,7 @@ VOID BkDestroyVssObject(
 }
 
 HRESULT BkStartSnapshotsVssObject(
-    __in PBK_VSS_OBJECT Vss
+    _In_ PBK_VSS_OBJECT Vss
     )
 {
     HRESULT result;
@@ -136,8 +136,8 @@ HRESULT BkStartSnapshotsVssObject(
 }
 
 HRESULT BkAddSnapshotVssObject(
-    __in PBK_VSS_OBJECT Vss,
-    __in PPH_STRING Volume
+    _In_ PBK_VSS_OBJECT Vss,
+    _In_ PPH_STRING Volume
     )
 {
     HRESULT result;
@@ -176,8 +176,8 @@ HRESULT BkAddSnapshotVssObject(
 }
 
 bool BkpSnapshotSortFunction(
-    __in BK_VSS_SNAPSHOT &Snapshot1,
-    __in BK_VSS_SNAPSHOT &Snapshot2
+    _In_ BK_VSS_SNAPSHOT &Snapshot1,
+    _In_ BK_VSS_SNAPSHOT &Snapshot2
     )
 {
     SIZE_T length1;
@@ -190,7 +190,7 @@ bool BkpSnapshotSortFunction(
 }
 
 HRESULT BkpUpdateSnapshotProperties(
-    __in PBK_VSS_OBJECT Vss
+    _In_ PBK_VSS_OBJECT Vss
     )
 {
     HRESULT result;
@@ -201,7 +201,7 @@ HRESULT BkpUpdateSnapshotProperties(
     {
         if (SUCCEEDED(result = Vss->Object->GetSnapshotProperties(it->SnapshotId, &prop)))
         {
-            PhSwapReference2((PVOID *)&it->SnapshotDevice, PhCreateString(prop.m_pwszSnapshotDeviceObject));
+            PhMoveReference((PVOID *)&it->SnapshotDevice, PhCreateString(prop.m_pwszSnapshotDeviceObject));
             VssFreeSnapshotPropertiesInternal_I(&prop);
         }
         else
@@ -216,7 +216,7 @@ HRESULT BkpUpdateSnapshotProperties(
 }
 
 HRESULT BkPerformSnapshotsVssObject(
-    __in PBK_VSS_OBJECT Vss
+    _In_ PBK_VSS_OBJECT Vss
     )
 {
     HRESULT result;
@@ -253,8 +253,8 @@ HRESULT BkPerformSnapshotsVssObject(
 }
 
 PPH_STRING BkMapFileNameVssObject(
-    __in PBK_VSS_OBJECT Vss,
-    __in PPH_STRING FileName
+    _In_ PBK_VSS_OBJECT Vss,
+    _In_ PPH_STRING FileName
     )
 {
     std::vector<BK_VSS_SNAPSHOT>::iterator it;

@@ -52,9 +52,9 @@ PPH_HASHTABLE BeFileIconHashtable;
 PH_STRINGREF BeDirectoryIconKey = PH_STRINGREF_INIT(L"\\");
 
 static INT NTAPI BeRevisionRevisionCompareFunction(
-    __in PVOID Item1,
-    __in PVOID Item2,
-    __in_opt PVOID Context
+    _In_ PVOID Item1,
+    _In_ PVOID Item2,
+    _In_opt_ PVOID Context
     )
 {
     PEN_FILE_REVISION_INFORMATION item1 = Item1;
@@ -64,9 +64,9 @@ static INT NTAPI BeRevisionRevisionCompareFunction(
 }
 
 static INT NTAPI BeRevisionTimeCompareFunction(
-    __in PVOID Item1,
-    __in PVOID Item2,
-    __in_opt PVOID Context
+    _In_ PVOID Item1,
+    _In_ PVOID Item2,
+    _In_opt_ PVOID Context
     )
 {
     PEN_FILE_REVISION_INFORMATION item1 = Item1;
@@ -76,10 +76,10 @@ static INT NTAPI BeRevisionTimeCompareFunction(
 }
 
 INT_PTR CALLBACK BeExplorerDlgProc(
-    __in HWND hwndDlg,
-    __in UINT uMsg,
-    __in WPARAM wParam,
-    __in LPARAM lParam
+    _In_ HWND hwndDlg,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
     )
 {
     switch (uMsg)
@@ -245,7 +245,7 @@ INT_PTR CALLBACK BeExplorerDlgProc(
                     PPH_STRING text;
 
                     text = PhGetTreeNewText(BeFileListHandle, 0);
-                    PhSetClipboardStringEx(BeFileListHandle, text->Buffer, text->Length);
+                    PhSetClipboardString(BeFileListHandle, &text->sr);
                     PhDereferenceObject(text);
                 }
                 break;
@@ -346,7 +346,7 @@ BOOLEAN BeLoadRevisionList(
 }
 
 BOOLEAN BeSetCurrentRevision(
-    __in ULONGLONG RevisionId
+    _In_ ULONGLONG RevisionId
     )
 {
     NTSTATUS status;
@@ -455,9 +455,9 @@ BOOLEAN BeSetCurrentRevision(
 #define SORT_FUNCTION(Column) BeFileListTreeNewCompare##Column
 
 #define BEGIN_SORT_FUNCTION(Column) static int __cdecl BeFileListTreeNewCompare##Column( \
-    __in void *_context, \
-    __in const void *_elem1, \
-    __in const void *_elem2 \
+    _In_ void *_context, \
+    _In_ const void *_elem1, \
+    _In_ const void *_elem2 \
     ) \
 { \
     PBE_FILE_NODE node1 = *(PBE_FILE_NODE *)_elem1; \
@@ -505,11 +505,11 @@ BEGIN_SORT_FUNCTION(TimeStamp)
 END_SORT_FUNCTION
 
 BOOLEAN BeFileListTreeNewCallback(
-    __in HWND hwnd,
-    __in PH_TREENEW_MESSAGE Message,
-    __in_opt PVOID Parameter1,
-    __in_opt PVOID Parameter2,
-    __in_opt PVOID Context
+    _In_ HWND hwnd,
+    _In_ PH_TREENEW_MESSAGE Message,
+    _In_opt_ PVOID Parameter1,
+    _In_opt_ PVOID Parameter2,
+    _In_opt_ PVOID Context
     )
 {
     PBE_FILE_NODE node;
@@ -703,8 +703,8 @@ BOOLEAN BeFileListTreeNewCallback(
 }
 
 PBE_FILE_NODE BeCreateFileNode(
-    __in_opt PDB_FILE_DIRECTORY_INFORMATION Information,
-    __in_opt PBE_FILE_NODE ParentNode
+    _In_opt_ PDB_FILE_DIRECTORY_INFORMATION Information,
+    _In_opt_ PBE_FILE_NODE ParentNode
     )
 {
     PBE_FILE_NODE node;
@@ -758,7 +758,7 @@ PBE_FILE_NODE BeCreateFileNode(
 }
 
 VOID BeDestroyFileNode(
-    __in PBE_FILE_NODE Node
+    _In_ PBE_FILE_NODE Node
     )
 {
     ULONG i;
@@ -778,7 +778,7 @@ VOID BeDestroyFileNode(
 }
 
 BOOLEAN BeExpandFileNode(
-    __in PBE_FILE_NODE Node
+    _In_ PBE_FILE_NODE Node
     )
 {
     NTSTATUS status;
@@ -879,7 +879,7 @@ PBE_FILE_NODE BeGetSelectedFileNode(
 }
 
 PPH_STRING BeComputeFullPath(
-    __in PBE_FILE_NODE Node
+    _In_ PBE_FILE_NODE Node
     )
 {
     PPH_STRING result;
@@ -922,7 +922,7 @@ PPH_STRING BeComputeFullPath(
 }
 
 VOID BeSelectFullPath(
-    __in PPH_STRINGREF FullPath
+    _In_ PPH_STRINGREF FullPath
     )
 {
     PBE_FILE_NODE currentNode;
@@ -977,8 +977,8 @@ VOID BeSelectFullPath(
 }
 
 BOOLEAN BeFileIconEntryCompareFunction(
-    __in PVOID Entry1,
-    __in PVOID Entry2
+    _In_ PVOID Entry1,
+    _In_ PVOID Entry2
     )
 {
     PBE_FILE_ICON_ENTRY entry1 = Entry1;
@@ -988,7 +988,7 @@ BOOLEAN BeFileIconEntryCompareFunction(
 }
 
 ULONG BeFileIconEntryHashFunction(
-    __in PVOID Entry
+    _In_ PVOID Entry
     )
 {
     PBE_FILE_ICON_ENTRY entry = Entry;
@@ -997,7 +997,7 @@ ULONG BeFileIconEntryHashFunction(
 }
 
 HICON BeGetFileIconForExtension(
-    __in PPH_STRINGREF Extension
+    _In_ PPH_STRINGREF Extension
     )
 {
     static PH_STRINGREF dotString = PH_STRINGREF_INIT(L".");
@@ -1059,7 +1059,7 @@ HICON BeGetFileIconForExtension(
 }
 
 VOID BeDestroyRestoreParameters(
-    __in PBE_RESTORE_PARAMETERS Parameters
+    _In_ PBE_RESTORE_PARAMETERS Parameters
     )
 {
     PhSwapReference(&Parameters->FromFileName, NULL);
@@ -1069,9 +1069,9 @@ VOID BeDestroyRestoreParameters(
 }
 
 VOID BePreviewSingleFileWithProgress(
-    __in HWND ParentWindowHandle,
-    __in ULONGLONG RevisionId,
-    __in PPH_STRINGREF FileName
+    _In_ HWND ParentWindowHandle,
+    _In_ ULONGLONG RevisionId,
+    _In_ PPH_STRINGREF FileName
     )
 {
     PBE_RESTORE_PARAMETERS parameters;
@@ -1086,7 +1086,7 @@ VOID BePreviewSingleFileWithProgress(
 }
 
 NTSTATUS BePreviewSingleFileThreadStart(
-    __in PVOID Parameter
+    _In_ PVOID Parameter
     )
 {
     static PH_STRINGREF backslash = PH_STRINGREF_INIT(L"\\");
@@ -1132,10 +1132,10 @@ Done:
 }
 
 VOID BeRestoreFileOrDirectoryWithProgress(
-    __in HWND ParentWindowHandle,
-    __in ULONGLONG RevisionId,
-    __in PPH_STRINGREF FileName,
-    __in BOOLEAN Directory
+    _In_ HWND ParentWindowHandle,
+    _In_ ULONGLONG RevisionId,
+    _In_ PPH_STRINGREF FileName,
+    _In_ BOOLEAN Directory
     )
 {
     PPH_STRING fullPath;
@@ -1239,7 +1239,7 @@ VOID BeRestoreFileOrDirectoryWithProgress(
 }
 
 NTSTATUS BeRestoreFileOrDirectoryThreadStart(
-    __in PVOID Parameter
+    _In_ PVOID Parameter
     )
 {
     NTSTATUS status;
@@ -1291,8 +1291,8 @@ PPH_STRING BePromptForConfigFileName(
 }
 
 VOID BeMessageHandler(
-    __in ULONG Level,
-    __in __assumeRefs(1) PPH_STRING Message
+    _In_ ULONG Level,
+    _In_ _Assume_refs_(1) PPH_STRING Message
     )
 {
     PH_STRING_BUILDER sb;
@@ -1331,7 +1331,7 @@ VOID BeMessageHandler(
 }
 
 ULONG BeGetProgressFromMessage(
-    __in PPH_STRINGREF Message
+    _In_ PPH_STRINGREF Message
     )
 {
     static PH_STRINGREF colonSeparator = PH_STRINGREF_INIT(L": ");
@@ -1355,9 +1355,9 @@ ULONG BeGetProgressFromMessage(
 }
 
 BOOLEAN BeExecuteWithProgress(
-    __in HWND ParentWindowHandle,
-    __in PUSER_THREAD_START_ROUTINE ThreadStart,
-    __in_opt PVOID Context
+    _In_ HWND ParentWindowHandle,
+    _In_ PUSER_THREAD_START_ROUTINE ThreadStart,
+    _In_opt_ PVOID Context
     )
 {
     HANDLE threadHandle;
@@ -1430,8 +1430,8 @@ PPH_STRING BeGetTempDirectoryName(
 }
 
 BOOLEAN BeIsDirectoryEmptyEnumCallback(
-    __in PFILE_DIRECTORY_INFORMATION Information,
-    __in_opt PVOID Context
+    _In_ PFILE_DIRECTORY_INFORMATION Information,
+    _In_opt_ PVOID Context
     )
 {
     if (Information->FileNameLength == sizeof(WCHAR) && Information->FileName[0] == '.')
@@ -1445,8 +1445,8 @@ BOOLEAN BeIsDirectoryEmptyEnumCallback(
 }
 
 NTSTATUS BeIsDirectoryEmpty(
-    __in PWSTR DirectoryName,
-    __out PBOOLEAN Empty
+    _In_ PWSTR DirectoryName,
+    _Out_ PBOOLEAN Empty
     )
 {
     NTSTATUS status;
@@ -1469,8 +1469,8 @@ NTSTATUS BeIsDirectoryEmpty(
 
 // Copied from appsup.c
 BOOLEAN PhGetListViewContextMenuPoint(
-    __in HWND ListViewHandle,
-    __out PPOINT Point
+    _In_ HWND ListViewHandle,
+    _Out_ PPOINT Point
     )
 {
     static PH_INTEGER_PAIR PhSmallIconSize = { 16, 16 };

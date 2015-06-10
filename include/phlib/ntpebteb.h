@@ -1,10 +1,6 @@
 #ifndef _NTPEBTEB_H
 #define _NTPEBTEB_H
 
-#if (PHNT_MODE == PHNT_MODE_KERNEL)
-typedef PVOID *PPVOID;
-#endif
-
 typedef struct _RTL_USER_PROCESS_PARAMETERS *PRTL_USER_PROCESS_PARAMETERS;
 typedef struct _RTL_CRITICAL_SECTION *PRTL_CRITICAL_SECTION;
 
@@ -21,11 +17,11 @@ typedef struct _PEB
         {
             BOOLEAN ImageUsesLargePages : 1;
             BOOLEAN IsProtectedProcess : 1;
-            BOOLEAN IsLegacyProcess : 1;
             BOOLEAN IsImageDynamicallyRelocated : 1;
             BOOLEAN SkipPatchingUser32Forwarders : 1;
             BOOLEAN IsPackagedProcess : 1;
             BOOLEAN IsAppContainer : 1;
+            BOOLEAN IsProtectedProcessLight : 1;
             BOOLEAN SpareBits : 1;
         };
     };
@@ -66,7 +62,7 @@ typedef struct _PEB
     ULONG TlsBitmapBits[2];
     PVOID ReadOnlySharedMemoryBase;
     PVOID HotpatchInformation;
-    PPVOID ReadOnlyStaticServerData;
+    PVOID *ReadOnlyStaticServerData;
     PVOID AnsiCodePageData;
     PVOID OemCodePageData;
     PVOID UnicodeCaseTableData;
@@ -82,7 +78,7 @@ typedef struct _PEB
 
     ULONG NumberOfHeaps;
     ULONG MaximumNumberOfHeaps;
-    PPVOID ProcessHeaps;
+    PVOID *ProcessHeaps;
 
     PVOID GdiSharedHandleTable;
     PVOID ProcessStarterHelper;
@@ -121,7 +117,7 @@ typedef struct _PEB
 
     SIZE_T MinimumStackCommit;
 
-    PPVOID FlsCallback;
+    PVOID *FlsCallback;
     LIST_ENTRY FlsListHead;
     PVOID FlsBitmap;
     ULONG FlsBitmapBits[FLS_MAXIMUM_AVAILABLE / (sizeof(ULONG) * 8)];
@@ -189,7 +185,7 @@ typedef struct _TEB
     PVOID SystemReserved1[54];
     NTSTATUS ExceptionCode;
     PVOID ActivationContextStackPointer;
-#ifdef _M_X64
+#ifdef _WIN64
     UCHAR SpareBytes[24];
 #else
     UCHAR SpareBytes[36];
@@ -225,7 +221,7 @@ typedef struct _TEB
     PVOID DbgSsReserved[2];
 
     ULONG HardErrorMode;
-#ifdef _M_X64
+#ifdef _WIN64
     PVOID Instrumentation[11];
 #else
     PVOID Instrumentation[9];
@@ -258,8 +254,8 @@ typedef struct _TEB
     PVOID SavedPriorityState;
     ULONG_PTR SoftPatchPtr1;
     PVOID ThreadPoolData;
-    PPVOID TlsExpansionSlots;
-#ifdef _M_X64
+    PVOID *TlsExpansionSlots;
+#ifdef _WIN64
     PVOID DeallocationBStore;
     PVOID BStoreLimit;
 #endif

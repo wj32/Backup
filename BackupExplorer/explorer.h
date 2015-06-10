@@ -24,11 +24,11 @@ LONG BeMessageLoop(
     );
 
 VOID BeRegisterDialog(
-    __in HWND DialogWindowHandle
+    _In_ HWND DialogWindowHandle
     );
 
 VOID BeUnregisterDialog(
-    __in HWND DialogWindowHandle
+    _In_ HWND DialogWindowHandle
     );
 
 // explorer
@@ -37,45 +37,45 @@ extern HWND BeWindowHandle;
 extern PBK_CONFIG BeConfig;
 
 INT_PTR CALLBACK BeExplorerDlgProc(
-    __in HWND hwndDlg,
-    __in UINT uMsg,
-    __in WPARAM wParam,
-    __in LPARAM lParam
+    _In_ HWND hwndDlg,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
     );
 
 BOOLEAN BeSetCurrentRevision(
-    __in ULONGLONG RevisionId
+    _In_ ULONGLONG RevisionId
     );
 
 VOID BeSelectFullPath(
-    __in PPH_STRINGREF FullPath
+    _In_ PPH_STRINGREF FullPath
     );
 
 HICON BeGetFileIconForExtension(
-    __in PPH_STRINGREF Extension
+    _In_ PPH_STRINGREF Extension
     );
 
 VOID BePreviewSingleFileWithProgress(
-    __in HWND ParentWindowHandle,
-    __in ULONGLONG RevisionId,
-    __in PPH_STRINGREF FileName
+    _In_ HWND ParentWindowHandle,
+    _In_ ULONGLONG RevisionId,
+    _In_ PPH_STRINGREF FileName
     );
 
 VOID BeRestoreFileOrDirectoryWithProgress(
-    __in HWND ParentWindowHandle,
-    __in ULONGLONG RevisionId,
-    __in PPH_STRINGREF FileName,
-    __in BOOLEAN Directory
+    _In_ HWND ParentWindowHandle,
+    _In_ ULONGLONG RevisionId,
+    _In_ PPH_STRINGREF FileName,
+    _In_ BOOLEAN Directory
     );
 
 VOID BeMessageHandler(
-    __in ULONG Level,
-    __in __assumeRefs(1) PPH_STRING Message
+    _In_ ULONG Level,
+    _In_ _Assume_refs_(1) PPH_STRING Message
     );
 
 BOOLEAN PhGetListViewContextMenuPoint(
-    __in HWND ListViewHandle,
-    __out PPOINT Point
+    _In_ HWND ListViewHandle,
+    _Out_ PPOINT Point
     );
 
 // progress
@@ -84,14 +84,14 @@ BOOLEAN PhGetListViewContextMenuPoint(
 #define BE_PROGRESS_MESSAGE_UPDATE (WM_APP + 2)
 
 HWND BeCreateProgressDialog(
-    __in HWND ParentWindowHandle
+    _In_ HWND ParentWindowHandle
     );
 
 // revisions
 
 VOID BeShowRevisionsDialog(
-    __in HWND ParentWindowHandle,
-    __in PPH_STRINGREF FileName
+    _In_ HWND ParentWindowHandle,
+    _In_ PPH_STRINGREF FileName
     );
 
 // find

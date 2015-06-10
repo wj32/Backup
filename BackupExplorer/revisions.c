@@ -31,15 +31,15 @@ typedef struct _BE_REVISIONS_CONTEXT
 } BE_REVISIONS_CONTEXT, *PBE_REVISIONS_CONTEXT;
 
 INT_PTR CALLBACK BeRevisionsDlgProc(
-    __in HWND hwndDlg,
-    __in UINT uMsg,
-    __in WPARAM wParam,
-    __in LPARAM lParam
+    _In_ HWND hwndDlg,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
     );
 
 VOID BeShowRevisionsDialog(
-    __in HWND ParentWindowHandle,
-    __in PPH_STRINGREF FileName
+    _In_ HWND ParentWindowHandle,
+    _In_ PPH_STRINGREF FileName
     )
 {
     BE_REVISIONS_CONTEXT context;
@@ -62,8 +62,8 @@ VOID BeShowRevisionsDialog(
 }
 
 VOID BeLoadFileRevisions(
-    __in HWND hwndDlg,
-    __in PBE_REVISIONS_CONTEXT Context
+    _In_ HWND hwndDlg,
+    _In_ PBE_REVISIONS_CONTEXT Context
     )
 {
     NTSTATUS status;
@@ -132,9 +132,9 @@ VOID BeLoadFileRevisions(
 }
 
 static INT NTAPI BeFileRevisionRevisionCompareFunction(
-    __in PVOID Item1,
-    __in PVOID Item2,
-    __in_opt PVOID Context
+    _In_ PVOID Item1,
+    _In_ PVOID Item2,
+    _In_opt_ PVOID Context
     )
 {
     PEN_FILE_REVISION_INFORMATION item1 = Item1;
@@ -144,9 +144,9 @@ static INT NTAPI BeFileRevisionRevisionCompareFunction(
 }
 
 static INT NTAPI BeFileRevisionSizeCompareFunction(
-    __in PVOID Item1,
-    __in PVOID Item2,
-    __in_opt PVOID Context
+    _In_ PVOID Item1,
+    _In_ PVOID Item2,
+    _In_opt_ PVOID Context
     )
 {
     PEN_FILE_REVISION_INFORMATION item1 = Item1;
@@ -156,9 +156,9 @@ static INT NTAPI BeFileRevisionSizeCompareFunction(
 }
 
 static INT NTAPI BeFileRevisionTimeModifiedCompareFunction(
-    __in PVOID Item1,
-    __in PVOID Item2,
-    __in_opt PVOID Context
+    _In_ PVOID Item1,
+    _In_ PVOID Item2,
+    _In_opt_ PVOID Context
     )
 {
     PEN_FILE_REVISION_INFORMATION item1 = Item1;
@@ -168,10 +168,10 @@ static INT NTAPI BeFileRevisionTimeModifiedCompareFunction(
 }
 
 INT_PTR CALLBACK BeRevisionsDlgProc(
-    __in HWND hwndDlg,
-    __in UINT uMsg,
-    __in WPARAM wParam,
-    __in LPARAM lParam
+    _In_ HWND hwndDlg,
+    _In_ UINT uMsg,
+    _In_ WPARAM wParam,
+    _In_ LPARAM lParam
     )
 {
     PBE_REVISIONS_CONTEXT context;
@@ -272,7 +272,6 @@ INT_PTR CALLBACK BeRevisionsDlgProc(
                 PEN_FILE_REVISION_INFORMATION revisionInfo;
                 PPH_EMENU menu;
                 INT selectedCount;
-                PPH_EMENU_ITEM selectedItem;
 
                 point.x = (SHORT)LOWORD(lParam);
                 point.y = (SHORT)HIWORD(lParam);
@@ -296,12 +295,8 @@ INT_PTR CALLBACK BeRevisionsDlgProc(
                     if (revisionInfo->Attributes & DB_FILE_ATTRIBUTE_DIRECTORY)
                         PhSetFlagsEMenuItem(menu, ID_FILE_PREVIEW, PH_EMENU_DISABLED, PH_EMENU_DISABLED);
 
-                    selectedItem = PhShowEMenu(menu, context->ListHandle, PH_EMENU_SHOW_LEFTRIGHT | PH_EMENU_SHOW_NONOTIFY,
+                    PhShowEMenu(menu, hwndDlg, PH_EMENU_SHOW_SEND_COMMAND | PH_EMENU_SHOW_LEFTRIGHT,
                         PH_ALIGN_LEFT | PH_ALIGN_TOP, point.x, point.y);
-
-                    if (selectedItem)
-                        SendMessage(hwndDlg, WM_COMMAND, selectedItem->Id, 0);
-
                     PhDestroyEMenu(menu);
                 }
             }
