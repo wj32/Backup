@@ -1312,7 +1312,7 @@ VOID BeMessageHandler(
     PhInitializeStringBuilder(&sb, Message->Length);
 
     now = PhFormatDateTime(NULL);
-    PhAppendStringBuilder(&sb, now);
+    PhAppendStringBuilder(&sb, &now->sr);
     PhDereferenceObject(now);
     PhAppendStringBuilder2(&sb, L": ");
 
@@ -1321,7 +1321,7 @@ VOID BeMessageHandler(
     if (Level == EN_MESSAGE_ERROR)
         PhAppendStringBuilder2(&sb, L"** ERROR ** ");
 
-    PhAppendStringBuilder(&sb, Message);
+    PhAppendStringBuilder(&sb, &Message->sr);
     PhDereferenceObject(Message);
 
     ListBox_AddString(BeLogHandle, sb.String->Buffer);

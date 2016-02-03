@@ -16,11 +16,13 @@
 #pragma warning(disable: 4214)
 // 'function': attributes not present on previous declaration
 #pragma warning(disable: 4985)
-// 'function': was declared deprecated
-#pragma warning(disable: 4996)
 
 #ifndef UNICODE
 #define UNICODE
+#endif
+
+#ifndef _CRT_SECURE_NO_WARNINGS
+#define _CRT_SECURE_NO_WARNINGS
 #endif
 
 #if defined(PHLIB_EXPORT)
@@ -492,10 +494,10 @@ PhTestEvent(
 typedef struct _PH_BARRIER
 {
     ULONG_PTR Value;
-    PH_QUEUED_LOCK WakeEvent;
+    PH_WAKE_EVENT WakeEvent;
 } PH_BARRIER, *PPH_BARRIER;
 
-#define PH_BARRIER_INIT(Target) { (ULONG_PTR)(Target) << PH_BARRIER_TARGET_SHIFT, PH_QUEUED_LOCK_INIT }
+#define PH_BARRIER_INIT(Target) { (ULONG_PTR)(Target) << PH_BARRIER_TARGET_SHIFT, PH_WAKE_EVENT_INIT }
 
 PHLIBAPI
 VOID
@@ -705,6 +707,13 @@ PhTestInitOnce(
 // String
 
 PHLIBAPI
+SIZE_T
+NTAPI
+PhCountStringZ(
+    _In_ PWSTR String
+    );
+
+PHLIBAPI
 PSTR
 NTAPI
 PhDuplicateBytesZ(
@@ -808,6 +817,34 @@ PhIsDigitCharacter(
 
 FORCEINLINE
 LONG
+PhCompareBytesZ(
+    _In_ PSTR String1,
+    _In_ PSTR String2,
+    _In_ BOOLEAN IgnoreCase
+    )
+{
+    if (!IgnoreCase)
+        return strcmp(String1, String2);
+    else
+        return _stricmp(String1, String2);
+}
+
+FORCEINLINE
+BOOLEAN
+PhEqualBytesZ(
+    _In_ PSTR String1,
+    _In_ PSTR String2,
+    _In_ BOOLEAN IgnoreCase
+    )
+{
+    if (!IgnoreCase)
+        return strcmp(String1, String2) == 0;
+    else
+        return _stricmp(String1, String2) == 0;
+}
+
+FORCEINLINE
+LONG
 PhCompareStringZ(
     _In_ PWSTR String1,
     _In_ PWSTR String2,
@@ -817,7 +854,7 @@ PhCompareStringZ(
     if (!IgnoreCase)
         return wcscmp(String1, String2);
     else
-        return wcsicmp(String1, String2);
+        return _wcsicmp(String1, String2);
 }
 
 FORCEINLINE
@@ -838,7 +875,7 @@ PhEqualStringZ(
         if (PhAreCharactersDifferent(String1[0], String2[0]))
             return FALSE;
 
-        return wcsicmp(String1, String2) == 0;
+        return _wcsicmp(String1, String2) == 0;
     }
 }
 
@@ -858,13 +895,13 @@ typedef struct _PH_BYTESREF
     PCH Buffer;
 } PH_BYTESREF, *PPH_BYTESREF;
 
-typedef struct _PH_RELATIVE_STRINGREF
+typedef struct _PH_RELATIVE_BYTESREF
 {
     /** The length, in bytes, of the string. */
     ULONG Length;
     /** A user-defined offset. */
     ULONG Offset;
-} PH_RELATIVE_STRINGREF, *PPH_RELATIVE_STRINGREF;
+} PH_RELATIVE_BYTESREF, *PPH_RELATIVE_BYTESREF, PH_RELATIVE_STRINGREF, *PPH_RELATIVE_STRINGREF;
 
 #define PH_STRINGREF_INIT(String) { sizeof(String) - sizeof(WCHAR), (String) }
 #define PH_BYTESREF_INIT(String) { sizeof(String) - sizeof(CHAR), (String) }
@@ -877,6 +914,17 @@ PhInitializeStringRef(
     )
 {
     String->Length = wcslen(Buffer) * sizeof(WCHAR);
+    String->Buffer = Buffer;
+}
+
+FORCEINLINE
+VOID
+PhInitializeStringRefLongHint(
+    _Out_ PPH_STRINGREF String,
+    _In_ PWSTR Buffer
+    )
+{
+    String->Length = PhCountStringZ(Buffer) * sizeof(WCHAR);
     String->Buffer = Buffer;
 }
 
@@ -1358,27 +1406,6 @@ PhGetStringOrEmpty(
         return L"";
 }
 
-FORCEINLINE
-PH_STRINGREF
-PhGetStringRefOrEmpty(
-    _In_opt_ PPH_STRING String
-    )
-{
-    PH_STRINGREF sr;
-
-    if (String)
-    {
-        sr = String->sr;
-    }
-    else
-    {
-        sr.Length = 0;
-        sr.Buffer = L"";
-    }
-
-    return sr;
-}
-
 /**
  * Retrieves a pointer to a string object's buffer
  * or returns the specified alternative string.
@@ -1820,7 +1847,7 @@ PhTrimToNullTerminatorString(
     _Inout_ PPH_STRING String
     )
 {
-    String->Length = wcslen(String->Buffer) * sizeof(WCHAR);
+    String->Length = PhCountStringZ(String->Buffer) * sizeof(WCHAR);
 }
 
 // byte string
@@ -1975,7 +2002,7 @@ PhEncodeUnicode(
 PHLIBAPI
 VOID
 NTAPI
-PhZeroExtendToUtf16InPlace(
+PhZeroExtendToUtf16Buffer(
     _In_reads_bytes_(InputLength) PCH Input,
     _In_ SIZE_T InputLength,
     _Out_writes_bytes_(InputLength * sizeof(WCHAR)) PWCH Output
@@ -2016,7 +2043,7 @@ PhConvertUtf16ToAscii(
     _In_opt_ CHAR Replacement
     )
 {
-    return PhConvertUtf16ToAsciiEx(Buffer, wcslen(Buffer) * sizeof(WCHAR), Replacement);
+    return PhConvertUtf16ToAsciiEx(Buffer, PhCountStringZ(Buffer) * sizeof(WCHAR), Replacement);
 }
 
 // Multi-byte to UTF-16
@@ -2069,7 +2096,7 @@ PhConvertUtf8ToUtf16Size(
 PHLIBAPI
 BOOLEAN
 NTAPI
-PhConvertUtf8ToUtf16InPlace(
+PhConvertUtf8ToUtf16Buffer(
     _Out_writes_bytes_to_(MaxBytesInUtf16String, *BytesInUtf16String) PWCH Utf16String,
     _In_ SIZE_T MaxBytesInUtf16String,
     _Out_opt_ PSIZE_T BytesInUtf16String,
@@ -2106,7 +2133,7 @@ PhConvertUtf16ToUtf8Size(
 PHLIBAPI
 BOOLEAN
 NTAPI
-PhConvertUtf16ToUtf8InPlace(
+PhConvertUtf16ToUtf8Buffer(
     _Out_writes_bytes_to_(MaxBytesInUtf8String, *BytesInUtf8String) PCH Utf8String,
     _In_ SIZE_T MaxBytesInUtf8String,
     _Out_opt_ PSIZE_T BytesInUtf8String,
@@ -2133,8 +2160,7 @@ PhConvertUtf16ToUtf8Ex(
 
 /**
  * A string builder structure.
- * The string builder object allows you to easily
- * construct complex strings without allocating
+ * The string builder object allows you to easily construct complex strings without allocating
  * a great number of strings in the process.
  */
 typedef struct _PH_STRING_BUILDER
@@ -2143,8 +2169,7 @@ typedef struct _PH_STRING_BUILDER
     SIZE_T AllocatedLength;
     /**
      * The constructed string.
-     * \a String will be allocated for \a AllocatedLength,
-     * but we will modify the \a Length field to be the
+     * \a String will be allocated for \a AllocatedLength, we will modify the \a Length field to be the
      * correct length.
      */
     PPH_STRING String;
@@ -2168,13 +2193,6 @@ PhDeleteStringBuilder(
 PHLIBAPI
 PPH_STRING
 NTAPI
-PhReferenceStringBuilderString(
-    _In_ PPH_STRING_BUILDER StringBuilder
-    );
-
-PHLIBAPI
-PPH_STRING
-NTAPI
 PhFinalStringBuilderString(
     _Inout_ PPH_STRING_BUILDER StringBuilder
     );
@@ -2184,7 +2202,7 @@ VOID
 NTAPI
 PhAppendStringBuilder(
     _Inout_ PPH_STRING_BUILDER StringBuilder,
-    _In_ PPH_STRING String
+    _In_ PPH_STRINGREF String
     );
 
 PHLIBAPI
@@ -2244,7 +2262,7 @@ NTAPI
 PhInsertStringBuilder(
     _Inout_ PPH_STRING_BUILDER StringBuilder,
     _In_ SIZE_T Index,
-    _In_ PPH_STRING String
+    _In_ PPH_STRINGREF String
     );
 
 PHLIBAPI
@@ -2273,6 +2291,97 @@ PhRemoveStringBuilder(
     _Inout_ PPH_STRING_BUILDER StringBuilder,
     _In_ SIZE_T StartIndex,
     _In_ SIZE_T Count
+    );
+
+FORCEINLINE
+VOID
+PhRemoveEndStringBuilder(
+    _Inout_ PPH_STRING_BUILDER StringBuilder,
+    _In_ SIZE_T Count
+    )
+{
+    PhRemoveStringBuilder(
+        StringBuilder,
+        StringBuilder->String->Length / sizeof(WCHAR) - Count,
+        Count
+        );
+}
+
+// Byte string builder
+
+/**
+ * A byte string builder structure.
+ * This is similar to string builder, but is based on PH_BYTES and is suitable for general binary data.
+ */
+typedef struct _PH_BYTES_BUILDER
+{
+    /** Allocated length of the byte string, not including the null terminator. */
+    SIZE_T AllocatedLength;
+    /**
+     * The constructed byte string.
+     * \a Bytes will be allocated for \a AllocatedLength, we will modify the \a Length field to be the
+     * correct length.
+     */
+    PPH_BYTES Bytes;
+} PH_BYTES_BUILDER, *PPH_BYTES_BUILDER;
+
+PHLIBAPI
+VOID
+NTAPI
+PhInitializeBytesBuilder(
+    _Out_ PPH_BYTES_BUILDER BytesBuilder,
+    _In_ SIZE_T InitialCapacity
+    );
+
+PHLIBAPI
+VOID
+NTAPI
+PhDeleteBytesBuilder(
+    _Inout_ PPH_BYTES_BUILDER BytesBuilder
+    );
+
+PHLIBAPI
+PPH_BYTES
+NTAPI
+PhFinalBytesBuilderBytes(
+    _Inout_ PPH_BYTES_BUILDER BytesBuilder
+    );
+
+FORCEINLINE
+PVOID
+PhOffsetBytesBuilder(
+    _In_ PPH_BYTES_BUILDER BytesBuilder,
+    _In_ SIZE_T Offset
+    )
+{
+    return BytesBuilder->Bytes->Buffer + Offset;
+}
+
+PHLIBAPI
+VOID
+NTAPI
+PhAppendBytesBuilder(
+    _Inout_ PPH_BYTES_BUILDER BytesBuilder,
+    _In_ PPH_BYTESREF Bytes
+    );
+
+PHLIBAPI
+VOID
+NTAPI
+PhAppendBytesBuilder2(
+    _Inout_ PPH_BYTES_BUILDER BytesBuilder,
+    _In_ PCHAR Bytes
+    );
+
+PHLIBAPI
+PVOID
+NTAPI
+PhAppendBytesBuilderEx(
+    _Inout_ PPH_BYTES_BUILDER BytesBuilder,
+    _In_opt_ PVOID Buffer,
+    _In_ SIZE_T Length,
+    _In_opt_ SIZE_T Alignment,
+    _Out_opt_ PSIZE_T Offset
     );
 
 // List
@@ -2922,33 +3031,20 @@ PhNextEnumHashtable(
     return NULL;
 }
 
-#define PhHashBytes PhHashBytesSdbm
-
-#define PhHashBytesHsieh PhfHashBytesHsieh
 PHLIBAPI
 ULONG
-FASTCALL
-PhfHashBytesHsieh(
-    _In_ PUCHAR Bytes,
+NTAPI
+PhHashBytes(
+    _In_reads_(Length) PUCHAR Bytes,
     _In_ SIZE_T Length
     );
 
-#define PhHashBytesMurmur PhfHashBytesMurmur
 PHLIBAPI
 ULONG
-FASTCALL
-PhfHashBytesMurmur(
-    _In_ PUCHAR Bytes,
-    _In_ SIZE_T Length
-    );
-
-#define PhHashBytesSdbm PhfHashBytesSdbm
-PHLIBAPI
-ULONG
-FASTCALL
-PhfHashBytesSdbm(
-    _In_ PUCHAR Bytes,
-    _In_ SIZE_T Length
+NTAPI
+PhHashStringRef(
+    _In_ PPH_STRINGREF String,
+    _In_ BOOLEAN IgnoreCase
     );
 
 FORCEINLINE
@@ -3024,6 +3120,24 @@ PhFindItemSimpleHashtable(
     _In_ PPH_HASHTABLE SimpleHashtable,
     _In_opt_ PVOID Key
     );
+
+FORCEINLINE
+PVOID
+NTAPI
+PhFindItemSimpleHashtable2(
+    _In_ PPH_HASHTABLE SimpleHashtable,
+    _In_opt_ PVOID Key
+    )
+{
+    PVOID *item;
+
+    item = PhFindItemSimpleHashtable(SimpleHashtable, Key);
+
+    if (item)
+        return *item;
+    else
+        return NULL;
+}
 
 PHLIBAPI
 BOOLEAN
@@ -3140,10 +3254,10 @@ typedef struct _PH_CALLBACK
     /** A lock protecting the callbacks list. */
     PH_QUEUED_LOCK ListLock;
     /** A condition variable pulsed when the callback becomes free. */
-    PH_QUEUED_LOCK BusyCondition;
+    PH_CONDITION BusyCondition;
 } PH_CALLBACK, *PPH_CALLBACK;
 
-#define PH_CALLBACK_DECLARE(Name) PH_CALLBACK Name = { &Name.ListHead, &Name.ListHead, PH_QUEUED_LOCK_INIT, PH_QUEUED_LOCK_INIT }
+#define PH_CALLBACK_DECLARE(Name) PH_CALLBACK Name = { &Name.ListHead, &Name.ListHead, PH_QUEUED_LOCK_INIT, PH_CONDITION_INIT }
 
 PHLIBAPI
 VOID
@@ -3835,7 +3949,7 @@ typedef struct _PH_WORK_QUEUE
 
     LIST_ENTRY QueueListHead;
     PH_QUEUED_LOCK QueueLock;
-    PH_QUEUED_LOCK QueueEmptyCondition;
+    PH_CONDITION QueueEmptyCondition;
 
     ULONG MaximumThreads;
     ULONG MinimumThreads;

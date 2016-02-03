@@ -235,12 +235,14 @@ FORCEINLINE int wcsicmp2(
     )
 {
     if (Value1 && Value2)
-        return wcsicmp(Value1, Value2);
+        return _wcsicmp(Value1, Value2);
     else if (!Value1)
         return !Value2 ? 0 : -1;
     else
         return 1;
 }
+
+typedef int (__cdecl *PC_COMPARE_FUNCTION)(void *, const void *, const void *);
 
 // Synchronization
 
@@ -254,6 +256,7 @@ void *_InterlockedCompareExchangePointer(
     );
 #endif
 
+#if (_MSC_VER < 1900)
 #ifndef _InterlockedExchangePointer
 FORCEINLINE void *_InterlockedExchangePointer(
     void *volatile *Destination,
@@ -265,6 +268,7 @@ FORCEINLINE void *_InterlockedExchangePointer(
         (LONG_PTR)Exchange
         );
 }
+#endif
 #endif
 
 #endif
@@ -364,12 +368,6 @@ FORCEINLINE BOOLEAN _InterlockedIncrementNoZero(
 
 #define PH_PTR_STR_LEN 24
 #define PH_PTR_STR_LEN_1 (PH_PTR_STR_LEN + 1)
-
-#define STR_EQUAL(Str1, Str2) (strcmp(Str1, Str2) == 0)
-#define WSTR_EQUAL(Str1, Str2) (wcscmp(Str1, Str2) == 0)
-
-#define STR_IEQUAL(Str1, Str2) (stricmp(Str1, Str2) == 0)
-#define WSTR_IEQUAL(Str1, Str2) (wcsicmp(Str1, Str2) == 0)
 
 FORCEINLINE VOID PhPrintInt32(
     _Out_writes_(PH_INT32_STR_LEN_1) PWSTR Destination,

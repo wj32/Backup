@@ -153,6 +153,9 @@ typedef struct _PH_TREENEW_NODE
 #define TN_SELECT_TOGGLE 0x2
 #define TN_SELECT_RESET 0x4
 
+// Auto-size flags
+#define TN_AUTOSIZE_REMAINING_SPACE 0x1
+
 typedef struct _PH_TREENEW_CELL_PARTS
 {
     ULONG Flags;
@@ -386,7 +389,8 @@ typedef struct _PH_TREENEW_SEARCH_EVENT
 #define TNM_AUTOSIZECOLUMN (WM_USER + 42)
 #define TNM_SETEMPTYTEXT (WM_USER + 43)
 #define TNM_SETROWHEIGHT (WM_USER + 44)
-#define TNM_LAST (WM_USER + 44)
+#define TNM_ISFLATNODEVALID (WM_USER + 45)
+#define TNM_LAST (WM_USER + 45)
 
 #define TreeNew_SetCallback(hWnd, Callback, Context) \
     SendMessage((hWnd), TNM_SETCALLBACK, (WPARAM)(Context), (LPARAM)(Callback))
@@ -505,14 +509,17 @@ typedef struct _PH_TREENEW_SEARCH_EVENT
 #define TreeNew_GetVisibleColumnCount(hWnd) \
     ((ULONG)SendMessage((hWnd), TNM_GETVISIBLECOLUMNCOUNT, 0, 0))
 
-#define TreeNew_AutoSizeColumn(hWnd, Id) \
-    SendMessage((hWnd), TNM_AUTOSIZECOLUMN, (WPARAM)(Id), 0)
+#define TreeNew_AutoSizeColumn(hWnd, Id, Flags) \
+    SendMessage((hWnd), TNM_AUTOSIZECOLUMN, (WPARAM)(Id), (LPARAM)(Flags))
 
 #define TreeNew_SetEmptyText(hWnd, Text, Flags) \
     SendMessage((hWnd), TNM_SETEMPTYTEXT, (WPARAM)(Flags), (LPARAM)(Text))
 
 #define TreeNew_SetRowHeight(hWnd, RowHeight) \
     SendMessage((hWnd), TNM_SETROWHEIGHT, (WPARAM)(RowHeight), 0)
+
+#define TreeNew_IsFlatNodeValid(hWnd) \
+    ((BOOLEAN)SendMessage((hWnd), TNM_ISFLATNODEVALID, 0, 0))
 
 typedef struct _PH_TREENEW_VIEW_PARTS
 {

@@ -10,7 +10,7 @@
 #define PH_EMENU_MOUSESELECT 0x40
 #define PH_EMENU_RADIOCHECK 0x80
 
-#define PH_EMENU_STRING 0x100000
+#define PH_EMENU_SEPARATECHECKSPACE 0x100000
 #define PH_EMENU_SEPARATOR 0x200000
 
 #define PH_EMENU_TEXT_OWNED 0x80000000
@@ -45,7 +45,7 @@ PPH_EMENU_ITEM PhCreateEMenuItem(
     _In_ ULONG Flags,
     _In_ ULONG Id,
     _In_ PWSTR Text,
-    _In_opt_ PWSTR Bitmap,
+    _In_opt_ HBITMAP Bitmap,
     _In_opt_ PVOID Context
     );
 
@@ -168,14 +168,14 @@ PPH_EMENU_ITEM PhShowEMenu(
 
 PHLIBAPI
 BOOLEAN PhSetFlagsEMenuItem(
-    _In_ PPH_EMENU_ITEM Item,
+    _Inout_ PPH_EMENU_ITEM Item,
     _In_ ULONG Id,
     _In_ ULONG Mask,
     _In_ ULONG Value
     );
 
 FORCEINLINE BOOLEAN PhEnableEMenuItem(
-    _In_ PPH_EMENU_ITEM Item,
+    _Inout_ PPH_EMENU_ITEM Item,
     _In_ ULONG Id,
     _In_ BOOLEAN Enable
     )
@@ -188,6 +188,18 @@ VOID PhSetFlagsAllEMenuItems(
     _In_ PPH_EMENU_ITEM Item,
     _In_ ULONG Mask,
     _In_ ULONG Value
+    );
+
+#define PH_EMENU_MODIFY_TEXT 0x1
+#define PH_EMENU_MODIFY_BITMAP 0x2
+
+PHLIBAPI
+VOID PhModifyEMenuItem(
+    _Inout_ PPH_EMENU_ITEM Item,
+    _In_ ULONG ModifyFlags,
+    _In_ ULONG OwnedFlags,
+    _In_opt_ PWSTR Text,
+    _In_opt_ HBITMAP Bitmap
     );
 
 #endif

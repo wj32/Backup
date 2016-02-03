@@ -2057,7 +2057,7 @@ PhSetEnabledProvider(
 
 // svcsup
 
-extern WCHAR *PhServiceTypeStrings[6];
+extern WCHAR *PhServiceTypeStrings[10];
 extern WCHAR *PhServiceStartTypeStrings[5];
 extern WCHAR *PhServiceErrorControlStrings[4];
 
@@ -2385,8 +2385,6 @@ PhGetWin32Message(
     _In_ ULONG Result
     );
 
-#define PH_MAX_MESSAGE_SIZE 800
-
 PHLIBAPI
 INT
 NTAPI
@@ -2713,7 +2711,7 @@ NTAPI
 PhFormatImageVersionInfo(
     _In_opt_ PPH_STRING FileName,
     _In_ PPH_IMAGE_VERSION_INFO ImageVersionInfo,
-    _In_opt_ PWSTR Indent,
+    _In_opt_ PPH_STRINGREF Indent,
     _In_opt_ ULONG LineLimit
     );
 

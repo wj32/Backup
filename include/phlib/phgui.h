@@ -341,6 +341,7 @@ PPH_STRING PhGetWindowText(
     );
 
 #define PH_GET_WINDOW_TEXT_INTERNAL 0x1
+#define PH_GET_WINDOW_TEXT_LENGTH_ONLY 0x2
 
 PHLIBAPI
 ULONG PhGetWindowTextEx(
@@ -442,6 +443,10 @@ HWND PhCreateDialogFromTemplate(
     _In_ PWSTR Template,
     _In_ DLGPROC DialogProc,
     _In_ PVOID Parameter
+    );
+
+BOOLEAN PhModalPropertySheet(
+    _Inout_ PROPSHEETHEADER *Header
     );
 
 #define PH_ANCHOR_LEFT 0x1
