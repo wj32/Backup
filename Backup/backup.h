@@ -3,5 +3,6 @@
 
 #define PHNT_VERSION PHNT_VISTA
 #include <ph.h>
+#include <filestream.h>
 
 #endif

@@ -24,6 +24,7 @@
 #include <windowsx.h>
 #include <emenu.h>
 #include <cpysave.h>
+#include <shellapi.h>
 #include "explorerp.h"
 
 HWND BeWindowHandle;

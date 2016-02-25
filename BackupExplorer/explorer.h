@@ -3,7 +3,8 @@
 
 #define PHNT_VERSION PHNT_VISTA
 #include <ph.h>
-#include <phgui.h>
+#include <guisup.h>
+#include <filestream.h>
 #include <treenew.h>
 #include "resource.h"
 

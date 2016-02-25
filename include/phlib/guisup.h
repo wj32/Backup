@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include <ph.h>
 #include <commctrl.h>
 
 #ifdef __cplusplus
@@ -135,6 +134,7 @@ extern _EnableThemeDialogTexture EnableThemeDialogTexture_I;
 extern _SHAutoComplete SHAutoComplete_I;
 extern _TaskDialogIndirect TaskDialogIndirect_I;
 
+PHLIBAPI
 VOID PhGuiSupportInitialization(
     VOID
     );
@@ -442,6 +442,7 @@ typedef struct _DLGTEMPLATEEX
     short cy;
 } DLGTEMPLATEEX, *PDLGTEMPLATEEX;
 
+PHLIBAPI
 HWND PhCreateDialogFromTemplate(
     _In_ HWND Parent,
     _In_ ULONG Style,

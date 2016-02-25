@@ -21,6 +21,7 @@
  */
 
 #include "backup.h"
+#include <objbase.h>
 
 LONG BkRunCommandLine(
     VOID
@@ -29,7 +30,7 @@ LONG BkRunCommandLine(
 int __cdecl wmain(int argc, wchar_t *argv[])
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-    PhInitializePhLibEx(PHLIB_INIT_MODULE_IO_SUPPORT, 512 * 1024, 16 * 1024);
+    PhInitializePhLibEx(PHLIB_INIT_MODULE_FILE_STREAM, 512 * 1024, 16 * 1024);
 
     return BkRunCommandLine();
 }

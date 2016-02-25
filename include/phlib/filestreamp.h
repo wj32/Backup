@@ -1,5 +1,5 @@
-#ifndef _PH_IOSUPP_H
-#define _PH_IOSUPP_H
+#ifndef _PH_FILESTREAMP_H
+#define _PH_FILESTREAMP_H
 
 VOID NTAPI PhpFileStreamDeleteProcedure(
     _In_ PVOID Object,
