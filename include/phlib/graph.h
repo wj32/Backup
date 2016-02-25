@@ -1,16 +1,28 @@
 #ifndef _PH_GRAPH_H
 #define _PH_GRAPH_H
 
-// Graph drawing
-
-#ifndef _PH_GRAPH_PRIVATE
-extern RECT PhNormalGraphTextMargin;
-extern RECT PhNormalGraphTextPadding;
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#define PH_GRAPH_USE_GRID 0x1
+// Graph drawing
+
+extern RECT PhNormalGraphTextMargin;
+extern RECT PhNormalGraphTextPadding;
+
+#define PH_GRAPH_USE_GRID_X 0x1
+#define PH_GRAPH_USE_GRID_Y 0x2
+#define PH_GRAPH_LOGARITHMIC_GRID_Y 0x4
 #define PH_GRAPH_USE_LINE_2 0x10
 #define PH_GRAPH_OVERLAY_LINE_2 0x20
+#define PH_GRAPH_LABEL_MAX_Y 0x1000
+
+typedef PPH_STRING (NTAPI *PPH_GRAPH_LABEL_Y_FUNCTION)(
+    _In_ struct _PH_GRAPH_DRAW_INFO *DrawInfo,
+    _In_ ULONG DataIndex,
+    _In_ FLOAT Value,
+    _In_ FLOAT Parameter
+    );
 
 typedef struct _PH_GRAPH_DRAW_INFO
 {
@@ -33,13 +45,23 @@ typedef struct _PH_GRAPH_DRAW_INFO
     // Grid
     COLORREF GridColor;
     ULONG GridWidth;
-    ULONG GridHeight;
-    ULONG GridStart;
+    FLOAT GridHeight;
+    ULONG GridXOffset;
+    ULONG GridYThreshold;
+    FLOAT GridBase; // Base for logarithmic grid
+
+    // y-axis label
+    PPH_GRAPH_LABEL_Y_FUNCTION LabelYFunction;
+    FLOAT LabelYFunctionParameter;
+    HFONT LabelYFont;
+    COLORREF LabelYColor;
+    ULONG LabelMaxYIndexLimit;
 
     // Text
     PH_STRINGREF Text;
     RECT TextRect;
     RECT TextBoxRect;
+    HFONT TextFont;
     COLORREF TextColor;
     COLORREF TextBoxColor;
 } PH_GRAPH_DRAW_INFO, *PPH_GRAPH_DRAW_INFO;
@@ -50,12 +72,6 @@ typedef struct _PH_GRAPH_DRAW_INFO
 
 BOOLEAN PhGraphControlInitialization(
     VOID
-    );
-
-PHLIBAPI
-VOID PhDrawGraph(
-    _In_ HDC hdc,
-    _In_ PPH_GRAPH_DRAW_INFO DrawInfo
     );
 
 PHLIBAPI
@@ -228,5 +244,9 @@ VOID PhGraphStateGetDrawInfo(
     _In_ PPH_GRAPH_GETDRAWINFO GetDrawInfo,
     _In_ ULONG DataCount
     );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -1,19 +1,14 @@
-#ifndef _NTWIN_H
-#define _NTWIN_H
+#ifndef _PHNT_WINDOWS_H
+#define _PHNT_WINDOWS_H
 
-// This header file provides access to Win32, plus NTSTATUS values.
+// This header file provides access to Win32, plus NTSTATUS values and some access mask values.
 
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_NO_STATUS
 #include <windows.h>
 #undef WIN32_NO_STATUS
 #include <ntstatus.h>
-
 #include <winioctl.h>
-#include <shellapi.h>
-#include <ole2.h>
-#include <commdlg.h>
-#include <wmistr.h>
 
 typedef GUID *PGUID;
 

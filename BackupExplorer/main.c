@@ -51,7 +51,7 @@ INT WINAPI WinMain(
     BeInstanceHandle = hInstance;
 
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-    PhInitializePhLibEx(PHLIB_INIT_MODULE_WORK_QUEUE | PHLIB_INIT_MODULE_IO_SUPPORT, 512 * 1024, 16 * 1024);
+    PhInitializePhLibEx(PHLIB_INIT_MODULE_IO_SUPPORT, 512 * 1024, 16 * 1024);
 
     PhApplicationName = L"Backup Explorer";
 

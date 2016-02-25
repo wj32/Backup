@@ -152,7 +152,7 @@ INT_PTR CALLBACK BeFindDlgProc(
                         // Start the search.
 
                         SearchString = PhGetWindowText(GetDlgItem(hwndDlg, IDC_FILTER));
-                        PhUpperString(SearchString);
+                        _wcsupr(SearchString->Buffer);
                         SearchResults = PhCreateList(128);
                         SearchResultsAddIndex = 0;
                         SearchResultsAddThreshold = 1;
@@ -477,7 +477,7 @@ static VOID EnumDb(
         }
 
         upperFileName = PhDuplicateString(fileName);
-        PhUpperString(upperFileName);
+        _wcsupr(upperFileName->Buffer);
 
         if (!(dirInfo[i].Attributes & DB_FILE_ATTRIBUTE_DELETE_TAG))
         {

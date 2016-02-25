@@ -516,21 +516,27 @@ typedef enum _IO_PRIORITY_HINT
     MaxIoPriorityTypes
 } IO_PRIORITY_HINT;
 
-#define FILE_SKIP_COMPLETION_PORT_ON_SUCCESS 0x1
-#define FILE_SKIP_SET_EVENT_ON_HANDLE 0x2
-#define FILE_SKIP_SET_USER_EVENT_ON_FAST_IO 0x4
-
 typedef struct _FILE_IO_PRIORITY_HINT_INFORMATION
 {
     IO_PRIORITY_HINT PriorityHint;
 } FILE_IO_PRIORITY_HINT_INFORMATION, *PFILE_IO_PRIORITY_HINT_INFORMATION;
 
-typedef  struct _FILE_IO_COMPLETION_NOTIFICATION_INFORMATION
+typedef struct _FILE_IO_PRIORITY_HINT_INFORMATION_EX
+{
+    IO_PRIORITY_HINT PriorityHint;
+    BOOLEAN BoostOutstanding;
+} FILE_IO_PRIORITY_HINT_INFORMATION_EX, *PFILE_IO_PRIORITY_HINT_INFORMATION_EX;
+
+#define FILE_SKIP_COMPLETION_PORT_ON_SUCCESS 0x1
+#define FILE_SKIP_SET_EVENT_ON_HANDLE 0x2
+#define FILE_SKIP_SET_USER_EVENT_ON_FAST_IO 0x4
+
+typedef struct _FILE_IO_COMPLETION_NOTIFICATION_INFORMATION
 {
     ULONG Flags;
 } FILE_IO_COMPLETION_NOTIFICATION_INFORMATION, *PFILE_IO_COMPLETION_NOTIFICATION_INFORMATION;
 
-typedef  struct _FILE_PROCESS_IDS_USING_FILE_INFORMATION
+typedef struct _FILE_PROCESS_IDS_USING_FILE_INFORMATION
 {
     ULONG NumberOfProcessIdsInList;
     ULONG_PTR ProcessIdList[1];
@@ -576,10 +582,29 @@ typedef struct _FILE_REMOTE_PROTOCOL_INFORMATION
 
     // Specific information
 
+#if (PHNT_VERSION < PHNT_WIN8)
     struct
     {
         ULONG Reserved[16];
     } ProtocolSpecificReserved;
+#else
+    union
+    {
+        struct
+        {
+            struct
+            {
+                ULONG Capabilities;
+            } Server;
+            struct
+            {
+                ULONG Capabilities;
+                ULONG CachingFlags;
+            } Share;
+        } Smb2;
+        ULONG Reserved[16];
+    } ProtocolSpecific;
+#endif
 } FILE_REMOTE_PROTOCOL_INFORMATION, *PFILE_REMOTE_PROTOCOL_INFORMATION;
 
 #define CHECKSUM_ENFORCEMENT_OFF 0x00000001
@@ -877,18 +902,6 @@ typedef struct _FILE_FS_METADATA_SIZE_INFORMATION
     ULONG SectorsPerAllocationUnit;
     ULONG BytesPerSector;
 } FILE_FS_METADATA_SIZE_INFORMATION, *PFILE_FS_METADATA_SIZE_INFORMATION;
-
-// NtNotifyChangeDirectoryFile
-
-/*
-typedef struct _FILE_NOTIFY_INFORMATION
-{
-    ULONG NextEntryOffset;
-    ULONG Action;
-    ULONG FileNameLength;
-    WCHAR FileName[1];
-} FILE_NOTIFY_INFORMATION, *PFILE_NOTIFY_INFORMATION;
-*/
 
 // System calls
 
@@ -1271,7 +1284,7 @@ NtNotifyChangeDirectoryFile(
     _In_opt_ PIO_APC_ROUTINE ApcRoutine,
     _In_opt_ PVOID ApcContext,
     _Out_ PIO_STATUS_BLOCK IoStatusBlock,
-    _Out_writes_bytes_(Length) PVOID Buffer,
+    _Out_writes_bytes_(Length) PVOID Buffer, // FILE_NOTIFY_INFORMATION
     _In_ ULONG Length,
     _In_ ULONG CompletionFilter,
     _In_ BOOLEAN WatchTree

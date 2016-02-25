@@ -59,35 +59,30 @@
 // Annotations
 
 /**
- * Indicates that a function assumes the specified
- * number of references are available for the object.
+ * Indicates that a function assumes the specified number of references are available for the
+ * object.
  *
- * \remarks Usually functions reference objects if they
- * store them for later usage; this annotation specifies
- * that the caller must supply these extra references
- * itself. In effect these references are "transferred"
- * to the function and must not be used. E.g. if you
- * create an object and immediately call a function
- * with _Assume_refs_(1), you may no longer use the object
- * since that one reference you held is no longer yours.
+ * \remarks Usually functions reference objects if they store them for later usage; this annotation
+ * specifies that the caller must supply these extra references itself. In effect these references
+ * are "transferred" to the function and must not be used. E.g. if you create an object and
+ * immediately call a function with _Assume_refs_(1), you may no longer use the object since that
+ * one reference you held is no longer yours.
  */
 #define _Assume_refs_(count)
 
 #define _Callback_
 
 /**
- * Indicates that a function may raise a software
- * exception.
+ * Indicates that a function may raise a software exception.
  *
- * \remarks Do not use this annotation for
- * temporary usages of exceptions, e.g. unimplemented
+ * \remarks Do not use this annotation for temporary usages of exceptions, e.g. unimplemented
  * functions.
  */
 #define _May_raise_
 
 /**
- * Indicates that a function requires the specified
- * value to be aligned at the specified number of bytes.
+ * Indicates that a function requires the specified value to be aligned at the specified number of
+ * bytes.
  */
 #define _Needs_align_(align)
 
@@ -358,6 +353,33 @@ FORCEINLINE BOOLEAN _InterlockedIncrementNoZero(
     }
 }
 
+FORCEINLINE BOOLEAN _InterlockedIncrementPositive(
+    _Inout_ _Interlocked_operand_ LONG volatile *Addend
+    )
+{
+    LONG value;
+    LONG newValue;
+
+    value = *Addend;
+
+    while (TRUE)
+    {
+        if (value <= 0)
+            return FALSE;
+
+        if ((newValue = _InterlockedCompareExchange(
+            Addend,
+            value + 1,
+            value
+            )) == value)
+        {
+            return TRUE;
+        }
+
+        value = newValue;
+    }
+}
+
 // Strings
 
 #define PH_INT32_STR_LEN 12
@@ -434,27 +456,31 @@ FORCEINLINE ULONG PhCountBits(
 
 FORCEINLINE ULONG PhRoundNumber(
     _In_ ULONG Value,
-    _In_ ULONG Multiplier
+    _In_ ULONG Granularity
     )
 {
-    ULONG newValue;
+    return (Value + Granularity / 2) / Granularity * Granularity;
+}
 
-    newValue = Value / Multiplier * Multiplier;
+FORCEINLINE ULONG PhMultiplyDivide(
+    _In_ ULONG Number,
+    _In_ ULONG Numerator,
+    _In_ ULONG Denominator
+    )
+{
+    return (ULONG)(((ULONG64)Number * (ULONG64)Numerator + Denominator / 2) / (ULONG64)Denominator);
+}
 
-    // This new value has the multiplier truncated.
-    // E.g. 1099 / 100 * 100 = 1000.
-    // If the difference is less than half the multiplier,
-    // use the new value.
-    // E.g.
-    // 1099 -> 1000 (100). 1099 - 1000 >= 50, so use
-    // the new value plus the multiplier.
-    // 1010 -> 1000 (100). 1010 - 1000 < 50, so use
-    // the new value.
-
-    if (Value - newValue < Multiplier / 2)
-        return newValue;
+FORCEINLINE LONG PhMultiplyDivideSigned(
+    _In_ LONG Number,
+    _In_ ULONG Numerator,
+    _In_ ULONG Denominator
+    )
+{
+    if (Number >= 0)
+        return PhMultiplyDivide(Number, Numerator, Denominator);
     else
-        return newValue + Multiplier;
+        return -(LONG)PhMultiplyDivide(-Number, Numerator, Denominator);
 }
 
 FORCEINLINE VOID PhProbeAddress(

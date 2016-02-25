@@ -283,7 +283,7 @@ public:
     VOID WaitForJob();
     VOID Run();
 
-    static NTSTATUS ThreadStart(PVOID Parameter)
+    static NTSTATUS NTAPI ThreadStart(PVOID Parameter)
     {
         PkUpdateArchiveExtractCallback *extractCallback = (PkUpdateArchiveExtractCallback *)Parameter;
 

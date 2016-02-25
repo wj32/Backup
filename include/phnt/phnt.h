@@ -1,17 +1,16 @@
-#ifndef _PH_PHNT_H
-#define _PH_PHNT_H
+#ifndef _PHNT_H
+#define _PHNT_H
 
 // This header file provides access to NT APIs.
 
-// Definitions are annotated to indicate their source.
-// If a definition is not annotated, it has been retrieved
-// from an official Microsoft source (NT headers, DDK headers, winnt.h).
+// Definitions are annotated to indicate their source. If a definition is not annotated, it has been
+// retrieved from an official Microsoft source (NT headers, DDK headers, winnt.h).
 
-// "winbase" indicates that a definition has been reconstructed from
-// a Win32-ized NT definition in winbase.h.
-// "rev" indicates that a definition has been reverse-engineered.
-// "dbg" indicates that a definition has been obtained from a debug
-// message or assertion in a checked build of the kernel or file.
+// * "winbase" indicates that a definition has been reconstructed from a Win32-ized NT definition in
+//   winbase.h.
+// * "rev" indicates that a definition has been reverse-engineered.
+// * "dbg" indicates that a definition has been obtained from a debug message or assertion in a
+//   checked build of the kernel or file.
 
 // Reliability:
 // 1. No annotation.
@@ -51,7 +50,7 @@ extern "C" {
 #endif
 
 #if (PHNT_MODE != PHNT_MODE_KERNEL)
-#include <ntbasic.h>
+#include <phnt_ntdef.h>
 #include <ntnls.h>
 #include <ntkeapi.h>
 #endif
@@ -67,7 +66,7 @@ extern "C" {
 #include <ntpsapi.h>
 
 #if (PHNT_MODE != PHNT_MODE_KERNEL)
-#include <ntcm.h>
+#include <cfg.h>
 #include <ntdbg.h>
 #include <ntioapi.h>
 #include <ntlpcapi.h>

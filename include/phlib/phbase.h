@@ -33,9 +33,12 @@
 #define PHLIBAPI
 #endif
 
-#include <ntwin.h>
-#include <ntbasic.h>
+#include <phnt_windows.h>
 #include <phnt.h>
+#include <shellapi.h>
+#include <ole2.h>
+#include <commdlg.h>
+#include <wmistr.h>
 #include <phsup.h>
 #include <ref.h>
 #include <fastlock.h>
@@ -59,10 +62,7 @@ typedef struct _PH_STARTUP_PARAMETERS PH_STARTUP_PARAMETERS;
 PHLIBAPI extern _User_set_ PVOID PhLibImageBase;
 
 PHLIBAPI extern _User_set_ PWSTR PhApplicationName;
-PHLIBAPI extern ULONG PhCurrentSessionId;
-PHLIBAPI extern HANDLE PhCurrentTokenQueryHandle;
-PHLIBAPI extern BOOLEAN PhElevated;
-PHLIBAPI extern TOKEN_ELEVATION_TYPE PhElevationType;
+PHLIBAPI extern _User_set_ ULONG PhGlobalDpi;
 PHLIBAPI extern PVOID PhHeapHandle;
 PHLIBAPI extern RTL_OSVERSIONINFOEXW PhOsVersion;
 PHLIBAPI extern SYSTEM_BASIC_INFORMATION PhSystemBasicInformation;
@@ -113,18 +113,13 @@ PHLIBAPI extern ACCESS_MASK ThreadAllAccess;
 #define PHLIB_INIT_MODULE_RESERVED1 0x1
 #define PHLIB_INIT_MODULE_RESERVED2 0x2
 /** Needed to use work queues. */
-#define PHLIB_INIT_MODULE_WORK_QUEUE 0x4
-/** Needed to use handle tables. */
-#define PHLIB_INIT_MODULE_HANDLE_TABLE 0x8
+#define PHLIB_INIT_MODULE_RESERVED3 0x4
+#define PHLIB_INIT_MODULE_RESERVED4 0x8
 /** Needed to use file streams. Basic I/O functions do not require this in order to work. */
 #define PHLIB_INIT_MODULE_IO_SUPPORT 0x10
 /** Needed to use symbol providers. */
 #define PHLIB_INIT_MODULE_SYMBOL_PROVIDER 0x20
-#define PHLIB_INIT_MODULE_RESERVED3 0x40
-
-// Misc.
-/** Retrieves token information (e.g. elevation status). */
-#define PHLIB_INIT_TOKEN_INFO 0x100000
+#define PHLIB_INIT_MODULE_RESERVED5 0x40
 
 NTSTATUS
 PhInitializePhLib(
@@ -160,8 +155,8 @@ struct _PH_OBJECT_TYPE;
 typedef struct _PH_OBJECT_TYPE *PPH_OBJECT_TYPE;
 
 BOOLEAN
-PhInitializeBase(
-    _In_ ULONG Flags
+PhBaseInitialization(
+    VOID
     );
 
 // Threads
@@ -324,7 +319,7 @@ PHLIBAPI
 PVOID
 NTAPI
 PhReAllocate(
-    _Frees_ptr_opt_ PVOID Memory,
+    _Frees_ptr_ PVOID Memory,
     _In_ SIZE_T Size
     );
 
@@ -379,10 +374,8 @@ PhAllocateCopy(
 /**
  * A fast event object.
  *
- * \remarks
- * This event object does not use a kernel event object
- * until necessary, and frees the object automatically
- * when it is no longer needed.
+ * \remarks This event object does not use a kernel event object until necessary, and frees the
+ * object automatically when it is no longer needed.
  */
 typedef struct _PH_EVENT
 {
@@ -1214,9 +1207,8 @@ extern PPH_OBJECT_TYPE PhStringType;
 /**
  * A 16-bit string object, which supports UTF-16.
  *
- * \remarks The \a Length never includes the null terminator. Every
- * string must have a null terminator at the end, for compatibility
- * reasons. Thus the invariant is:
+ * \remarks The \a Length never includes the null terminator. Every string must have a null
+ * terminator at the end, for compatibility reasons. The invariant is:
  * \code Buffer[Length / sizeof(WCHAR)] = 0 \endcode
  */
 typedef struct _PH_STRING
@@ -1347,13 +1339,11 @@ PhFormatString_V(
     );
 
 /**
- * Retrieves a pointer to a string object's buffer
- * or returns NULL.
+ * Retrieves a pointer to a string object's buffer or returns NULL.
  *
  * \param String A pointer to a string object.
  *
- * \return A pointer to the string object's buffer
- * if the supplied pointer is non-NULL, otherwise
+ * \return A pointer to the string object's buffer if the supplied pointer is non-NULL, otherwise
  * NULL.
  */
 FORCEINLINE
@@ -1385,14 +1375,12 @@ PhGetStringRef(
 }
 
 /**
- * Retrieves a pointer to a string object's buffer
- * or returns an empty string.
+ * Retrieves a pointer to a string object's buffer or returns an empty string.
  *
  * \param String A pointer to a string object.
  *
- * \return A pointer to the string object's buffer
- * if the supplied pointer is non-NULL, otherwise
- * an empty string.
+ * \return A pointer to the string object's buffer if the supplied pointer is non-NULL, otherwise an
+ * empty string.
  */
 FORCEINLINE
 PWSTR
@@ -1407,14 +1395,12 @@ PhGetStringOrEmpty(
 }
 
 /**
- * Retrieves a pointer to a string object's buffer
- * or returns the specified alternative string.
+ * Retrieves a pointer to a string object's buffer or returns the specified alternative string.
  *
  * \param String A pointer to a string object.
  * \param DefaultString The alternative string.
  *
- * \return A pointer to the string object's buffer
- * if the supplied pointer is non-NULL, otherwise
+ * \return A pointer to the string object's buffer if the supplied pointer is non-NULL, otherwise
  * the specified alternative string.
  */
 FORCEINLINE
@@ -1671,9 +1657,8 @@ PhEndsWithString2(
  * \param StartIndex The index, in characters, to start searching at.
  * \param Char The character to search for.
  *
- * \return The index, in characters, of the first occurrence of
- * \a Char in \a String after \a StartIndex. If \a Char was not
- * found, -1 is returned.
+ * \return The index, in characters, of the first occurrence of \a Char in \a String after
+ * \a StartIndex. If \a Char was not found, -1 is returned.
  */
 FORCEINLINE
 ULONG_PTR
@@ -1710,9 +1695,8 @@ PhFindCharInString(
  * \param StartIndex The index, in characters, to start searching at.
  * \param Char The character to search for.
  *
- * \return The index, in characters, of the last occurrence of
- * \a Char in \a String after \a StartIndex. If \a Char was not
- * found, -1 is returned.
+ * \return The index, in characters, of the last occurrence of \a Char in \a String after
+ * \a StartIndex. If \a Char was not found, -1 is returned.
  */
 FORCEINLINE
 ULONG_PTR
@@ -1749,9 +1733,8 @@ PhFindLastCharInString(
  * \param StartIndex The index, in characters, to start searching at.
  * \param SubString The string to search for.
  *
- * \return The index, in characters, of the first occurrence of
- * \a SubString in \a String after \a StartIndex. If \a SubString was not
- * found, -1 is returned.
+ * \return The index, in characters, of the first occurrence of \a SubString in \a String after
+ * \a StartIndex. If \a SubString was not found, -1 is returned.
  */
 FORCEINLINE
 ULONG_PTR
@@ -1804,42 +1787,12 @@ PhSubstring(
 }
 
 /**
- * Converts a string to lowercase in-place.
- *
- * \param String The string to convert.
- */
-FORCEINLINE
-VOID
-PhLowerString(
-    _Inout_ PPH_STRING String
-    )
-{
-    _wcslwr(String->Buffer);
-}
-
-/**
- * Converts a string to uppercase in-place.
- *
- * \param String The string to convert.
- */
-FORCEINLINE
-VOID
-PhUpperString(
-    _Inout_ PPH_STRING String
-    )
-{
-    _wcsupr(String->Buffer);
-}
-
-/**
- * Updates a string object's length with
- * its true length as determined by an
- * embedded null terminator.
+ * Updates a string object's length with its true length as determined by an embedded null
+ * terminator.
  *
  * \param String The string to modify.
  *
- * \remarks Use this function after modifying a string
- * object's buffer manually.
+ * \remarks Use this function after modifying a string object's buffer manually.
  */
 FORCEINLINE
 VOID
@@ -1850,13 +1803,13 @@ PhTrimToNullTerminatorString(
     String->Length = PhCountStringZ(String->Buffer) * sizeof(WCHAR);
 }
 
-// byte string
+// Byte string
 
 extern PPH_OBJECT_TYPE PhBytesType;
 
 /**
- * An 8-bit string object, which supports ASCII, UTF-8 and Windows multi-byte encodings,
- * as well as binary data.
+ * An 8-bit string object, which supports ASCII, UTF-8 and Windows multi-byte encodings, as well as
+ * binary data.
  */
 typedef struct _PH_BYTES
 {
@@ -2169,8 +2122,8 @@ typedef struct _PH_STRING_BUILDER
     SIZE_T AllocatedLength;
     /**
      * The constructed string.
-     * \a String will be allocated for \a AllocatedLength, we will modify the \a Length field to be the
-     * correct length.
+     * \a String will be allocated for \a AllocatedLength, we will modify the \a Length field to be
+     * the correct length.
      */
     PPH_STRING String;
 } PH_STRING_BUILDER, *PPH_STRING_BUILDER;
@@ -2311,7 +2264,8 @@ PhRemoveEndStringBuilder(
 
 /**
  * A byte string builder structure.
- * This is similar to string builder, but is based on PH_BYTES and is suitable for general binary data.
+ * This is similar to string builder, but is based on PH_BYTES and is suitable for general binary
+ * data.
  */
 typedef struct _PH_BYTES_BUILDER
 {
@@ -2319,8 +2273,8 @@ typedef struct _PH_BYTES_BUILDER
     SIZE_T AllocatedLength;
     /**
      * The constructed byte string.
-     * \a Bytes will be allocated for \a AllocatedLength, we will modify the \a Length field to be the
-     * correct length.
+     * \a Bytes will be allocated for \a AllocatedLength, we will modify the \a Length field to be
+     * the correct length.
      */
     PPH_BYTES Bytes;
 } PH_BYTES_BUILDER, *PPH_BYTES_BUILDER;
@@ -2384,15 +2338,108 @@ PhAppendBytesBuilderEx(
     _Out_opt_ PSIZE_T Offset
     );
 
+// Array
+
+/** An array structure. Storage is automatically allocated for new elements. */
+typedef struct _PH_ARRAY
+{
+    /** The number of items in the list. */
+    SIZE_T Count;
+    /** The number of items for which storage is allocated. */
+    SIZE_T AllocatedCount;
+    /** The size of each item, in bytes. */
+    SIZE_T ItemSize;
+    /** The base address of the array. */
+    PVOID Items;
+} PH_ARRAY, *PPH_ARRAY;
+
+FORCEINLINE
+PVOID
+PhItemArray(
+    _In_ PPH_ARRAY Array,
+    _In_ SIZE_T Index
+    )
+{
+    return (PCHAR)Array->Items + Index * Array->ItemSize;
+}
+
+PHLIBAPI
+VOID
+NTAPI
+PhInitializeArray(
+    _Out_ PPH_ARRAY Array,
+    _In_ SIZE_T ItemSize,
+    _In_ SIZE_T InitialCapacity
+    );
+
+PHLIBAPI
+VOID
+NTAPI
+PhDeleteArray(
+    _Inout_ PPH_ARRAY Array
+    );
+
+PHLIBAPI
+PVOID
+NTAPI
+PhFinalArrayItems(
+    _Inout_ PPH_ARRAY Array
+    );
+
+PHLIBAPI
+VOID
+NTAPI
+PhResizeArray(
+    _Inout_ PPH_ARRAY Array,
+    _In_ SIZE_T NewCapacity
+    );
+
+PHLIBAPI
+VOID
+NTAPI
+PhAddItemArray(
+    _Inout_ PPH_ARRAY Array,
+    _In_ PVOID Item
+    );
+
+PHLIBAPI
+VOID
+NTAPI
+PhAddItemsArray(
+    _Inout_ PPH_ARRAY Array,
+    _In_ PVOID Items,
+    _In_ SIZE_T Count
+    );
+
+PHLIBAPI
+VOID
+NTAPI
+PhClearArray(
+    _Inout_ PPH_ARRAY Array
+    );
+
+PHLIBAPI
+VOID
+NTAPI
+PhRemoveItemArray(
+    _Inout_ PPH_ARRAY Array,
+    _In_ SIZE_T Index
+    );
+
+PHLIBAPI
+VOID
+NTAPI
+PhRemoveItemsArray(
+    _Inout_ PPH_ARRAY Array,
+    _In_ SIZE_T StartIndex,
+    _In_ SIZE_T Count
+    );
+
 // List
 
 extern PPH_OBJECT_TYPE PhListType;
 
-/**
- * A list structure.
- * Storage is automatically allocated for new
- * elements.
- */
+/** A list structure. Storage is automatically allocated for new elements. */
 typedef struct _PH_LIST
 {
     /** The number of items in the list. */
@@ -2510,10 +2557,8 @@ typedef LONG (NTAPI *PPH_COMPARE_FUNCTION)(
 extern PPH_OBJECT_TYPE PhPointerListType;
 
 /**
- * A pointer list structure.
- * The pointer list is similar to the normal list
- * structure, but both insertions and deletions
- * occur in constant time. The list is not ordered.
+ * A pointer list structure. The pointer list is similar to the normal list structure, but both
+ * insertions and deletions occur in constant time. The list is not ordered.
  */
 typedef struct _PH_POINTER_LIST
 {
@@ -2628,8 +2673,7 @@ PhInitializeHashSet(
  *
  * \param NumberOfBuckets The number of buckets.
  *
- * \return The allocated hash set. You must free it with
- * PhFree() when you no longer need it.
+ * \return The allocated hash set. You must free it with PhFree() when you no longer need it.
  */
 FORCEINLINE
 PPH_HASH_ENTRY *
@@ -2753,8 +2797,7 @@ PhAddEntryHashSet(
  *
  * \return The first entry in the chain.
  *
- * \remarks If the function returns NULL, the entry
- * does not exist in the hash set.
+ * \remarks If the function returns NULL, the entry does not exist in the hash set.
  */
 FORCEINLINE
 PPH_HASH_ENTRY
@@ -2814,10 +2857,10 @@ PhRemoveEntryHashSet(
 /**
  * Resizes a hash set.
  *
- * \param Buckets A pointer to the bucket array. On return the new bucket
- * array is stored in this variable.
- * \param NumberOfBuckets A pointer to the number of buckets. On return the
- * new number of buckets is stored in this variable.
+ * \param Buckets A pointer to the bucket array. On return the new bucket array is stored in this
+ * variable.
+ * \param NumberOfBuckets A pointer to the number of buckets. On return the new number of buckets is
+ * stored in this variable.
  * \param NewNumberOfBuckets The new number of buckets.
  */
 FORCEINLINE
@@ -2846,8 +2889,9 @@ typedef struct _PH_HASHTABLE_ENTRY
 {
     /** Hash code of the entry. -1 if entry is unused. */
     ULONG HashCode;
-    /** Either the index of the next entry in the bucket,
-     * the index of the next free entry, or -1 for invalid.
+    /**
+     * Either the index of the next entry in the bucket, the index of the next free entry, or -1 for
+     * invalid.
      */
     ULONG Next;
     /** The beginning of user data. */
@@ -2860,10 +2904,9 @@ typedef struct _PH_HASHTABLE_ENTRY
  * \param Entry1 The first entry.
  * \param Entry2 The second entry.
  *
- * \return TRUE if the entries are equal, otherwise
- * FALSE.
+ * \return TRUE if the entries are equal, otherwise FALSE.
  */
-typedef BOOLEAN (NTAPI *PPH_HASHTABLE_COMPARE_FUNCTION)(
+typedef BOOLEAN (NTAPI *PPH_HASHTABLE_EQUAL_FUNCTION)(
     _In_ PVOID Entry1,
     _In_ PVOID Entry2
     );
@@ -2876,11 +2919,9 @@ typedef BOOLEAN (NTAPI *PPH_HASHTABLE_COMPARE_FUNCTION)(
  * \return A hash code for the entry.
  *
  * \remarks
- * \li Two entries which are considered to be equal
- * by the comparison function must be given the same
- * hash code.
- * \li Two different entries do not have to be given
- * different hash codes.
+ * \li Two entries which are considered to be equal by the comparison function must be given the
+ * same hash code.
+ * \li Two different entries do not have to be given different hash codes.
  */
 typedef ULONG (NTAPI *PPH_HASHTABLE_HASH_FUNCTION)(
     _In_ PVOID Entry
@@ -2900,7 +2941,7 @@ typedef struct _PH_HASHTABLE
     /** Size of user data in each entry. */
     ULONG EntrySize;
     /** The comparison function. */
-    PPH_HASHTABLE_COMPARE_FUNCTION CompareFunction;
+    PPH_HASHTABLE_EQUAL_FUNCTION EqualFunction;
     /** The hash function. */
     PPH_HASHTABLE_HASH_FUNCTION HashFunction;
 
@@ -2917,8 +2958,9 @@ typedef struct _PH_HASHTABLE
     ULONG Count;
     /** Index into entry array for free list. */
     ULONG FreeEntry;
-    /** Index of next usable index into entry array, a.k.a. the
-     * count of entries that were ever allocated.
+    /**
+     * Index of next usable index into entry array, a.k.a. the count of entries that were ever
+     * allocated.
      */
     ULONG NextEntry;
 } PH_HASHTABLE, *PPH_HASHTABLE;
@@ -2936,7 +2978,7 @@ PPH_HASHTABLE
 NTAPI
 PhCreateHashtable(
     _In_ ULONG EntrySize,
-    _In_ PPH_HASHTABLE_COMPARE_FUNCTION CompareFunction,
+    _In_ PPH_HASHTABLE_EQUAL_FUNCTION EqualFunction,
     _In_ PPH_HASHTABLE_HASH_FUNCTION HashFunction,
     _In_ ULONG InitialCapacity
     );
@@ -3208,33 +3250,26 @@ PhFreeToFreeList(
 /**
  * A callback function.
  *
- * \param Parameter A value given to all callback
- * functions being notified.
- * \param Context A user-defined value passed
- * to PhRegisterCallback().
+ * \param Parameter A value given to all callback functions being notified.
+ * \param Context A user-defined value passed to PhRegisterCallback().
  */
 typedef VOID (NTAPI *PPH_CALLBACK_FUNCTION)(
     _In_opt_ PVOID Parameter,
     _In_opt_ PVOID Context
     );
 
-/**
- * A callback registration structure.
- */
+/** A callback registration structure. */
 typedef struct _PH_CALLBACK_REGISTRATION
 {
     /** The list entry in the callbacks list. */
     LIST_ENTRY ListEntry;
     /** The callback function. */
     PPH_CALLBACK_FUNCTION Function;
-    /** A user-defined value to be passed to the
-     * callback function. */
+    /** A user-defined value to be passed to the callback function. */
     PVOID Context;
-    /** A value indicating whether the registration
-     * structure is being used. */
+    /** A value indicating whether the registration structure is being used. */
     LONG Busy;
-    /** Whether the registration structure is being
-     * removed. */
+    /** Whether the registration structure is being removed. */
     BOOLEAN Unregistering;
     BOOLEAN Reserved;
     /** Flags controlling the callback. */
@@ -3242,10 +3277,8 @@ typedef struct _PH_CALLBACK_REGISTRATION
 } PH_CALLBACK_REGISTRATION, *PPH_CALLBACK_REGISTRATION;
 
 /**
- * A callback structure.
- * The callback object allows multiple callback
- * functions to be registered and notified in a
- * thread-safe way.
+ * A callback structure. The callback object allows multiple callback functions to be registered and
+ * notified in a thread-safe way.
  */
 typedef struct _PH_CALLBACK
 {
@@ -3376,6 +3409,15 @@ PhStringToInteger64(
     );
 
 PHLIBAPI
+BOOLEAN
+NTAPI
+PhStringToDouble(
+    _In_ PPH_STRINGREF String,
+    _Reserved_ ULONG Base,
+    _Out_opt_ DOUBLE *Double
+    );
+
+PHLIBAPI
 PPH_STRING
 NTAPI
 PhIntegerToString64(
@@ -3467,9 +3509,11 @@ typedef enum _PH_FORMAT_TYPE
     FormatGroupDigits = 0x10000,
     /** Always insert a prefix, '+' for positive and '-' for negative */
     FormatPrefixSign = 0x20000,
-    /** Pad left with zeros, taking into consideration the sign. Width must be specified.
+    /**
+     * Pad left with zeros, taking into consideration the sign. Width must be specified.
      * Format*Align cannot be used in conjunction with this flag. If FormatGroupDigits is specified,
-     * this flag is ignored. */
+     * this flag is ignored.
+     */
     FormatPadZeros = 0x40000,
 
     // General flags
@@ -3481,29 +3525,33 @@ typedef enum _PH_FORMAT_TYPE
     FormatUpperCase = 0x20000000
 } PH_FORMAT_TYPE;
 
-/**
- * Describes an element to be formatted to a string.
- */
+/** Describes an element to be formatted to a string. */
 typedef struct _PH_FORMAT
 {
     /** Specifies the type of the element and optional flags. */
     PH_FORMAT_TYPE Type;
-    /** The precision of the element. The meaning of this field depends on
-     * the element type. For \a Double and \a Size, this field specifies
-     * the number of decimal points to include. */
+    /**
+     * The precision of the element. The meaning of this field depends on the element type. For
+     * \a Double and \a Size, this field specifies the number of decimal points to include.
+     */
     USHORT Precision;
-    /** The width of the element. This field specifies the minimum
-     * number of characters to output. The remaining space is
-     * padded with either spaces, zeros, or a custom character. */
+    /**
+     * The width of the element. This field specifies the minimum number of characters to output.
+     * The remaining space is padded with either spaces, zeros, or a custom character.
+     */
     USHORT Width;
     /** The pad character. */
     WCHAR Pad;
-    /** The meaning of this field depends on the element type. For integer
-     * types, this field specifies the base to convert the number into.
-     * For \a Size, this field specifies the maximum size unit. */
+    /**
+     * The meaning of this field depends on the element type. For integer types, this field
+     * specifies the base to convert the number into. For \a Size, this field specifies the maximum
+     * size unit.
+     */
     UCHAR Radix;
-    /** The meaning of this field depends on the element type. For \a Size,
-     * this field specifies the minimum size unit. */
+    /**
+     * The meaning of this field depends on the element type. For \a Size, this field specifies the
+     * minimum size unit.
+     */
     UCHAR Parameter;
     union
     {
@@ -3656,8 +3704,6 @@ PhNtStatusFileNotFound(
     _In_ NTSTATUS Status
     );
 
-// collect
-
 // Generic tree definitions
 
 typedef enum _PH_TREE_ENUMERATION_ORDER
@@ -3669,7 +3715,7 @@ typedef enum _PH_TREE_ENUMERATION_ORDER
 #define PhIsLeftChildElement(Links) ((Links)->Parent->Left == (Links))
 #define PhIsRightChildElement(Links) ((Links)->Parent->Right == (Links))
 
-// AVL trees
+// avltree
 
 typedef struct _PH_AVL_LINKS
 {
@@ -3733,10 +3779,33 @@ PhFindElementAvlTree(
 PHLIBAPI
 PPH_AVL_LINKS
 NTAPI
-PhFindElementAvlTree2(
+PhLowerBoundElementAvlTree(
     _In_ PPH_AVL_TREE Tree,
-    _In_ PPH_AVL_LINKS Element,
-    _Out_ PLONG Result
+    _In_ PPH_AVL_LINKS Element
+    );
+
+PHLIBAPI
+PPH_AVL_LINKS
+NTAPI
+PhUpperBoundElementAvlTree(
+    _In_ PPH_AVL_TREE Tree,
+    _In_ PPH_AVL_LINKS Element
+    );
+
+PHLIBAPI
+PPH_AVL_LINKS
+NTAPI
+PhLowerDualBoundElementAvlTree(
+    _In_ PPH_AVL_TREE Tree,
+    _In_ PPH_AVL_LINKS Element
+    );
+
+PHLIBAPI
+PPH_AVL_LINKS
+NTAPI
+PhUpperDualBoundElementAvlTree(
+    _In_ PPH_AVL_TREE Tree,
+    _In_ PPH_AVL_LINKS Element
     );
 
 PHLIBAPI
@@ -3780,251 +3849,6 @@ PhEnumAvlTree(
     _In_ PPH_AVL_TREE Tree,
     _In_ PH_TREE_ENUMERATION_ORDER Order,
     _In_ PPH_ENUM_AVL_TREE_CALLBACK Callback,
-    _In_opt_ PVOID Context
-    );
-
-// handle
-
-struct _PH_HANDLE_TABLE;
-typedef struct _PH_HANDLE_TABLE *PPH_HANDLE_TABLE;
-
-typedef struct _PH_HANDLE_TABLE_ENTRY
-{
-    union
-    {
-        PVOID Object;
-        ULONG_PTR Value;
-        struct
-        {
-            /** The type of the entry; 1 if the entry is free,
-             * otherwise 0 if the entry is in use.
-             */
-            ULONG_PTR Type : 1;
-            /** Whether the entry is not locked; 1 if the entry
-             * is not locked, otherwise 0 if the entry is locked.
-             */
-            ULONG_PTR Locked : 1;
-            ULONG_PTR Value : sizeof(ULONG_PTR) * 8 - 2;
-        } TypeAndValue;
-    };
-    union
-    {
-        ACCESS_MASK GrantedAccess;
-        ULONG NextFreeValue;
-        ULONG_PTR Value2;
-    };
-} PH_HANDLE_TABLE_ENTRY, *PPH_HANDLE_TABLE_ENTRY;
-
-#define PH_HANDLE_TABLE_SAFE
-#define PH_HANDLE_TABLE_FREE_COUNT 64
-
-#define PH_HANDLE_TABLE_STRICT_FIFO 0x1
-#define PH_HANDLE_TABLE_VALID_FLAGS 0x1
-
-VOID
-PhHandleTableInitialization(
-    VOID
-    );
-
-PPH_HANDLE_TABLE
-NTAPI
-PhCreateHandleTable(
-    VOID
-    );
-
-VOID
-NTAPI
-PhDestroyHandleTable(
-    _In_ _Post_invalid_ PPH_HANDLE_TABLE HandleTable
-    );
-
-BOOLEAN
-NTAPI
-PhLockHandleTableEntry(
-    _Inout_ PPH_HANDLE_TABLE HandleTable,
-    _Inout_ PPH_HANDLE_TABLE_ENTRY HandleTableEntry
-    );
-
-VOID
-NTAPI
-PhUnlockHandleTableEntry(
-    _Inout_ PPH_HANDLE_TABLE HandleTable,
-    _Inout_ PPH_HANDLE_TABLE_ENTRY HandleTableEntry
-    );
-
-HANDLE
-NTAPI
-PhCreateHandle(
-    _Inout_ PPH_HANDLE_TABLE HandleTable,
-    _In_ PPH_HANDLE_TABLE_ENTRY HandleTableEntry
-    );
-
-BOOLEAN
-NTAPI
-PhDestroyHandle(
-    _Inout_ PPH_HANDLE_TABLE HandleTable,
-    _In_ HANDLE Handle,
-    _In_opt_ PPH_HANDLE_TABLE_ENTRY HandleTableEntry
-    );
-
-PPH_HANDLE_TABLE_ENTRY
-NTAPI
-PhLookupHandleTableEntry(
-    _In_ PPH_HANDLE_TABLE HandleTable,
-    _In_ HANDLE Handle
-    );
-
-typedef BOOLEAN (NTAPI *PPH_ENUM_HANDLE_TABLE_CALLBACK)(
-    _In_ PPH_HANDLE_TABLE HandleTable,
-    _In_ HANDLE Handle,
-    _In_ PPH_HANDLE_TABLE_ENTRY HandleTableEntry,
-    _In_opt_ PVOID Context
-    );
-
-VOID
-NTAPI
-PhEnumHandleTable(
-    _In_ PPH_HANDLE_TABLE HandleTable,
-    _In_ PPH_ENUM_HANDLE_TABLE_CALLBACK Callback,
-    _In_opt_ PVOID Context
-    );
-
-VOID
-NTAPI
-PhSweepHandleTable(
-    _In_ PPH_HANDLE_TABLE HandleTable,
-    _In_ PPH_ENUM_HANDLE_TABLE_CALLBACK Callback,
-    _In_opt_ PVOID Context
-    );
-
-typedef enum _PH_HANDLE_TABLE_INFORMATION_CLASS
-{
-    HandleTableBasicInformation,
-    HandleTableFlagsInformation,
-    MaxHandleTableInfoClass
-} PH_HANDLE_TABLE_INFORMATION_CLASS;
-
-typedef struct _PH_HANDLE_TABLE_BASIC_INFORMATION
-{
-    ULONG Count;
-    ULONG Flags;
-    ULONG TableLevel;
-} PH_HANDLE_TABLE_BASIC_INFORMATION, *PPH_HANDLE_TABLE_BASIC_INFORMATION;
-
-typedef struct _PH_HANDLE_TABLE_FLAGS_INFORMATION
-{
-    ULONG Flags;
-} PH_HANDLE_TABLE_FLAGS_INFORMATION, *PPH_HANDLE_TABLE_FLAGS_INFORMATION;
-
-NTSTATUS
-NTAPI
-PhQueryInformationHandleTable(
-    _In_ PPH_HANDLE_TABLE HandleTable,
-    _In_ PH_HANDLE_TABLE_INFORMATION_CLASS InformationClass,
-    _Out_writes_bytes_opt_(BufferLength) PVOID Buffer,
-    _In_ ULONG BufferLength,
-    _Out_opt_ PULONG ReturnLength
-    );
-
-NTSTATUS
-NTAPI
-PhSetInformationHandleTable(
-    _Inout_ PPH_HANDLE_TABLE HandleTable,
-    _In_ PH_HANDLE_TABLE_INFORMATION_CLASS InformationClass,
-    _In_reads_bytes_(BufferLength) PVOID Buffer,
-    _In_ ULONG BufferLength
-    );
-
-// workqueue
-
-#if !defined(_PH_WORKQUEUE_PRIVATE) && defined(DEBUG)
-extern PPH_LIST PhDbgWorkQueueList;
-extern PH_QUEUED_LOCK PhDbgWorkQueueListLock;
-#endif
-
-typedef struct _PH_WORK_QUEUE
-{
-    PH_RUNDOWN_PROTECT RundownProtect;
-    BOOLEAN Terminating;
-
-    LIST_ENTRY QueueListHead;
-    PH_QUEUED_LOCK QueueLock;
-    PH_CONDITION QueueEmptyCondition;
-
-    ULONG MaximumThreads;
-    ULONG MinimumThreads;
-    ULONG NoWorkTimeout;
-
-    PH_QUEUED_LOCK StateLock;
-    HANDLE SemaphoreHandle;
-    ULONG CurrentThreads;
-    ULONG BusyCount;
-} PH_WORK_QUEUE, *PPH_WORK_QUEUE;
-
-typedef VOID (NTAPI *PPH_WORK_QUEUE_ITEM_DELETE_FUNCTION)(
-    _In_ PUSER_THREAD_START_ROUTINE Function,
-    _In_ PVOID Context
-    );
-
-typedef struct _PH_WORK_QUEUE_ITEM
-{
-    LIST_ENTRY ListEntry;
-    PUSER_THREAD_START_ROUTINE Function;
-    PVOID Context;
-    PPH_WORK_QUEUE_ITEM_DELETE_FUNCTION DeleteFunction;
-} PH_WORK_QUEUE_ITEM, *PPH_WORK_QUEUE_ITEM;
-
-VOID
-PhWorkQueueInitialization(
-    VOID
-    );
-
-PHLIBAPI
-VOID
-NTAPI
-PhInitializeWorkQueue(
-    _Out_ PPH_WORK_QUEUE WorkQueue,
-    _In_ ULONG MinimumThreads,
-    _In_ ULONG MaximumThreads,
-    _In_ ULONG NoWorkTimeout
-    );
-
-PHLIBAPI
-VOID
-NTAPI
-PhDeleteWorkQueue(
-    _Inout_ PPH_WORK_QUEUE WorkQueue
-    );
-
-PHLIBAPI
-VOID
-NTAPI
-PhWaitForWorkQueue(
-    _Inout_ PPH_WORK_QUEUE WorkQueue
-    );
-
-PHLIBAPI
-VOID
-NTAPI
-PhQueueItemWorkQueue(
-    _Inout_ PPH_WORK_QUEUE WorkQueue,
-    _In_ PUSER_THREAD_START_ROUTINE Function,
-    _In_opt_ PVOID Context
-    );
-
-VOID
-PhQueueItemWorkQueueEx(
-    _Inout_ PPH_WORK_QUEUE WorkQueue,
-    _In_ PUSER_THREAD_START_ROUTINE Function,
-    _In_opt_ PVOID Context,
-    _In_opt_ PPH_WORK_QUEUE_ITEM_DELETE_FUNCTION DeleteFunction
-    );
-
-PHLIBAPI
-VOID
-NTAPI
-PhQueueItemGlobalWorkQueue(
-    _In_ PUSER_THREAD_START_ROUTINE Function,
     _In_opt_ PVOID Context
     );
 
@@ -4074,6 +3898,7 @@ extern ULONG PhCrc32Table[256];
 // Enums
 
 extern WCHAR *PhIoPriorityHintNames[MaxIoPriorityTypes];
+extern WCHAR *PhPagePriorityNames[MEMORY_PRIORITY_NORMAL + 1];
 extern WCHAR *PhKThreadStateNames[MaximumThreadState];
 extern WCHAR *PhKWaitReasonNames[MaximumWaitReason];
 

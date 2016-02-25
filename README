@@ -1,21 +1,19 @@
 Features:
 
- * Only runs on Windows Vista and above
- * Only incremental backups are supported
- * Mandatory compression with 7-Zip
- * Full file/directory history (SVN-like revisions, but no file content diff)
- * Restores files and directories from any given revision
- * Can trim (delete) old revisions
- * Volume Shadow Copy support (allows backup of locked files)
- * Transaction support
+* Only runs on Windows Vista and above
+* Only incremental backups are supported
+* Mandatory compression with 7-Zip
+* Full file/directory history (SVN-like revisions, but no file content diff)
+* Restores files and directories from any given revision
+* Can trim (delete) old revisions
+* Volume Shadow Copy support (allows backup of locked files)
+* Transaction support
 
 In order to compile the code, you must compile Process Hacker and copy:
 
- * phlib/bin/Release32/phlib.lib to lib/lib32/phlib.lib
- * phlib/bin/Debug32/phlib.lib to lib/lib32/phlibd.lib
- * phlib/bin/Release64/phlib.lib to lib/lib64/phlib.lib
- * phlib/bin/Debug64/phlib.lib to lib/lib64/phlibd.lib
+* phlib/bin/Release32/phlib.lib to lib/lib32/phlib.lib
+* phlib/bin/Debug32/phlib.lib to lib/lib32/phlibd.lib
+* phlib/bin/Release64/phlib.lib to lib/lib64/phlib.lib
+* phlib/bin/Debug64/phlib.lib to lib/lib64/phlibd.lib
 
-7z.dll must be placed in the same directory as Backup.exe (with the same
-architecture, 32-bit or 64-bit). You can get 7z.dll by installing 7-Zip:
-http://www.7-zip.org
+7z.dll must be placed in the same directory as Backup.exe (with the same architecture, 32-bit or 64-bit). You can get 7z.dll by installing 7-Zip: http://www.7-zip.org

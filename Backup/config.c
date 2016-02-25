@@ -22,6 +22,7 @@
 
 #include "backup.h"
 #include "config.h"
+#include <mapimg.h>
 
 PPH_STRING BkpCreateStringFromFileBuffer(
     _In_ PVOID Buffer,

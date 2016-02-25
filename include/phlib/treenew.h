@@ -1,6 +1,10 @@
 #ifndef _PH_TREENEW_H
 #define _PH_TREENEW_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PH_TREENEW_CLASSNAME L"PhTreeNew"
 
 #define PH_TREENEW_SEARCH_TIMEOUT 1000
@@ -15,9 +19,10 @@ typedef struct _PH_TREENEW_COLUMN
         {
             ULONG Visible : 1;
             ULONG CustomDraw : 1;
-            ULONG Fixed : 1; // whether this is the fixed column
-            ULONG SortDescending : 1; // sort descending on initial click rather than ascending
-            ULONG SpareFlags : 28;
+            ULONG Fixed : 1; // Whether this is the fixed column
+            ULONG SortDescending : 1; // Sort descending on initial click rather than ascending
+            ULONG DpiScaleOnAdd : 1; // Whether to DPI scale the width (only when adding)
+            ULONG SpareFlags : 27;
         };
     };
     ULONG Id;
@@ -31,7 +36,7 @@ typedef struct _PH_TREENEW_COLUMN
 
     struct
     {
-        LONG ViewIndex; // actual index in header control
+        LONG ViewIndex; // Actual index in header control
         LONG ViewX; // 0 for the fixed column, and an offset from the divider for normal columns
     } s;
 } PH_TREENEW_COLUMN, *PPH_TREENEW_COLUMN;
@@ -62,7 +67,7 @@ typedef struct _PH_TREENEW_NODE
     PPH_STRINGREF TextCache;
     ULONG TextCacheSize;
 
-    ULONG Index; // index within the flat list
+    ULONG Index; // Index within the flat list
     ULONG Level; // 0 for root, 1, 2, ...
 
     struct
@@ -116,6 +121,7 @@ typedef struct _PH_TREENEW_NODE
 #define TN_COLUMN_FLAG_CUSTOMDRAW 0x200000
 #define TN_COLUMN_FLAG_FIXED 0x400000
 #define TN_COLUMN_FLAG_SORTDESCENDING 0x800000
+#define TN_COLUMN_FLAG_NODPISCALEONADD 0x1000000
 #define TN_COLUMN_FLAGS 0xfff00000
 
 // Cache flags
@@ -583,6 +589,7 @@ FORCEINLINE BOOLEAN PhAddTreeNewColumn(
     column.Alignment = Alignment;
     column.DisplayIndex = DisplayIndex;
     column.TextFlags = TextFlags;
+    column.DpiScaleOnAdd = TRUE;
 
     if (DisplayIndex == -2)
         column.Fixed = TRUE;
@@ -612,6 +619,7 @@ FORCEINLINE BOOLEAN PhAddTreeNewColumnEx(
     column.Alignment = Alignment;
     column.DisplayIndex = DisplayIndex;
     column.TextFlags = TextFlags;
+    column.DpiScaleOnAdd = TRUE;
 
     if (DisplayIndex == -2)
         column.Fixed = TRUE;
@@ -650,8 +658,14 @@ FORCEINLINE BOOLEAN PhAddTreeNewColumnEx2(
         column.CustomDraw = TRUE;
     if (ExtraFlags & TN_COLUMN_FLAG_SORTDESCENDING)
         column.SortDescending = TRUE;
+    if (!(ExtraFlags & TN_COLUMN_FLAG_NODPISCALEONADD))
+        column.DpiScaleOnAdd = TRUE;
 
     return !!TreeNew_AddColumn(hwnd, &column);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

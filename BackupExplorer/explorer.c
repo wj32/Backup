@@ -1009,7 +1009,7 @@ HICON BeGetFileIconForExtension(
     HICON icon;
 
     upperExtension = PhCreateStringEx(Extension->Buffer, Extension->Length);
-    PhUpperString(upperExtension);
+    _wcsupr(upperExtension->Buffer);
     entry.Key = upperExtension->sr;
 
     realEntry = PhFindEntryHashtable(BeFileIconHashtable, &entry);

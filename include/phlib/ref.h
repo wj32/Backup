@@ -2,7 +2,7 @@
  * Process Hacker -
  *   internal object manager
  *
- * Copyright (C) 2009-2015 wj32
+ * Copyright (C) 2009-2016 wj32
  *
  * This file is part of Process Hacker.
  *
@@ -39,8 +39,7 @@ extern "C" {
 // Object type callbacks
 
 /**
- * The delete procedure for an object type, called when
- * an object of the type is being freed.
+ * The delete procedure for an object type, called when an object of the type is being freed.
  *
  * \param Object A pointer to the object being freed.
  * \param Flags Reserved.
@@ -65,17 +64,6 @@ typedef VOID (NTAPI *PPH_CREATE_OBJECT_HOOK)(
     );
 #endif
 
-#ifndef _PH_REF_PRIVATE
-extern PPH_OBJECT_TYPE PhObjectTypeObject;
-extern PPH_OBJECT_TYPE PhAllocType;
-
-#ifdef DEBUG
-extern LIST_ENTRY PhDbgObjectListHead;
-extern PH_QUEUED_LOCK PhDbgObjectListLock;
-extern PPH_CREATE_OBJECT_HOOK PhDbgCreateObjectHook;
-#endif
-#endif
-
 typedef struct _PH_OBJECT_TYPE_PARAMETERS
 {
     SIZE_T FreeListSize;
@@ -91,7 +79,16 @@ typedef struct _PH_OBJECT_TYPE_INFORMATION
     UCHAR Reserved;
 } PH_OBJECT_TYPE_INFORMATION, *PPH_OBJECT_TYPE_INFORMATION;
 
-NTSTATUS PhInitializeRef(
+extern PPH_OBJECT_TYPE PhObjectTypeObject;
+extern PPH_OBJECT_TYPE PhAllocType;
+
+#ifdef DEBUG
+extern LIST_ENTRY PhDbgObjectListHead;
+extern PH_QUEUED_LOCK PhDbgObjectListLock;
+extern PPH_CREATE_OBJECT_HOOK PhDbgCreateObjectHook;
+#endif
+
+NTSTATUS PhRefInitialization(
     VOID
     );
 
@@ -113,7 +110,7 @@ PhReferenceObject(
 
 _May_raise_
 PHLIBAPI
-LONG
+PVOID
 NTAPI
 PhReferenceObjectEx(
     _In_ PVOID Object,
@@ -121,7 +118,7 @@ PhReferenceObjectEx(
     );
 
 PHLIBAPI
-BOOLEAN
+PVOID
 NTAPI
 PhReferenceObjectSafe(
     _In_ PVOID Object
@@ -135,7 +132,7 @@ PhDereferenceObject(
     );
 
 PHLIBAPI
-BOOLEAN
+VOID
 NTAPI
 PhDereferenceObjectDeferDelete(
     _In_ PVOID Object
@@ -143,7 +140,7 @@ PhDereferenceObjectDeferDelete(
 
 _May_raise_
 PHLIBAPI
-LONG
+VOID
 NTAPI
 PhDereferenceObjectEx(
     _In_ PVOID Object,
@@ -250,18 +247,15 @@ PhClearReference(
 
 /** The size of the static array in an auto-release pool. */
 #define PH_AUTO_POOL_STATIC_SIZE 64
-/** The maximum size of the dynamic array for it to be
- * kept after the auto-release pool is drained. */
+/** The maximum size of the dynamic array for it to be kept after the auto-release pool is drained. */
 #define PH_AUTO_POOL_DYNAMIC_BIG_SIZE 256
 
 /**
- * An auto-dereference pool can be used for
- * semi-automatic reference counting. Batches of
- * objects are dereferenced at a certain time.
+ * An auto-dereference pool can be used for semi-automatic reference counting. Batches of objects
+ * are dereferenced at a certain time.
  *
- * This object is not thread-safe and cannot
- * be used across thread boundaries. Always
- * store them as local variables.
+ * This object is not thread-safe and cannot be used across thread boundaries. Always store them as
+ * local variables.
  */
 typedef struct _PH_AUTO_POOL
 {
@@ -304,6 +298,9 @@ NTAPI
 PhAutoDereferenceObject(
     _In_opt_ PVOID Object
     );
+
+#define PH_AUTO PhAutoDereferenceObject
+#define PH_AUTO_T(Type, Object) ((Type *)PH_AUTO(Object))
 
 /** Deprecated. Use PhAutoDereferenceObject instead. */
 PHLIBAPI VOID NTAPI PhaDereferenceObject(PVOID Object);

@@ -23,6 +23,7 @@
 #include "backup.h"
 #include "package.h"
 #include "packagep.h"
+#include <workqueue.h>
 
 static GUID IID_ISequentialInStream_I = { 0x23170f69, 0x40c1, 0x278a, { 0x00, 0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x00 } };
 static GUID IID_ISequentialOutStream_I = { 0x23170f69, 0x40c1, 0x278a, { 0x00, 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00 } };
@@ -723,7 +724,7 @@ HRESULT PkUpdateArchiveExtractCallback::SetOperationResult(Int32 resultEOperatio
 VOID PkUpdateArchiveExtractCallback::StartThread()
 {
     ThreadStarted = TRUE;
-    PhQueueItemGlobalWorkQueue(ThreadStart, this);
+    PhQueueItemWorkQueue(PhGetGlobalWorkQueue(), ThreadStart, this);
 }
 
 VOID PkUpdateArchiveExtractCallback::StopThread()

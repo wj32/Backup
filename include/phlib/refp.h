@@ -2,7 +2,7 @@
  * Process Hacker -
  *   internal object manager
  *
- * Copyright (C) 2009-2015 wj32
+ * Copyright (C) 2009-2016 wj32
  *
  * This file is part of Process Hacker.
  *
@@ -31,8 +31,8 @@
 #define PH_OBJECT_FROM_TYPE_FREE_LIST 0x2
 
 /**
- * The object header contains object manager information
- * including the reference count of an object and its type.
+ * The object header contains object manager information including the reference count of an object
+ * and its type.
  */
 typedef struct _PH_OBJECT_HEADER
 {
@@ -40,16 +40,25 @@ typedef struct _PH_OBJECT_HEADER
     {
         struct
         {
-            union
-            {
-                LONG RefCount;
-                PVOID PaddingDoNotUse; // Corresponds to DeferDeleteListEntry
-            };
             USHORT TypeIndex;
             UCHAR Flags;
             UCHAR Reserved1;
 #ifdef _WIN64
             ULONG Reserved2;
+#endif
+            union
+            {
+                LONG RefCount;
+                struct
+                {
+                    LONG SavedTypeIndex : 16;
+                    LONG SavedFlags : 8;
+                    LONG Reserved : 7;
+                    LONG DeferDelete : 1; // MUST be the high bit, so that RefCount < 0 when deferring delete
+                };
+            };
+#ifdef _WIN64
+            ULONG Reserved3;
 #endif
         };
         SLIST_ENTRY DeferDeleteListEntry;
@@ -60,26 +69,29 @@ typedef struct _PH_OBJECT_HEADER
     LIST_ENTRY ObjectListEntry;
 #endif
 
-    /** The body of the object. For use by the \ref PhObjectToObjectHeader
-     * and \ref PhObjectHeaderToObject macros. */
+    /**
+     * The body of the object. For use by the \ref PhObjectToObjectHeader and
+     * \ref PhObjectHeaderToObject macros.
+     */
     QUAD_PTR Body;
 } PH_OBJECT_HEADER, *PPH_OBJECT_HEADER;
 
 #ifndef DEBUG
 #ifdef _WIN64
-C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, RefCount) == 0x0);
+C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, TypeIndex) == 0x0);
+C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Flags) == 0x2);
+C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Reserved1) == 0x3);
+C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Reserved2) == 0x4);
+C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, RefCount) == 0x8);
+C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Reserved3) == 0xc);
 C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, DeferDeleteListEntry) == 0x0);
-C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, TypeIndex) == 0x8);
-C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Flags) == 0xa);
-C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Reserved1) == 0xb);
-C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Reserved2) == 0xc);
 C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Body) == 0x10);
 #else
-C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, RefCount) == 0x0);
+C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, TypeIndex) == 0x0);
+C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Flags) == 0x2);
+C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Reserved1) == 0x3);
+C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, RefCount) == 0x4);
 C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, DeferDeleteListEntry) == 0x0);
-C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, TypeIndex) == 0x4);
-C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Flags) == 0x6);
-C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Reserved1) == 0x7);
 C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Body) == 0x8);
 #endif
 #endif
@@ -111,10 +123,7 @@ C_ASSERT(FIELD_OFFSET(PH_OBJECT_HEADER, Body) == 0x8);
  */
 #define PhAddObjectHeaderSize(Size) ((Size) + FIELD_OFFSET(PH_OBJECT_HEADER, Body))
 
-/**
- * An object type specifies a kind of object and
- * its delete procedure.
- */
+/** An object type specifies a kind of object and its delete procedure. */
 typedef struct _PH_OBJECT_TYPE
 {
     /** The flags that were used to create the object type. */
@@ -132,8 +141,7 @@ typedef struct _PH_OBJECT_TYPE
 } PH_OBJECT_TYPE, *PPH_OBJECT_TYPE;
 
 /**
- * Increments a reference count, but will never increment
- * from 0 to 1.
+ * Increments a reference count, but will never increment from a nonpositive value to 1.
  *
  * \param RefCount A pointer to a reference count.
  */
@@ -143,10 +151,8 @@ PhpInterlockedIncrementSafe(
     _Inout_ PLONG RefCount
     )
 {
-    /* Here we will attempt to increment the reference count,
-     * making sure that it is not 0.
-     */
-    return _InterlockedIncrementNoZero(RefCount);
+    /* Here we will attempt to increment the reference count, making sure that it is positive. */
+    return _InterlockedIncrementPositive(RefCount);
 }
 
 PPH_OBJECT_HEADER PhpAllocateObject(

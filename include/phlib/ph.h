@@ -40,6 +40,25 @@ typedef NTSTATUS (NTAPI *PPH_SET_OBJECT_SECURITY)(
     _In_opt_ PVOID Context
     );
 
+typedef struct _PH_TOKEN_ATTRIBUTES
+{
+    HANDLE TokenHandle;
+    struct
+    {
+        ULONG Elevated : 1;
+        ULONG ElevationType : 2;
+        ULONG ReservedBits : 29;
+    };
+    ULONG Reserved;
+} PH_TOKEN_ATTRIBUTES, *PPH_TOKEN_ATTRIBUTES;
+
+PHLIBAPI
+PH_TOKEN_ATTRIBUTES
+NTAPI
+PhGetOwnTokenAttributes(
+    VOID
+    );
+
 PHLIBAPI
 NTSTATUS
 NTAPI
@@ -249,14 +268,6 @@ PhGetProcessWindowTitle(
 PHLIBAPI
 NTSTATUS
 NTAPI
-PhGetProcessIsPosix(
-    _In_ HANDLE ProcessHandle,
-    _Out_ PBOOLEAN IsPosix
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
 PhGetProcessExecuteFlags(
     _In_ HANDLE ProcessHandle,
     _Out_ PULONG ExecuteFlags
@@ -272,14 +283,6 @@ NTAPI
 PhGetProcessDepStatus(
     _In_ HANDLE ProcessHandle,
     _Out_ PULONG DepStatus
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetProcessPosixCommandLine(
-    _In_ HANDLE ProcessHandle,
-    _Out_ PPH_STRING *CommandLine
     );
 
 #define PH_GET_PROCESS_ENVIRONMENT_WOW64 0x1 // retrieve the WOW64 environment
@@ -348,32 +351,7 @@ NTSTATUS
 NTAPI
 PhSetProcessIoPriority(
     _In_ HANDLE ProcessHandle,
-    _In_ ULONG IoPriority
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhSetProcessExecuteFlags(
-    _In_ HANDLE ProcessHandle,
-    _In_ ULONG ExecuteFlags
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhSetProcessDepStatus(
-    _In_ HANDLE ProcessHandle,
-    _In_ ULONG DepStatus
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhSetProcessDepStatusInvasive(
-    _In_ HANDLE ProcessHandle,
-    _In_ ULONG DepStatus,
-    _In_opt_ PLARGE_INTEGER Timeout
+    _In_ IO_PRIORITY_HINT IoPriority
     );
 
 PHLIBAPI
@@ -399,7 +377,7 @@ NTSTATUS
 NTAPI
 PhSetThreadIoPriority(
     _In_ HANDLE ThreadHandle,
-    _In_ ULONG IoPriority
+    _In_ IO_PRIORITY_HINT IoPriority
     );
 
 PHLIBAPI
@@ -614,16 +592,12 @@ PhDuplicateObject(
 #define PH_ENUM_PROCESS_MODULES_LIMIT 0x800
 
 /**
- * A callback function passed to PhEnumProcessModules()
- * and called for each process module.
+ * A callback function passed to PhEnumProcessModules() and called for each process module.
  *
- * \param Module A structure providing information about
- * the module.
- * \param Context A user-defined value passed to
- * PhEnumProcessModules().
+ * \param Module A structure providing information about the module.
+ * \param Context A user-defined value passed to PhEnumProcessModules().
  *
- * \return TRUE to continue the enumeration, FALSE to
- * stop.
+ * \return TRUE to continue the enumeration, FALSE to stop.
  */
 typedef BOOLEAN (NTAPI *PPH_ENUM_PROCESS_MODULES_CALLBACK)(
     _In_ PLDR_DATA_TABLE_ENTRY Module,
@@ -725,23 +699,19 @@ PhGetKernelFileName(
     );
 
 /**
- * Gets a pointer to the first process information
- * structure in a buffer returned by PhEnumProcesses().
+ * Gets a pointer to the first process information structure in a buffer returned by
+ * PhEnumProcesses().
  *
- * \param Processes A pointer to a buffer returned
- * by PhEnumProcesses().
+ * \param Processes A pointer to a buffer returned by PhEnumProcesses().
  */
 #define PH_FIRST_PROCESS(Processes) ((PSYSTEM_PROCESS_INFORMATION)(Processes))
 
 /**
- * Gets a pointer to the process information structure
- * after a given structure.
+ * Gets a pointer to the process information structure after a given structure.
  *
- * \param Process A pointer to a process information
- * structure.
+ * \param Process A pointer to a process information structure.
  *
- * \return A pointer to the next process information
- * structure, or NULL if there are no more.
+ * \return A pointer to the next process information structure, or NULL if there are no more.
  */
 #define PH_NEXT_PROCESS(Process) ( \
     ((PSYSTEM_PROCESS_INFORMATION)(Process))->NextEntryOffset ? \
@@ -864,16 +834,13 @@ PhGetProcessIsDotNetEx(
     );
 
 /**
- * A callback function passed to PhEnumDirectoryObjects()
- * and called for each directory object.
+ * A callback function passed to PhEnumDirectoryObjects() and called for each directory object.
  *
  * \param Name The name of the object.
  * \param TypeName The name of the object's type.
- * \param Context A user-defined value passed to
- * PhEnumDirectoryObjects().
+ * \param Context A user-defined value passed to PhEnumDirectoryObjects().
  *
- * \return TRUE to continue the enumeration, FALSE to
- * stop.
+ * \return TRUE to continue the enumeration, FALSE to stop.
  */
 typedef BOOLEAN (NTAPI *PPH_ENUM_DIRECTORY_OBJECTS)(
     _In_ PPH_STRINGREF Name,
@@ -979,16 +946,12 @@ typedef struct _PH_MODULE_INFO
 } PH_MODULE_INFO, *PPH_MODULE_INFO;
 
 /**
- * A callback function passed to PhEnumGenericModules()
- * and called for each process module.
+ * A callback function passed to PhEnumGenericModules() and called for each process module.
  *
- * \param Module A structure providing information about
- * the module.
- * \param Context A user-defined value passed to
- * PhEnumGenericModules().
+ * \param Module A structure providing information about the module.
+ * \param Context A user-defined value passed to PhEnumGenericModules().
  *
- * \return TRUE to continue the enumeration, FALSE to
- * stop.
+ * \return TRUE to continue the enumeration, FALSE to stop.
  */
 typedef BOOLEAN (NTAPI *PPH_ENUM_GENERIC_MODULES_CALLBACK)(
     _In_ PPH_MODULE_INFO Module,
@@ -1042,6 +1005,25 @@ PhOpenKey(
     _In_opt_ HANDLE RootDirectory,
     _In_ PPH_STRINGREF ObjectName,
     _In_ ULONG Attributes
+    );
+
+PHLIBAPI
+NTSTATUS
+NTAPI
+PhQueryKey(
+    _In_ HANDLE KeyHandle,
+    _In_ KEY_INFORMATION_CLASS KeyInformationClass,
+    _Out_ PVOID *Buffer
+    );
+
+PHLIBAPI
+NTSTATUS
+NTAPI
+PhQueryValueKey(
+    _In_ HANDLE KeyHandle,
+    _In_opt_ PPH_STRINGREF ValueName,
+    _In_ KEY_VALUE_INFORMATION_CLASS KeyValueInformationClass,
+    _Out_ PVOID *Buffer
     );
 
 // lsa
@@ -1254,384 +1236,6 @@ PhCallKphDuplicateObjectWithTimeout(
     _In_ ULONG Options
     );
 
-// mapimg
-
-typedef struct _PH_MAPPED_IMAGE
-{
-    PVOID ViewBase;
-    SIZE_T Size;
-
-    PIMAGE_NT_HEADERS NtHeaders;
-    ULONG NumberOfSections;
-    PIMAGE_SECTION_HEADER Sections;
-    USHORT Magic;
-} PH_MAPPED_IMAGE, *PPH_MAPPED_IMAGE;
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhInitializeMappedImage(
-    _Out_ PPH_MAPPED_IMAGE MappedImage,
-    _In_ PVOID ViewBase,
-    _In_ SIZE_T Size
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhLoadMappedImage(
-    _In_opt_ PWSTR FileName,
-    _In_opt_ HANDLE FileHandle,
-    _In_ BOOLEAN ReadOnly,
-    _Out_ PPH_MAPPED_IMAGE MappedImage
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhUnloadMappedImage(
-    _Inout_ PPH_MAPPED_IMAGE MappedImage
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhMapViewOfEntireFile(
-    _In_opt_ PWSTR FileName,
-    _In_opt_ HANDLE FileHandle,
-    _In_ BOOLEAN ReadOnly,
-    _Out_ PVOID *ViewBase,
-    _Out_ PSIZE_T Size
-    );
-
-PHLIBAPI
-PIMAGE_SECTION_HEADER
-NTAPI
-PhMappedImageRvaToSection(
-    _In_ PPH_MAPPED_IMAGE MappedImage,
-    _In_ ULONG Rva
-    );
-
-PHLIBAPI
-PVOID
-NTAPI
-PhMappedImageRvaToVa(
-    _In_ PPH_MAPPED_IMAGE MappedImage,
-    _In_ ULONG Rva,
-    _Out_opt_ PIMAGE_SECTION_HEADER *Section
-    );
-
-PHLIBAPI
-BOOLEAN
-NTAPI
-PhGetMappedImageSectionName(
-    _In_ PIMAGE_SECTION_HEADER Section,
-    _Out_writes_opt_z_(Count) PSTR Buffer,
-    _In_ ULONG Count,
-    _Out_opt_ PULONG ReturnCount
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageDataEntry(
-    _In_ PPH_MAPPED_IMAGE MappedImage,
-    _In_ ULONG Index,
-    _Out_ PIMAGE_DATA_DIRECTORY *Entry
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageLoadConfig32(
-    _In_ PPH_MAPPED_IMAGE MappedImage,
-    _Out_ PIMAGE_LOAD_CONFIG_DIRECTORY32 *LoadConfig
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageLoadConfig64(
-    _In_ PPH_MAPPED_IMAGE MappedImage,
-    _Out_ PIMAGE_LOAD_CONFIG_DIRECTORY64 *LoadConfig
-    );
-
-typedef struct _PH_REMOTE_MAPPED_IMAGE
-{
-    PVOID ViewBase;
-
-    PIMAGE_NT_HEADERS NtHeaders;
-    ULONG NumberOfSections;
-    PIMAGE_SECTION_HEADER Sections;
-    USHORT Magic;
-} PH_REMOTE_MAPPED_IMAGE, *PPH_REMOTE_MAPPED_IMAGE;
-
-NTSTATUS
-NTAPI
-PhLoadRemoteMappedImage(
-    _In_ HANDLE ProcessHandle,
-    _In_ PVOID ViewBase,
-    _Out_ PPH_REMOTE_MAPPED_IMAGE RemoteMappedImage
-    );
-
-NTSTATUS
-NTAPI
-PhUnloadRemoteMappedImage(
-    _Inout_ PPH_REMOTE_MAPPED_IMAGE RemoteMappedImage
-    );
-
-typedef struct _PH_MAPPED_IMAGE_EXPORTS
-{
-    PPH_MAPPED_IMAGE MappedImage;
-    ULONG NumberOfEntries;
-
-    PIMAGE_DATA_DIRECTORY DataDirectory;
-    PIMAGE_EXPORT_DIRECTORY ExportDirectory;
-    PULONG AddressTable;
-    PULONG NamePointerTable;
-    PUSHORT OrdinalTable;
-} PH_MAPPED_IMAGE_EXPORTS, *PPH_MAPPED_IMAGE_EXPORTS;
-
-typedef struct _PH_MAPPED_IMAGE_EXPORT_ENTRY
-{
-    USHORT Ordinal;
-    PSTR Name;
-} PH_MAPPED_IMAGE_EXPORT_ENTRY, *PPH_MAPPED_IMAGE_EXPORT_ENTRY;
-
-typedef struct _PH_MAPPED_IMAGE_EXPORT_FUNCTION
-{
-    PVOID Function;
-    PSTR ForwardedName;
-} PH_MAPPED_IMAGE_EXPORT_FUNCTION, *PPH_MAPPED_IMAGE_EXPORT_FUNCTION;
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageExports(
-    _Out_ PPH_MAPPED_IMAGE_EXPORTS Exports,
-    _In_ PPH_MAPPED_IMAGE MappedImage
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageExportEntry(
-    _In_ PPH_MAPPED_IMAGE_EXPORTS Exports,
-    _In_ ULONG Index,
-    _Out_ PPH_MAPPED_IMAGE_EXPORT_ENTRY Entry
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageExportFunction(
-    _In_ PPH_MAPPED_IMAGE_EXPORTS Exports,
-    _In_opt_ PSTR Name,
-    _In_opt_ USHORT Ordinal,
-    _Out_ PPH_MAPPED_IMAGE_EXPORT_FUNCTION Function
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageExportFunctionRemote(
-    _In_ PPH_MAPPED_IMAGE_EXPORTS Exports,
-    _In_opt_ PSTR Name,
-    _In_opt_ USHORT Ordinal,
-    _In_ PVOID RemoteBase,
-    _Out_ PVOID *Function
-    );
-
-#define PH_MAPPED_IMAGE_DELAY_IMPORTS 0x1
-
-typedef struct _PH_MAPPED_IMAGE_IMPORTS
-{
-    PPH_MAPPED_IMAGE MappedImage;
-    ULONG Flags;
-    ULONG NumberOfDlls;
-
-    union
-    {
-        PIMAGE_IMPORT_DESCRIPTOR DescriptorTable;
-        PVOID DelayDescriptorTable;
-    };
-} PH_MAPPED_IMAGE_IMPORTS, *PPH_MAPPED_IMAGE_IMPORTS;
-
-typedef struct _PH_MAPPED_IMAGE_IMPORT_DLL
-{
-    PPH_MAPPED_IMAGE MappedImage;
-    ULONG Flags;
-    PSTR Name;
-    ULONG NumberOfEntries;
-
-    union
-    {
-        PIMAGE_IMPORT_DESCRIPTOR Descriptor;
-        PVOID DelayDescriptor;
-    };
-    PVOID *LookupTable;
-} PH_MAPPED_IMAGE_IMPORT_DLL, *PPH_MAPPED_IMAGE_IMPORT_DLL;
-
-typedef struct _PH_MAPPED_IMAGE_IMPORT_ENTRY
-{
-    PSTR Name;
-    union
-    {
-        USHORT Ordinal;
-        USHORT NameHint;
-    };
-} PH_MAPPED_IMAGE_IMPORT_ENTRY, *PPH_MAPPED_IMAGE_IMPORT_ENTRY;
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageImports(
-    _Out_ PPH_MAPPED_IMAGE_IMPORTS Imports,
-    _In_ PPH_MAPPED_IMAGE MappedImage
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageImportDll(
-    _In_ PPH_MAPPED_IMAGE_IMPORTS Imports,
-    _In_ ULONG Index,
-    _Out_ PPH_MAPPED_IMAGE_IMPORT_DLL ImportDll
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageImportEntry(
-    _In_ PPH_MAPPED_IMAGE_IMPORT_DLL ImportDll,
-    _In_ ULONG Index,
-    _Out_ PPH_MAPPED_IMAGE_IMPORT_ENTRY Entry
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedImageDelayImports(
-    _Out_ PPH_MAPPED_IMAGE_IMPORTS Imports,
-    _In_ PPH_MAPPED_IMAGE MappedImage
-    );
-
-USHORT
-NTAPI
-PhCheckSum(
-    _In_ ULONG Sum,
-    _In_reads_(Count) PUSHORT Buffer,
-    _In_ ULONG Count
-    );
-
-PHLIBAPI
-ULONG
-NTAPI
-PhCheckSumMappedImage(
-    _In_ PPH_MAPPED_IMAGE MappedImage
-    );
-
-// maplib
-
-struct _PH_MAPPED_ARCHIVE;
-typedef struct _PH_MAPPED_ARCHIVE *PPH_MAPPED_ARCHIVE;
-
-typedef enum _PH_MAPPED_ARCHIVE_MEMBER_TYPE
-{
-    NormalArchiveMemberType,
-    LinkerArchiveMemberType,
-    LongnamesArchiveMemberType
-} PH_MAPPED_ARCHIVE_MEMBER_TYPE;
-
-typedef struct _PH_MAPPED_ARCHIVE_MEMBER
-{
-    PPH_MAPPED_ARCHIVE MappedArchive;
-    PH_MAPPED_ARCHIVE_MEMBER_TYPE Type;
-    PSTR Name;
-    ULONG Size;
-    PVOID Data;
-
-    PIMAGE_ARCHIVE_MEMBER_HEADER Header;
-    CHAR NameBuffer[20];
-} PH_MAPPED_ARCHIVE_MEMBER, *PPH_MAPPED_ARCHIVE_MEMBER;
-
-typedef struct _PH_MAPPED_ARCHIVE
-{
-    PVOID ViewBase;
-    SIZE_T Size;
-
-    PH_MAPPED_ARCHIVE_MEMBER FirstLinkerMember;
-    PH_MAPPED_ARCHIVE_MEMBER SecondLinkerMember;
-    PH_MAPPED_ARCHIVE_MEMBER LongnamesMember;
-    BOOLEAN HasLongnamesMember;
-
-    PPH_MAPPED_ARCHIVE_MEMBER FirstStandardMember;
-    PPH_MAPPED_ARCHIVE_MEMBER LastStandardMember;
-} PH_MAPPED_ARCHIVE, *PPH_MAPPED_ARCHIVE;
-
-typedef struct _PH_MAPPED_ARCHIVE_IMPORT_ENTRY
-{
-    PSTR Name;
-    PSTR DllName;
-    union
-    {
-        USHORT Ordinal;
-        USHORT NameHint;
-    };
-    BYTE Type;
-    BYTE NameType;
-    USHORT Machine;
-} PH_MAPPED_ARCHIVE_IMPORT_ENTRY, *PPH_MAPPED_ARCHIVE_IMPORT_ENTRY;
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhInitializeMappedArchive(
-    _Out_ PPH_MAPPED_ARCHIVE MappedArchive,
-    _In_ PVOID ViewBase,
-    _In_ SIZE_T Size
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhLoadMappedArchive(
-    _In_opt_ PWSTR FileName,
-    _In_opt_ HANDLE FileHandle,
-    _In_ BOOLEAN ReadOnly,
-    _Out_ PPH_MAPPED_ARCHIVE MappedArchive
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhUnloadMappedArchive(
-    _Inout_ PPH_MAPPED_ARCHIVE MappedArchive
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetNextMappedArchiveMember(
-    _In_ PPH_MAPPED_ARCHIVE_MEMBER Member,
-    _Out_ PPH_MAPPED_ARCHIVE_MEMBER NextMember
-    );
-
-PHLIBAPI
-BOOLEAN
-NTAPI
-PhIsMappedArchiveMemberShortFormat(
-    _In_ PPH_MAPPED_ARCHIVE_MEMBER Member
-    );
-
-PHLIBAPI
-NTSTATUS
-NTAPI
-PhGetMappedArchiveImportEntry(
-    _In_ PPH_MAPPED_ARCHIVE_MEMBER Member,
-    _Out_ PPH_MAPPED_ARCHIVE_IMPORT_ENTRY Entry
-    );
-
 // iosup
 
 extern PPH_OBJECT_TYPE PhFileStreamType;
@@ -1747,18 +1351,22 @@ PhImpersonateClientOfNamedPipe(
     );
 
 // Core flags (PhCreateFileStream2)
-/** Indicates that the file stream object should not close the file handle
- * upon deletion. */
+/** Indicates that the file stream object should not close the file handle upon deletion. */
 #define PH_FILE_STREAM_HANDLE_UNOWNED 0x1
-/** Indicates that the file stream object should not buffer I/O operations.
- * Note that this does not prevent the operating system from buffering I/O. */
+/**
+ * Indicates that the file stream object should not buffer I/O operations. Note that this does not
+ * prevent the operating system from buffering I/O.
+ */
 #define PH_FILE_STREAM_UNBUFFERED 0x2
-/** Indicates that the file handle supports asynchronous operations.
- * The file handle must not have been opened with FILE_SYNCHRONOUS_IO_ALERT
- * or FILE_SYNCHRONOUS_IO_NONALERT. */
+/**
+ * Indicates that the file handle supports asynchronous operations. The file handle must not have
+ * been opened with FILE_SYNCHRONOUS_IO_ALERT or FILE_SYNCHRONOUS_IO_NONALERT.
+ */
 #define PH_FILE_STREAM_ASYNCHRONOUS 0x4
-/** Indicates that the file stream object should maintain the file position
- * and not use the file object's own file position. */
+/**
+ * Indicates that the file stream object should maintain the file position and not use the file
+ * object's own file position.
+ */
 #define PH_FILE_STREAM_OWN_POSITION 0x8
 
 // Higher-level flags (PhCreateFileStream)
@@ -2201,6 +1809,20 @@ typedef struct _PH_INTEGER_PAIR
     LONG Y;
 } PH_INTEGER_PAIR, *PPH_INTEGER_PAIR;
 
+typedef struct _PH_SCALABLE_INTEGER_PAIR
+{
+    union
+    {
+        PH_INTEGER_PAIR Pair;
+        struct
+        {
+            LONG X;
+            LONG Y;
+        };
+    };
+    ULONG Scale;
+} PH_SCALABLE_INTEGER_PAIR, *PPH_SCALABLE_INTEGER_PAIR;
+
 typedef struct _PH_RECTANGLE
 {
     union
@@ -2303,7 +1925,7 @@ PHLIBAPI
 VOID
 NTAPI
 PhAdjustRectangleToWorkingArea(
-    _In_ HWND hWnd,
+    _In_opt_ HWND hWnd,
     _Inout_ PPH_RECTANGLE Rectangle
     );
 
@@ -2600,8 +2222,15 @@ PhFormatDateTime(
     _In_opt_ PSYSTEMTIME DateTime
     );
 
-#define PhaFormatDateTime(DateTime) \
-    ((PPH_STRING)PhAutoDereferenceObject(PhFormatDateTime(DateTime)))
+#define PhaFormatDateTime(DateTime) PH_AUTO_T(PH_STRING, PhFormatDateTime(DateTime))
+
+PHLIBAPI
+PPH_STRING
+NTAPI
+PhFormatTimeSpan(
+    _In_ ULONG64 Ticks,
+    _In_opt_ ULONG Mode
+    );
 
 PHLIBAPI
 PPH_STRING
@@ -2618,8 +2247,7 @@ PhFormatUInt64(
     _In_ BOOLEAN GroupDigits
     );
 
-#define PhaFormatUInt64(Value, GroupDigits) \
-    ((PPH_STRING)PhAutoDereferenceObject(PhFormatUInt64((Value), (GroupDigits))))
+#define PhaFormatUInt64(Value, GroupDigits) PH_AUTO_T(PH_STRING, PhFormatUInt64((Value), (GroupDigits)))
 
 PHLIBAPI
 PPH_STRING
@@ -2631,7 +2259,7 @@ PhFormatDecimal(
     );
 
 #define PhaFormatDecimal(Value, FractionalDigits, GroupDigits) \
-    ((PPH_STRING)PhAutoDereferenceObject(PhFormatDecimal((Value), (FractionalDigits), (GroupDigits))))
+    PH_AUTO_T(PH_STRING, PhFormatDecimal((Value), (FractionalDigits), (GroupDigits)))
 
 PHLIBAPI
 PPH_STRING
@@ -2641,8 +2269,7 @@ PhFormatSize(
     _In_ ULONG MaxSizeUnit
     );
 
-#define PhaFormatSize(Size, MaxSizeUnit) \
-    ((PPH_STRING)PhAutoDereferenceObject(PhFormatSize((Size), (MaxSizeUnit))))
+#define PhaFormatSize(Size, MaxSizeUnit) PH_AUTO_T(PH_STRING, PhFormatSize((Size), (MaxSizeUnit)))
 
 PHLIBAPI
 PPH_STRING
@@ -2961,13 +2588,6 @@ NTAPI
 PhShellOpenKey(
     _In_ HWND hWnd,
     _In_ PPH_STRING KeyName
-    );
-
-PKEY_VALUE_PARTIAL_INFORMATION
-NTAPI
-PhQueryRegistryValue(
-    _In_ HANDLE KeyHandle,
-    _In_opt_ PWSTR ValueName
     );
 
 PHLIBAPI

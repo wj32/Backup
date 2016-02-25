@@ -104,6 +104,11 @@ typedef HRESULT (WINAPI *_GetThemeInt)(
     _Out_ int *piVal
     );
 
+typedef HRESULT (WINAPI *_EnableThemeDialogTexture)(
+    _In_ HWND hwnd,
+    _In_ DWORD dwFlags
+    );
+
 typedef HRESULT (WINAPI *_SHAutoComplete)(
     _In_ HWND hwndEdit,
     _In_ DWORD dwFlags
@@ -126,6 +131,7 @@ extern _IsThemePartDefined IsThemePartDefined_I;
 extern _DrawThemeBackground DrawThemeBackground_I;
 extern _DrawThemeText DrawThemeText_I;
 extern _GetThemeInt GetThemeInt_I;
+extern _EnableThemeDialogTexture EnableThemeDialogTexture_I;
 extern _SHAutoComplete SHAutoComplete_I;
 extern _TaskDialogIndirect TaskDialogIndirect_I;
 
@@ -333,7 +339,7 @@ INT PhAddTabControlTab(
     );
 
 #define PhaGetDlgItemText(hwndDlg, id) \
-    ((PPH_STRING)PhAutoDereferenceObject(PhGetWindowText(GetDlgItem(hwndDlg, id))))
+    PH_AUTO_T(PH_STRING, PhGetWindowText(GetDlgItem(hwndDlg, id)))
 
 PHLIBAPI
 PPH_STRING PhGetWindowText(
@@ -445,6 +451,7 @@ HWND PhCreateDialogFromTemplate(
     _In_ PVOID Parameter
     );
 
+PHLIBAPI
 BOOLEAN PhModalPropertySheet(
     _Inout_ PROPSHEETHEADER *Header
     );
@@ -584,15 +591,12 @@ PhIconToBitmap(
 
 typedef enum _PH_ITEM_STATE
 {
-    // The item is normal. Use the ItemColorFunction
-    // to determine the color of the item.
+    // The item is normal. Use the ItemColorFunction to determine the color of the item.
     NormalItemState = 0,
-    // The item is new. On the next tick,
-    // change the state to NormalItemState. When an
-    // item is in this state, highlight it in NewColor.
+    // The item is new. On the next tick, change the state to NormalItemState. When an item is in
+    // this state, highlight it in NewColor.
     NewItemState,
-    // The item is being removed. On the next tick,
-    // delete the item. When an item is in this state,
+    // The item is being removed. On the next tick, delete the item. When an item is in this state,
     // highlight it in RemovingColor.
     RemovingItemState
 } PH_ITEM_STATE;
@@ -689,8 +693,7 @@ PhSetHeaderSortIcon(
  *
  * \param Color The color.
  *
- * \return A value ranging from 0 to 255,
- * indicating the brightness of the color.
+ * \return A value ranging from 0 to 255, indicating the brightness of the color.
  */
 FORCEINLINE
 ULONG
